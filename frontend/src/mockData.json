@@ -1,0 +1,2054 @@
+{
+  "students": [
+    {
+      "id": "1",
+      "photo": "",
+      "grNo": "GR001",
+      "firstName": "Ahmed",
+      "lastName": "Khan",
+      "fatherName": "Muhammad Khan",
+      "religion": "Islam",
+      "address": "123 Main Street, Karachi, Sindh",
+      "dateOfBirth": "2005-05-15",
+      "birthPlace": "Aga Khan Hospital",
+      "lastSchoolAttended": "Karachi Grammar School",
+      "dateOfAdmission": "2025-11-05",
+      "class": "Class 10",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 13000,
+      "totalFees": 9000,
+      "familyId": "family-1",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-1-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-01",
+          "dueDate": "2025-09-01",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-1-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-09-15",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-1-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-08",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-1-3",
+          "month": "November 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-15",
+          "dueDate": "2025-12-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "photo": "",
+      "grNo": "GR002",
+      "firstName": "Fatima",
+      "lastName": "Ahmed",
+      "fatherName": "Ali Ahmed",
+      "religion": "Islam",
+      "address": "456 Oak Avenue, Lahore, Punjab",
+      "dateOfBirth": "2006-08-22",
+      "birthPlace": "Shalamar Hospital",
+      "lastSchoolAttended": "Lahore Grammar School",
+      "dateOfAdmission": "2025-11-05",
+      "class": "Class 9",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 8000,
+      "totalFees": 8000,
+      "familyId": "family-1",
+      "relationship": "sister",
+      "parentId": "1",
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-2-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-09-05",
+          "dueDate": "2025-09-05",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-2-1",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-10-10",
+          "status": "pending",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-2-2",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-12",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-2-3",
+          "month": "November 2025",
+          "amount": 3500,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-12-10",
+          "status": "pending",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "photo": "",
+      "grNo": "GR003",
+      "firstName": "Bilal",
+      "lastName": "Malik",
+      "fatherName": "Usman Malik",
+      "religion": "Islam",
+      "address": "789 Pine Road, Islamabad, Capital",
+      "dateOfBirth": "2007-03-10",
+      "birthPlace": "Kambar Shahdadkot",
+      "lastSchoolAttended": "Islamabad Model School",
+      "dateOfAdmission": "2025-11-05",
+      "class": "Class 8",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Good student",
+      "monthlyFees": 3000,
+      "admissionFees": 4000,
+      "feesPaid": 7000,
+      "totalFees": 7000,
+      "familyId": "family-2",
+      "relationship": "self",
+      "parentId": null,
+      "status": "left",
+      "leavingDate": "2025-10-15",
+      "leavingReason": "Family moved to another city",
+      "feesHistory": [
+        {
+          "id": "challan-3-0",
+          "month": "Admission Fees",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-08-20",
+          "dueDate": "2025-08-20",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-3-1",
+          "month": "August 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-08-25",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-3-2",
+          "month": "September 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-09-12",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-3-3",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-11-10",
+          "status": "pending",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "photo": "",
+      "grNo": "GR004",
+      "firstName": "Ayesha",
+      "lastName": "Raza",
+      "fatherName": "Hassan Raza",
+      "religion": "Islam",
+      "address": "101 Maple Drive, Rawalpindi, Punjab",
+      "dateOfBirth": "2005-12-05",
+      "birthPlace": "Benazir Bhutto Hospital",
+      "lastSchoolAttended": "Rawalpindi Public School",
+      "dateOfAdmission": "2025-09-10",
+      "class": "Class 10",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 9000,
+      "totalFees": 9000,
+      "familyId": "family-3",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-4-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-10",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-4-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-10-10",
+          "status": "pending",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-4-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-05",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-4-3",
+          "month": "November 2025",
+          "amount": 4000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-12-10",
+          "status": "pending",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "photo": "",
+      "grNo": "GR005",
+      "firstName": "Omar",
+      "lastName": "Sheikh",
+      "fatherName": "Farid Sheikh",
+      "religion": "Islam",
+      "address": "202 Elm Street, Peshawar, KPK",
+      "dateOfBirth": "2006-07-18",
+      "birthPlace": "Lady Reading Hospital",
+      "lastSchoolAttended": "Peshawar Model School",
+      "dateOfAdmission": "2025-08-15",
+      "class": "Class 9",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Needs extra attention",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 11500,
+      "totalFees": 8000,
+      "familyId": "family-4",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-5-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-08-15",
+          "dueDate": "2025-08-15",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-5-1",
+          "month": "August 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-08-20",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-5-2",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-18",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-5-3",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-07",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-5-4",
+          "month": "November 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-18",
+          "dueDate": "2025-12-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "photo": "",
+      "grNo": "GR006",
+      "firstName": "Zainab",
+      "lastName": "Hussain",
+      "fatherName": "Tariq Hussain",
+      "religion": "Islam",
+      "address": "303 Cedar Lane, Quetta, Balochistan",
+      "dateOfBirth": "2007-01-25",
+      "birthPlace": "Civil Hospital Quetta",
+      "lastSchoolAttended": "Quetta Public School",
+      "dateOfAdmission": "2025-10-05",
+      "class": "Class 8",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "",
+      "monthlyFees": 3000,
+      "admissionFees": 4500,
+      "feesPaid": 7500,
+      "totalFees": 7500,
+      "familyId": "family-5",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-6-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-10-05",
+          "dueDate": "2025-10-05",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-6-1",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-10-15",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "photo": "",
+      "grNo": "GR007",
+      "firstName": "Hassan",
+      "lastName": "Qureshi",
+      "fatherName": "Imran Qureshi",
+      "religion": "Islam",
+      "address": "404 Birch Boulevard, Multan, Punjab",
+      "dateOfBirth": "2005-04-30",
+      "birthPlace": "Nishtar Hospital",
+      "lastSchoolAttended": "Multan Public School",
+      "dateOfAdmission": "2025-08-01",
+      "class": "Class 10",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Excellent performance",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 9000,
+      "totalFees": 9000,
+      "familyId": "family-6",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-7-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-08-01",
+          "dueDate": "2025-08-01",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-7-1",
+          "month": "August 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-08-08",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-7-2",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-09-12",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-7-3",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-09",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "photo": "",
+      "grNo": "GR008",
+      "firstName": "Mariam",
+      "lastName": "Butt",
+      "fatherName": "Asif Butt",
+      "religion": "Islam",
+      "address": "505 Spruce Court, Faisalabad, Punjab",
+      "dateOfBirth": "2006-11-12",
+      "birthPlace": "Allied Hospital",
+      "lastSchoolAttended": "Faisalabad Public School",
+      "dateOfAdmission": "2025-09-20",
+      "class": "Class 9",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 4500,
+      "totalFees": 8000,
+      "familyId": "family-7",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-8-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-09-20",
+          "dueDate": "2025-09-20",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-8-1",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-10-10",
+          "status": "pending",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-8-2",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-06",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "photo": "",
+      "grNo": "GR009",
+      "firstName": "Saad",
+      "lastName": "Mirza",
+      "fatherName": "Rashid Mirza",
+      "religion": "Islam",
+      "address": "606 Willow Street, Hyderabad, Sindh",
+      "dateOfBirth": "2007-02-14",
+      "birthPlace": "Hyderabad",
+      "lastSchoolAttended": "Hyderabad Grammar School",
+      "dateOfAdmission": "2025-08-25",
+      "class": "Class 8",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Active participant",
+      "monthlyFees": 3000,
+      "admissionFees": 4000,
+      "feesPaid": 7000,
+      "totalFees": 7000,
+      "familyId": "family-8",
+      "relationship": "self",
+      "parentId": null,
+      "status": "studying",
+      "feesHistory": [
+        {
+          "id": "challan-9-0",
+          "month": "Admission Fees",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-08-25",
+          "dueDate": "2025-08-25",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-9-1",
+          "month": "August 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-08-30",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-9-2",
+          "month": "September 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-09-15",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-9-3",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-11-10",
+          "status": "pending",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "photo": "",
+      "grNo": "GR010",
+      "firstName": "Sana",
+      "lastName": "Javed",
+      "fatherName": "Waqar Javed",
+      "religion": "Islam",
+      "address": "707 Poplar Avenue, Gujranwala, Punjab",
+      "dateOfBirth": "2005-09-08",
+      "birthPlace": "Gujranwala",
+      "lastSchoolAttended": "Gujranwala Public School",
+      "dateOfAdmission": "2025-09-15",
+      "class": "Class 10",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Top performer",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 9000,
+      "totalFees": 9000,
+      "familyId": "family-9",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-10-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-15",
+          "dueDate": "2025-09-15",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-10-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-09-20",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-10-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-03",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "photo": "",
+      "grNo": "GR011",
+      "firstName": "Ali",
+      "lastName": "Rizvi",
+      "fatherName": "Naveed Rizvi",
+      "religion": "Islam",
+      "address": "808 Oakwood Drive, Sialkot, Punjab",
+      "dateOfBirth": "2006-04-22",
+      "birthPlace": "Sialkot General Hospital",
+      "lastSchoolAttended": "Sialkot Model School",
+      "dateOfAdmission": "2025-08-30",
+      "class": "Class 9",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Creative thinker",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 8000,
+      "totalFees": 8000,
+      "familyId": "family-10",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-11-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-08-30",
+          "dueDate": "2025-08-30",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-11-1",
+          "month": "August 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-05",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-11-2",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-20",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-11-3",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-11",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "12",
+      "photo": "",
+      "grNo": "GR012",
+      "firstName": "Hina",
+      "lastName": "Abbasi",
+      "fatherName": "Shahid Abbasi",
+      "religion": "Islam",
+      "address": "909 Cedar Road, Bahawalpur, Punjab",
+      "dateOfBirth": "2007-06-30",
+      "birthPlace": "Bahawal Victoria Hospital",
+      "lastSchoolAttended": "Bahawalpur Public School",
+      "dateOfAdmission": "2025-10-10",
+      "class": "Class 8",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Artistic talent",
+      "monthlyFees": 3000,
+      "admissionFees": 4500,
+      "feesPaid": 7500,
+      "totalFees": 7500,
+      "familyId": "family-11",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-12-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-10-10",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-12-1",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-10-20",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "13",
+      "photo": "",
+      "grNo": "GR013",
+      "firstName": "Usman",
+      "lastName": "Tariq",
+      "fatherName": "Khalid Tariq",
+      "religion": "Islam",
+      "address": "1010 Maple Lane, Sukkur, Sindh",
+      "dateOfBirth": "2005-11-17",
+      "birthPlace": "Sukkur Civil Hospital",
+      "lastSchoolAttended": "Sukkur Grammar School",
+      "dateOfAdmission": "2025-09-05",
+      "class": "Class 10",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Sports enthusiast",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 5000,
+      "totalFees": 9000,
+      "familyId": "family-12",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-13-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-05",
+          "dueDate": "2025-09-05",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-13-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-10-10",
+          "status": "pending",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-13-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-04",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "14",
+      "photo": "",
+      "grNo": "GR014",
+      "firstName": "Nida",
+      "lastName": "Farooq",
+      "fatherName": "Irfan Farooq",
+      "religion": "Islam",
+      "address": "1111 Pine Street, Mardan, KPK",
+      "dateOfBirth": "2006-03-25",
+      "birthPlace": "Mardan Civil Hospital",
+      "lastSchoolAttended": "Mardan Public School",
+      "dateOfAdmission": "2025-11-05",
+      "class": "Class 9",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Diligent worker",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 8000,
+      "totalFees": 8000,
+      "familyId": "family-13",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-14-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-08-20",
+          "dueDate": "2025-08-20",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-14-1",
+          "month": "August 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-08-25",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-14-2",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-18",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-14-3",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-02",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "15",
+      "photo": "",
+      "grNo": "GR015",
+      "firstName": "Taha",
+      "lastName": "Siddiqui",
+      "fatherName": "Adil Siddiqui",
+      "religion": "Islam",
+      "address": "1212 Elm Avenue, Mirpur Khas, Sindh",
+      "dateOfBirth": "2007-07-12",
+      "birthPlace": "Mirpur Khas Civil Hospital",
+      "lastSchoolAttended": "Mirpur Khas Model School",
+      "dateOfAdmission": "2025-10-01",
+      "class": "Class 8",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Quick learner",
+      "monthlyFees": 3000,
+      "admissionFees": 4500,
+      "feesPaid": 7500,
+      "totalFees": 7500,
+      "familyId": "family-14",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-15-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-10-01",
+          "dueDate": "2025-10-01",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-15-1",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-10-10",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "16",
+      "photo": "",
+      "grNo": "GR016",
+      "firstName": "Sadia",
+      "lastName": "Hashmi",
+      "fatherName": "Faisal Hashmi",
+      "religion": "Islam",
+      "address": "1313 Birch Road, Jhang, Punjab",
+      "dateOfBirth": "2005-12-28",
+      "birthPlace": "Jhang Civil Hospital",
+      "lastSchoolAttended": "Jhang Public School",
+      "dateOfAdmission": "2025-09-12",
+      "class": "Class 10",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Excellent in literature",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 5000,
+      "totalFees": 9000,
+      "familyId": "family-15",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-16-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-12",
+          "dueDate": "2025-09-12",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-16-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-10-10",
+          "status": "pending",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-16-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-01",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "17",
+      "photo": "",
+      "grNo": "GR017",
+      "firstName": "Kamran",
+      "lastName": "Chaudhry",
+      "fatherName": "Nasir Chaudhry",
+      "religion": "Islam",
+      "address": "1414 Spruce Drive, Sahiwal, Punjab",
+      "dateOfBirth": "2006-05-03",
+      "birthPlace": "Sahiwal General Hospital",
+      "lastSchoolAttended": "Sahiwal Model School",
+      "dateOfAdmission": "2025-08-28",
+      "class": "Class 9",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Tech enthusiast",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 8000,
+      "totalFees": 8000,
+      "familyId": "family-16",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-17-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-08-28",
+          "dueDate": "2025-08-28",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-17-1",
+          "month": "August 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-02",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-17-2",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-15",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-17-3",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-13",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "18",
+      "photo": "",
+      "grNo": "GR018",
+      "firstName": "Rabia",
+      "lastName": "Iqbal",
+      "fatherName": "Shakeel Iqbal",
+      "religion": "Islam",
+      "address": "1515 Willow Street, Dera Ghazi Khan, Punjab",
+      "dateOfBirth": "2007-08-19",
+      "birthPlace": "DG Khan Civil Hospital",
+      "lastSchoolAttended": "DG Khan Public School",
+      "dateOfAdmission": "2025-10-15",
+      "class": "Class 8",
+      "section": "B",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Musical talent",
+      "monthlyFees": 3000,
+      "admissionFees": 4500,
+      "feesPaid": 7500,
+      "totalFees": 7500,
+      "familyId": "family-17",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-18-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-10-15",
+          "dueDate": "2025-10-15",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-18-1",
+          "month": "October 2025",
+          "amount": 3000,
+          "paid": true,
+          "date": "2025-10-25",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "19",
+      "photo": "",
+      "grNo": "GR019",
+      "firstName": "Junaid",
+      "lastName": "Aslam",
+      "fatherName": "Tahir Aslam",
+      "religion": "Islam",
+      "address": "1616 Poplar Avenue, Nawabshah, Sindh",
+      "dateOfBirth": "2005-10-11",
+      "birthPlace": "Nawabshah Civil Hospital",
+      "lastSchoolAttended": "Nawabshah Grammar School",
+      "dateOfAdmission": "2025-09-08",
+      "class": "Class 10",
+      "section": "A",
+      "dateOfLeaving": null,
+      "classInWhichLeft": "",
+      "reasonOfLeaving": "",
+      "remarks": "Leadership qualities",
+      "monthlyFees": 4000,
+      "admissionFees": 5000,
+      "feesPaid": 9000,
+      "totalFees": 9000,
+      "familyId": "family-18",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-19-0",
+          "month": "Admission Fees",
+          "amount": 5000,
+          "paid": true,
+          "date": "2025-09-08",
+          "dueDate": "2025-09-08",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-19-1",
+          "month": "September 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-09-18",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-19-2",
+          "month": "October 2025",
+          "amount": 4000,
+          "paid": true,
+          "date": "2025-11-07",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "20",
+      "photo": "",
+      "grNo": "GR020",
+      "firstName": "Amina",
+      "lastName": "Zafar",
+      "fatherName": "Shahbaz Zafar",
+      "religion": "Islam",
+      "address": "1717 Oakwood Drive, Rahim Yar Khan, Punjab",
+      "dateOfBirth": "2006-01-23",
+      "birthPlace": "RYK Civil Hospital",
+      "lastSchoolAttended": "RYK Public School",
+      "dateOfAdmission": "2025-08-18",
+      "class": "Class 9",
+      "section": "B",
+      "dateOfLeaving": "2025-10-15",
+      "classInWhichLeft": "Class 9",
+      "reasonOfLeaving": "Family moved to another city",
+      "remarks": "Science prodigy",
+      "monthlyFees": 3500,
+      "admissionFees": 4500,
+      "feesPaid": 8000,
+      "totalFees": 8000,
+      "familyId": "family-19",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-20-0",
+          "month": "Admission Fees",
+          "amount": 4500,
+          "paid": true,
+          "date": "2025-08-18",
+          "dueDate": "2025-08-18",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-20-1",
+          "month": "August 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-08-23",
+          "dueDate": "2025-09-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-20-2",
+          "month": "September 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-09-12",
+          "dueDate": "2025-10-10",
+          "status": "paid",
+          "type": "monthly"
+        },
+        {
+          "id": "challan-20-3",
+          "month": "October 2025",
+          "amount": 3500,
+          "paid": true,
+          "date": "2025-11-09",
+          "dueDate": "2025-11-10",
+          "status": "paid",
+          "type": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "21",
+      "photo": "",
+      "grNo": "GR021",
+      "firstName": "Usman",
+      "lastName": "Ahmed",
+      "fatherName": "Tariq Ahmed",
+      "religion": "Islam",
+      "address": "1818 Maple Street, Lahore, Punjab",
+      "dateOfBirth": "2007-03-15",
+      "birthPlace": "Lahore General Hospital",
+      "lastSchoolAttended": "Lahore Public School",
+      "dateOfAdmission": "2025-11-05",
+      "class": "Class 8",
+      "section": "A",
+      "monthlyFees": 3200,
+      "admissionFees": 4200,
+      "feesPaid": 4200,
+      "totalFees": 7400,
+      "familyId": "family-21",
+      "relationship": "self",
+      "parentId": null,
+      "feesHistory": [
+        {
+          "id": "challan-21-0",
+          "month": "Admission Fees",
+          "amount": 4200,
+          "paid": true,
+          "date": "2025-11-05",
+          "dueDate": "2025-11-05",
+          "status": "paid",
+          "type": "admission"
+        },
+        {
+          "id": "challan-21-1",
+          "month": "November 2025",
+          "amount": 3200,
+          "paid": false,
+          "date": null,
+          "dueDate": "2025-12-10",
+          "status": "pending",
+          "type": "monthly"
+        }
+      ]
+    }
+  ],
+  "expenses": [
+    {
+      "id": "1",
+      "description": "Stationery purchase",
+      "amount": 500,
+      "date": "2025-10-15",
+      "category": "Stationary"
+    },
+    {
+      "id": "2",
+      "description": "Electricity bill",
+      "amount": 1200,
+      "date": "2025-10-20",
+      "category": "Utilities"
+    },
+    {
+      "id": "3",
+      "description": "Staff salary",
+      "amount": 15000,
+      "date": "2025-10-25",
+      "category": "Salary"
+    },
+    {
+      "id": "4",
+      "description": "Library books",
+      "amount": 3000,
+      "date": "2025-10-10",
+      "category": "Stationary"
+    },
+    {
+      "id": "5",
+      "description": "Water bill",
+      "amount": 800,
+      "date": "2025-10-18",
+      "category": "Utilities"
+    },
+    {
+      "id": "6",
+      "description": "Computer maintenance",
+      "amount": 2500,
+      "date": "2025-10-22",
+      "category": "Maintenance"
+    },
+    {
+      "id": "7",
+      "description": "Sports equipment",
+      "amount": 1500,
+      "date": "2025-10-05",
+      "category": "Stationary"
+    },
+    {
+      "id": "8",
+      "description": "Internet bill",
+      "amount": 2000,
+      "date": "2025-10-28",
+      "category": "Utilities"
+    },
+    {
+      "id": "9",
+      "description": "Classroom furniture",
+      "amount": 5000,
+      "date": "2025-10-12",
+      "category": "Maintenance"
+    },
+    {
+      "id": "10",
+      "description": "Science lab supplies",
+      "amount": 4000,
+      "date": "2025-10-30",
+      "category": "Stationary"
+    },
+    {
+      "id": "11",
+      "description": "Monthly electricity bill",
+      "amount": 1500,
+      "date": "2025-11-05",
+      "category": "Utilities"
+    },
+    {
+      "id": "12",
+      "description": "Internet and phone bills",
+      "amount": 2200,
+      "date": "2025-11-10",
+      "category": "Utilities"
+    },
+    {
+      "id": "13",
+      "description": "Office supplies purchase",
+      "amount": 800,
+      "date": "2025-11-15",
+      "category": "Stationary"
+    },
+    {
+      "id": "14",
+      "description": "Maintenance and repairs",
+      "amount": 3500,
+      "date": "2025-11-20",
+      "category": "Maintenance"
+    },
+    {
+      "id": "15",
+      "description": "Canteen inventory",
+      "amount": 2800,
+      "date": "2025-11-25",
+      "category": "Stationary"
+    }
+  ],
+  "income": {
+    "canteenIncome": [
+      {
+        "id": "c0",
+        "date": "2025-10-05",
+        "amount": 1200,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c01",
+        "date": "2025-10-12",
+        "amount": 1400,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c02",
+        "date": "2025-10-19",
+        "amount": 1300,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c03",
+        "date": "2025-10-26",
+        "amount": 1500,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c1",
+        "date": "2025-11-05",
+        "amount": 1500,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c2",
+        "date": "2025-11-12",
+        "amount": 1800,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c3",
+        "date": "2025-11-19",
+        "amount": 1600,
+        "description": "Weekly canteen sales"
+      },
+      {
+        "id": "c4",
+        "date": "2025-11-26",
+        "amount": 1700,
+        "description": "Weekly canteen sales"
+      }
+    ],
+    "sponsorshipIncome": [
+      {
+        "id": "s0",
+        "date": "2025-10-15",
+        "amount": 4000,
+        "description": "Uniform sponsorship from local store",
+        "sponsor": "XYZ Uniforms"
+      },
+      {
+        "id": "s1",
+        "date": "2025-11-10",
+        "amount": 5000,
+        "description": "Book sponsorship from local publisher",
+        "sponsor": "ABC Publishers"
+      },
+      {
+        "id": "s2",
+        "date": "2025-11-20",
+        "amount": 3000,
+        "description": "Sports equipment sponsorship",
+        "sponsor": "XYZ Sports Store"
+      }
+    ]
+  },
+  "staff": [
+    {
+      "id": "1",
+      "firstName": "Ahmed",
+      "lastName": "Khan",
+      "phone": "111-222-3333",
+      "position": "Math Teacher",
+      "salary": 25000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 3000
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 1000
+        }
+      ],
+      "dateOfJoining": "2025-09-15",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-1-001",
+          "month": "September 2023",
+          "baseSalary": 25000,
+          "allowances": 4000,
+          "deductions": 0,
+          "netSalary": 29000,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "firstName": "Fatima",
+      "lastName": "Ahmed",
+      "phone": "444-555-6666",
+      "position": "English Teacher",
+      "salary": 24000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 3000
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 1000
+        }
+      ],
+      "dateOfJoining": "2025-08-10",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-2-001",
+          "month": "September 2023",
+          "baseSalary": 24000,
+          "allowances": 4000,
+          "deductions": 0,
+          "netSalary": 28000,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "firstName": "Bilal",
+      "lastName": "Malik",
+      "phone": "777-888-9999",
+      "position": "Science Teacher",
+      "salary": 26000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 2500
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 1000
+        }
+      ],
+      "dateOfJoining": "2025-09-20",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-3-001",
+          "month": "September 2023",
+          "baseSalary": 26000,
+          "allowances": 3500,
+          "deductions": 0,
+          "netSalary": 29500,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "4",
+      "firstName": "Ayesha",
+      "lastName": "Raza",
+      "phone": "222-333-4444",
+      "position": "Accountant",
+      "salary": 22000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 2500
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 800
+        }
+      ],
+      "dateOfJoining": "2025-08-12",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-4-001",
+          "month": "September 2023",
+          "baseSalary": 22000,
+          "allowances": 3300,
+          "deductions": 0,
+          "netSalary": 25300,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "5",
+      "firstName": "Omar",
+      "lastName": "Sheikh",
+      "phone": "555-666-7777",
+      "position": "Librarian",
+      "salary": 20000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 2000
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 500
+        }
+      ],
+      "dateOfJoining": "2025-09-05",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-5-001",
+          "month": "September 2023",
+          "baseSalary": 20000,
+          "allowances": 2500,
+          "deductions": 0,
+          "netSalary": 22500,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "6",
+      "firstName": "Zainab",
+      "lastName": "Hussain",
+      "phone": "888-999-0000",
+      "position": "Counselor",
+      "salary": 21000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 2500
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 600
+        }
+      ],
+      "dateOfJoining": "2025-08-18",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-6-001",
+          "month": "September 2023",
+          "baseSalary": 21000,
+          "allowances": 3100,
+          "deductions": 0,
+          "netSalary": 24100,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "7",
+      "firstName": "Hassan",
+      "lastName": "Qureshi",
+      "phone": "333-444-5555",
+      "position": "Principal",
+      "salary": 30000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 3000
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 1000
+        }
+      ],
+      "dateOfJoining": "2025-09-22",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-7-001",
+          "month": "September 2023",
+          "baseSalary": 30000,
+          "allowances": 4000,
+          "deductions": 0,
+          "netSalary": 34000,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "8",
+      "firstName": "Mariam",
+      "lastName": "Butt",
+      "phone": "666-777-8888",
+      "position": "Lab Assistant",
+      "salary": 18000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 1500
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 500
+        }
+      ],
+      "dateOfJoining": "2025-08-10",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-8-001",
+          "month": "September 2023",
+          "baseSalary": 18000,
+          "allowances": 2000,
+          "deductions": 0,
+          "netSalary": 20000,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "9",
+      "firstName": "Saad",
+      "lastName": "Mirza",
+      "phone": "555-444-3333",
+      "position": "Security Guard",
+      "salary": 15000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 1000
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 300
+        }
+      ],
+      "dateOfJoining": "2025-09-15",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-9-001",
+          "month": "September 2023",
+          "baseSalary": 15000,
+          "allowances": 1300,
+          "deductions": 0,
+          "netSalary": 16300,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "10",
+      "firstName": "Sana",
+      "lastName": "Javed",
+      "phone": "666-555-4444",
+      "position": "Receptionist",
+      "salary": 16000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 1200
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 300
+        }
+      ],
+      "dateOfJoining": "2025-08-10",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-10-001",
+          "month": "September 2023",
+          "baseSalary": 16000,
+          "allowances": 1500,
+          "deductions": 0,
+          "netSalary": 17500,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    },
+    {
+      "id": "11",
+      "firstName": "Ali",
+      "lastName": "Rizvi",
+      "phone": "777-666-5555",
+      "position": "Maintenance Staff",
+      "salary": 14000,
+      "allowances": [
+        {
+          "name": "Housing Allowance",
+          "amount": 800
+        },
+        {
+          "name": "Transport Allowance",
+          "amount": 200
+        }
+      ],
+      "dateOfJoining": "2025-09-20",
+      "attendance": [],
+      "salaryHistory": [
+        {
+          "id": "sal-11-001",
+          "month": "September 2023",
+          "baseSalary": 14000,
+          "allowances": 1000,
+          "deductions": 0,
+          "netSalary": 15000,
+          "status": "paid",
+          "paymentDate": "2023-09-30"
+        }
+      ]
+    }
+  ],
+  "classes": [
+    {
+      "id": "1",
+      "name": "Class 10",
+      "monthlyFees": 4000,
+      "subjects": [
+        { "id": "10math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "10eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "10sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "10hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "10A", "name": "A" },
+        { "id": "10B", "name": "B" }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Class 9",
+      "monthlyFees": 3500,
+      "subjects": [
+        { "id": "9math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "9eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "9sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "9geo", "name": "Geography", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "9A", "name": "A" },
+        { "id": "9B", "name": "B" }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Class 8",
+      "monthlyFees": 3000,
+      "subjects": [
+        { "id": "8math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "8eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "8sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "8hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "8A", "name": "A" },
+        { "id": "8B", "name": "B" }
+      ]
+    },
+    {
+      "id": "4",
+      "name": "Class 7",
+      "monthlyFees": 2500,
+      "subjects": [
+        { "id": "7math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "7eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "7sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "7geo", "name": "Geography", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "7A", "name": "A" },
+        { "id": "7B", "name": "B" }
+      ]
+    },
+    {
+      "id": "5",
+      "name": "Class 6",
+      "monthlyFees": 2000,
+      "subjects": [
+        { "id": "6math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "6eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "6sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "6hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "6A", "name": "A" },
+        { "id": "6B", "name": "B" }
+      ]
+    },
+    {
+      "id": "6",
+      "name": "Class 5",
+      "monthlyFees": 1500,
+      "subjects": [
+        { "id": "5math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "5eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "5sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "5hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "5A", "name": "A" },
+        { "id": "5B", "name": "B" }
+      ]
+    },
+    {
+      "id": "7",
+      "name": "Class 4",
+      "monthlyFees": 1200,
+      "subjects": [
+        { "id": "4math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "4eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "4sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "4hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "4A", "name": "A" },
+        { "id": "4B", "name": "B" }
+      ]
+    },
+    {
+      "id": "8",
+      "name": "Class 3",
+      "monthlyFees": 1000,
+      "subjects": [
+        { "id": "3math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "3eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "3sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "3hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "3A", "name": "A" },
+        { "id": "3B", "name": "B" }
+      ]
+    },
+    {
+      "id": "9",
+      "name": "Class 2",
+      "monthlyFees": 800,
+      "subjects": [
+        { "id": "2math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "2eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "2sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "2hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "2A", "name": "A" },
+        { "id": "2B", "name": "B" }
+      ]
+    },
+    {
+      "id": "10",
+      "name": "Class 1",
+      "monthlyFees": 600,
+      "subjects": [
+        { "id": "1math", "name": "Mathematics", "teacherId": "1", "teacherName": "Ahmed Khan" },
+        { "id": "1eng", "name": "English", "teacherId": "2", "teacherName": "Fatima Ahmed" },
+        { "id": "1sci", "name": "Science", "teacherId": "3", "teacherName": "Bilal Malik" },
+        { "id": "1hist", "name": "History", "teacherId": "4", "teacherName": "Ayesha Raza" }
+      ],
+      "sections": [
+        { "id": "1A", "name": "A" },
+        { "id": "1B", "name": "B" }
+      ]
+    }
+  ],
+  "subsidies": [
+    {
+      "id": 1,
+      "quarter": "Q1",
+      "year": 2025,
+      "amount": 350000,
+      "ngoName": "Education for All Foundation",
+      "receivedDate": "2024-01-15",
+      "expectedDate": "",
+      "status": "received",
+      "description": "Quarterly education subsidy for operational costs"
+    },
+    {
+      "id": 2,
+      "quarter": "Q2",
+      "year": 2025,
+      "amount": 350000,
+      "ngoName": "Education for All Foundation",
+      "receivedDate": "2024-04-10",
+      "expectedDate": "",
+      "status": "received",
+      "description": "Quarterly education subsidy for operational costs"
+    },
+    {
+      "id": 3,
+      "quarter": "Q3",
+      "year": 2025,
+      "amount": 350000,
+      "ngoName": "Education for All Foundation",
+      "receivedDate": "",
+      "expectedDate": "2024-07-15",
+      "status": "expected",
+      "description": "Quarterly education subsidy for operational costs"
+    },
+    {
+      "id": 4,
+      "quarter": "Q4",
+      "year": 2025,
+      "amount": 350000,
+      "ngoName": "Education for All Foundation",
+      "receivedDate": "",
+      "expectedDate": "2024-10-15",
+      "status": "expected",
+      "description": "Quarterly education subsidy for operational costs"
+    }
+  ]
+}

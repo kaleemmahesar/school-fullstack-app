@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System - API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .endpoint {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .response {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>School Management System - API Test</h1>
+        <p>This page demonstrates how to interact with the School Management System API.</p>
+        
+        <h2>Test Endpoints</h2>
+        
+        <div class="endpoint">
+            <h3>Get All Students</h3>
+            <button onclick="testEndpoint('students')">GET /api/students</button>
+            <div id="students-response" class="response" style="display:none;"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Get All Classes</h3>
+            <button onclick="testEndpoint('classes')">GET /api/classes</button>
+            <div id="classes-response" class="response" style="display:none;"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Get All Notifications</h3>
+            <button onclick="testEndpoint('notifications')">GET /api/notifications</button>
+            <div id="notifications-response" class="response" style="display:none;"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Get All Settings</h3>
+            <button onclick="testEndpoint('settings')">GET /api/settings</button>
+            <div id="settings-response" class="response" style="display:none;"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Get All Events</h3>
+            <button onclick="testEndpoint('events')">GET /api/events</button>
+            <div id="events-response" class="response" style="display:none;"></div>
+        </div>
+        
+        <div class="endpoint">
+            <h3>Create New Student</h3>
+            <button onclick="createStudent()">POST /api/students</button>
+            <div id="create-student-response" class="response" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const baseUrl = 'http://localhost/school-app/backend/api.php?endpoint=';
+        
+        async function testEndpoint(endpoint) {
+            const responseElement = document.getElementById(`${endpoint}-response`);
+            responseElement.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${baseUrl}${endpoint}`);
+                const data = await response.json();
+                
+                responseElement.textContent = JSON.stringify(data, null, 2);
+                responseElement.className = 'response success';
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+                responseElement.className = 'response error';
+            }
+        }
+        
+        async function createStudent() {
+            const responseElement = document.getElementById('create-student-response');
+            responseElement.style.display = 'block';
+            
+            try {
+                const studentData = {
+                    firstName: 'Test',
+                    lastName: 'Student',
+                    class: 'Class 10',
+                    section: 'A',
+                    dateOfBirth: '2010-01-01',
+                    dateOfAdmission: new Date().toISOString().split('T')[0],
+                    monthlyFees: 1000,
+                    admissionFees: 500,
+                    totalFees: 1500,
+                    feesPaid: 1500,
+                    status: 'studying',
+                    academicYear: '2025-2026'
+                };
+                
+                const response = await fetch(`${baseUrl}students`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(studentData)
+                });
+                
+                const data = await response.json();
+                
+                responseElement.textContent = JSON.stringify(data, null, 2);
+                responseElement.className = 'response success';
+            } catch (error) {
+                responseElement.textContent = `Error: ${error.message}`;
+                responseElement.className = 'response error';
+            }
+        }
+    </script>
+</body>
+</html>

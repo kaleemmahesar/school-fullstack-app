@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Management API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .endpoint { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        button { padding: 5px 10px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>School Management API Test</h1>
+    
+    <div class="endpoint">
+        <h3>Students Endpoint</h3>
+        <button onclick="testEndpoint('students')">GET /students</button>
+        <button onclick="testEndpoint('students/1')">GET /students/1</button>
+        <pre id="students-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Classes Endpoint</h3>
+        <button onclick="testEndpoint('classes')">GET /classes</button>
+        <pre id="classes-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Expenses Endpoint</h3>
+        <button onclick="testEndpoint('expenses')">GET /expenses</button>
+        <pre id="expenses-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Exams Endpoint</h3>
+        <button onclick="testEndpoint('exams')">GET /exams</button>
+        <pre id="exams-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Staff Endpoint</h3>
+        <button onclick="testEndpoint('staff')">GET /staff</button>
+        <pre id="staff-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Attendance Endpoint</h3>
+        <button onclick="testEndpoint('attendance')">GET /attendance</button>
+        <pre id="attendance-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Marks Endpoint</h3>
+        <button onclick="testEndpoint('marks')">GET /marks</button>
+        <pre id="marks-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Subsidies Endpoint</h3>
+        <button onclick="testEndpoint('subsidies')">GET /subsidies</button>
+        <pre id="subsidies-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Batches Endpoint</h3>
+        <button onclick="testEndpoint('batches')">GET /batches</button>
+        <pre id="batches-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Notifications Endpoint</h3>
+        <button onclick="testEndpoint('notifications')">GET /notifications</button>
+        <pre id="notifications-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Settings Endpoint</h3>
+        <button onclick="testEndpoint('settings')">GET /settings</button>
+        <pre id="settings-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Students Attendance Endpoint</h3>
+        <button onclick="testEndpoint('studentsAttendance')">GET /studentsAttendance</button>
+        <button onclick="testEndpoint('studentsAttendance?date=2025-11-26&classId=Class 10')">GET /studentsAttendance (with params)</button>
+        <pre id="studentsAttendance-result"></pre>
+    </div>
+    
+    <div class="endpoint">
+        <h3>Photo Upload Endpoint</h3>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="photoFile" name="photo" accept="image/*" required>
+            <button type="button" onclick="uploadPhoto()">Upload Photo</button>
+        </form>
+        <pre id="upload-result"></pre>
+    </div>
+    
+    <script>
+        function testEndpoint(endpoint) {
+            const resultElement = document.getElementById(endpoint + '-result');
+            resultElement.textContent = 'Loading...';
+            
+            fetch(`http://localhost/school-app/backend/api/${endpoint}`)
+                .then(response => {
+                    resultElement.textContent = `Status: ${response.status} ${response.statusText}\n`;
+                    return response.text();
+                })
+                .then(data => {
+                    try {
+                        const jsonData = JSON.parse(data);
+                        resultElement.textContent += JSON.stringify(jsonData, null, 2);
+                        resultElement.className = jsonData.error ? 'error' : 'success';
+                    } catch (e) {
+                        resultElement.textContent += data;
+                        resultElement.className = 'error';
+                    }
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'error';
+                });
+        }
+        
+        function uploadPhoto() {
+            const fileInput = document.getElementById('photoFile');
+            const resultElement = document.getElementById('upload-result');
+            
+            if (!fileInput.files.length) {
+                resultElement.textContent = 'Please select a file to upload';
+                resultElement.className = 'error';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('photo', fileInput.files[0]);
+            
+            resultElement.textContent = 'Uploading...';
+            
+            fetch('http://localhost/school-app/backend/api.php?endpoint=upload', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                resultElement.textContent = `Status: ${response.status} ${response.statusText}\n`;
+                return response.text();
+            })
+            .then(data => {
+                try {
+                    const jsonData = JSON.parse(data);
+                    resultElement.textContent += JSON.stringify(jsonData, null, 2);
+                    resultElement.className = jsonData.error ? 'error' : 'success';
+                } catch (e) {
+                    resultElement.textContent += data;
+                    resultElement.className = 'error';
+                }
+            })
+            .catch(error => {
+                resultElement.textContent = `Error: ${error.message}`;
+                resultElement.className = 'error';
+            });
+        }
+    </script>
+</body>
+</html>

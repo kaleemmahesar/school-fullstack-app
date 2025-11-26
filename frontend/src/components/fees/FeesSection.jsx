@@ -1,0 +1,1202 @@
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchStudents, generateChallan, bulkGenerateChallans, bulkUpdateChallanStatuses, payFees } from '../../store/studentsSlice';
+import { fetchBatches } from '../../store/alumniSlice';
+import { FaEye, FaReceipt, FaCheck, FaDollarSign, FaPrint, FaUser, FaUsers, FaInfoCircle, FaPlus, FaChartBar, FaExclamation } from 'react-icons/fa';
+import FeesHeader from './FeesHeader';
+import FeesStats from './FeesStats';
+import ViewTabs from './ViewTabs';
+import FeesFilters from './FeesFilters';
+import StudentFeesView from './StudentFeesView';
+import FamilyFeesView from './FamilyFeesView';
+import ChallanModals from './ChallanModals';
+import StudentFeesDetailPage from './StudentFeesDetailPage';
+import ChallanPrintView from '../ChallanPrintView';
+import BulkChallanPrintView from '../BulkChallanPrintView';
+import BulkGeneratedChallansPrintView from './BulkGeneratedChallansPrintView';
+import SingleChallanPrintView from './SingleChallanPrintView';
+import Pagination from '../common/Pagination';
+import { printChallanAsPDF } from '../../utils/challanPrinter';
+import { useSchoolFunding } from '../../hooks/useSchoolFunding';
+import NGOFundingInfo from '../common/NGOFundingInfo';
+import WhatsAppFeeReminder from './WhatsAppFeeReminder';
+
+const FeesSection = () => {
+  const dispatch = useDispatch();
+  const { students, loading, error } = useSelector(state => state.students);
+  const { batches } = useSelector(state => state.alumni);
+  const { classes } = useSelector(state => state.classes);
+  const { parents } = useSelector(state => state.parents);
+  const { isNGOSchool } = useSchoolFunding();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showStudentDetails, setShowStudentDetails] = useState(false);
+  const [detailViewStudent, setDetailViewStudent] = useState(null);
+  const [challanData, setChallanData] = useState({
+    studentId: '',
+    month: '',
+    amount: '',
+    dueDate: '',
+    description: ''
+  });
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [showPrintView, setShowPrintView] = useState(false);
+  const [printChallan, setPrintChallan] = useState(null);
+  const [printStudent, setPrintStudent] = useState(null);
+  const [showBulkPrintView, setShowBulkPrintView] = useState(false);
+  const [bulkPrintChallans, setBulkPrintChallans] = useState([]);
+  const [showGeneratedChallansView, setShowGeneratedChallansView] = useState(false);
+  const [generatedChallans, setGeneratedChallans] = useState([]);
+  const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false);
+  const [showBulkUpdateModal, setShowBulkUpdateModal] = useState(false);
+  const [bulkSelectedChallans, setBulkSelectedChallans] = useState([]);
+  const [paymentData, setPaymentData] = useState({
+    challanId: '',
+    paymentMethod: 'cash',
+    paymentDate: ''
+  });
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [bulkGenerateOptions, setBulkGenerateOptions] = useState({
+    generateFor: 'all',
+    selectedClass: '',
+    selectedSection: ''
+  });
+  const [selectedClass, setSelectedClass] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [viewMode, setViewMode] = useState('student');
+  const [selectedBatch, setSelectedBatch] = useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+
+  useEffect(() => {
+    dispatch(fetchStudents());
+    dispatch(fetchBatches());
+  }, [dispatch]);
+
+  // Set current academic year as default batch
+  useEffect(() => {
+    if (!selectedBatch && students.length > 0) {
+      // Get current academic year based on current date
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      const currentAcademicYear = `${currentYear}-${nextYear}`;
+      
+      // Check if current academic year exists in the data
+      const hasCurrentBatch = students.some(student => student.academicYear === currentAcademicYear);
+      
+      // If current academic year exists, set it as default
+      if (hasCurrentBatch) {
+        setSelectedBatch(currentAcademicYear);
+      } else {
+        // Otherwise, set to the most recent batch
+        const uniqueBatches = [...new Set(students.map(student => student.academicYear).filter(Boolean))];
+        if (uniqueBatches.length > 0) {
+          // Sort batches and get the most recent one
+          const sortedBatches = uniqueBatches.sort((a, b) => {
+            const aYear = parseInt(a.split('-')[0]);
+            const bYear = parseInt(b.split('-')[0]);
+            return bYear - aYear;
+          });
+          setSelectedBatch(sortedBatches[0]);
+        }
+      }
+    }
+  }, [students, selectedBatch]);
+
+  // Ref to track the last updated student ID to prevent infinite loops
+  const lastUpdatedStudentIdRef = useRef(null);
+
+  // Ref to track the last update timestamp
+  const lastUpdateTimestampRef = useRef(0);
+
+  useEffect(() => {
+    if (detailViewStudent && showStudentDetails) {
+      const updatedStudent = students.find(s => s.id === detailViewStudent.id);
+      if (updatedStudent) {
+        // Create a unique key based on student ID, feesHistory length, and a timestamp
+        const studentKey = `${updatedStudent.id}-${updatedStudent.feesHistory ? updatedStudent.feesHistory.length : 0}-${updatedStudent.feesHistory ? updatedStudent.feesHistory.map(ch => ch.status).join(',') : ''}-${lastUpdateTimestampRef.current}`;
+        const lastKey = lastUpdatedStudentIdRef.current;
+        
+        // Update if student data has changed or if it's a different student
+        if (lastKey !== studentKey) {
+          const monthlyChallans = updatedStudent.feesHistory ? updatedStudent.feesHistory.filter(challan => challan.type !== 'admission') : [];
+          const admissionChallans = updatedStudent.feesHistory ? updatedStudent.feesHistory.filter(challan => challan.type === 'admission') : [];
+          
+          const totalMonthlyChallans = monthlyChallans.length;
+          const paidMonthlyChallans = monthlyChallans.filter(challan => challan.status === 'paid').length;
+          const pendingMonthlyChallans = totalMonthlyChallans - paidMonthlyChallans;
+          
+          const totalAdmissionChallans = admissionChallans.length;
+          const paidAdmissionChallans = admissionChallans.filter(challan => challan.status === 'paid').length;
+          const pendingAdmissionChallans = totalAdmissionChallans - paidAdmissionChallans;
+          
+          // Total challans include both monthly and admission
+          const totalChallans = totalMonthlyChallans + totalAdmissionChallans;
+          const paidChallans = paidMonthlyChallans + paidAdmissionChallans;
+          const pendingChallans = pendingMonthlyChallans + pendingAdmissionChallans;
+          
+          const totalMonthlyAmount = monthlyChallans.reduce((sum, challan) => sum + (challan.amount || 0), 0);
+          const totalAdmissionAmount = admissionChallans.reduce((sum, challan) => sum + (challan.amount || 0), 0);
+          const totalAmount = totalMonthlyAmount + totalAdmissionAmount;
+          
+          const paidMonthlyAmount = monthlyChallans
+            .filter(challan => challan.status === 'paid')
+            .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+          const paidAdmissionAmount = admissionChallans
+            .filter(challan => challan.status === 'paid')
+            .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+          const paidAmount = paidMonthlyAmount + paidAdmissionAmount;
+          
+          const pendingAmount = totalAmount - paidAmount;
+          
+          const admissionPaid = admissionChallans.length > 0 && admissionChallans.every(challan => challan.status === 'paid');
+          
+          const newDetailViewStudent = {
+            ...updatedStudent,
+            totalChallans,
+            paidChallans,
+            pendingChallans,
+            totalAmount,
+            paidAmount,
+            pendingAmount,
+            admissionPaid,
+            completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : (admissionPaid ? 100 : 0)
+          };
+          
+          // Update the ref to track the last updated student key
+          lastUpdatedStudentIdRef.current = studentKey;
+          
+          setDetailViewStudent(newDetailViewStudent);
+        }
+      }
+    } else {
+      // Reset the ref when not viewing a student
+      lastUpdatedStudentIdRef.current = null;
+      lastUpdateTimestampRef.current = 0;
+    }
+  }, [students, detailViewStudent, showStudentDetails]);
+  const uniqueBatches = useMemo(() => [...new Set(students.map(student => student.academicYear).filter(Boolean))], [students]);
+  const uniqueClasses = useMemo(() => [...new Set(students.map(student => student.class))], [students]);
+  const classSections = useMemo(() => selectedClass 
+    ? [...new Set(students.filter(student => student.class === selectedClass).map(student => student.section))]
+    : [], [students, selectedClass]);
+
+  const generateStudentFeeStats = () => {
+    return students.map(student => {
+      const monthlyChallans = student.feesHistory ? student.feesHistory.filter(challan => challan.type !== 'admission') : [];
+      const admissionChallans = student.feesHistory ? student.feesHistory.filter(challan => challan.type === 'admission') : [];
+      
+      const totalMonthlyChallans = monthlyChallans.length;
+      const paidMonthlyChallans = monthlyChallans.filter(challan => challan.status === 'paid').length;
+      const pendingMonthlyChallans = totalMonthlyChallans - paidMonthlyChallans;
+      
+      const totalAdmissionChallans = admissionChallans.length;
+      const paidAdmissionChallans = admissionChallans.filter(challan => challan.status === 'paid').length;
+      const pendingAdmissionChallans = totalAdmissionChallans - paidAdmissionChallans;
+      
+      // Total challans include both monthly and admission
+      const totalChallans = totalMonthlyChallans + totalAdmissionChallans;
+      const paidChallans = paidMonthlyChallans + paidAdmissionChallans;
+      const pendingChallans = pendingMonthlyChallans + pendingAdmissionChallans;
+      
+      const totalMonthlyAmount = monthlyChallans.reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      const totalAdmissionAmount = admissionChallans.reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      const totalAmount = totalMonthlyAmount + totalAdmissionAmount;
+      
+      const paidMonthlyAmount = monthlyChallans
+        .filter(challan => challan.status === 'paid')
+        .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      const paidAdmissionAmount = admissionChallans
+        .filter(challan => challan.status === 'paid')
+        .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      const paidAmount = paidMonthlyAmount + paidAdmissionAmount;
+      
+      const pendingAmount = totalAmount - paidAmount;
+      
+      const admissionPaid = admissionChallans.length > 0 && admissionChallans.every(challan => challan.status === 'paid');
+      
+      return {
+        ...student,
+        totalChallans,
+        paidChallans,
+        pendingChallans,
+        totalAmount,
+        paidAmount,
+        pendingAmount,
+        admissionPaid,
+        completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : (admissionPaid ? 100 : 0)
+      };
+    });
+  };
+
+  const studentStats = useMemo(() => generateStudentFeeStats(), [students]);
+
+  const filteredStudents = useMemo(() => studentStats.filter(student => {
+  const matchesSearch = 
+    `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    student.section.toLowerCase().includes(searchTerm.toLowerCase());
+  
+  const matchesStatus = filterStatus === 'all' || 
+    (filterStatus === 'paid' && student.completionRate === 100 && student.admissionPaid) || 
+    (filterStatus === 'pending' && (student.completionRate < 100 || !student.admissionPaid));
+    
+  const matchesClass = !selectedClass || student.class === selectedClass;
+  const matchesSection = !selectedSection || student.section === selectedSection;
+  const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
+  
+  return matchesSearch && matchesStatus && matchesClass && matchesSection && matchesBatch;
+}), [studentStats, searchTerm, filterStatus, selectedClass, selectedSection, selectedBatch]);
+  
+  // Pagination functions
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredStudents.length / itemsPerPage)));
+  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  
+  // Calculate pagination variables
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentStudents = filteredStudents.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredStudents]);
+
+  const getFamilyChallans = () => {
+    const familyMap = {};
+    
+    filteredStudents.forEach(student => {
+      const parent = parents.find(p => p.studentIds.includes(student.id));
+      const familyId = parent ? parent.id : student.familyId || `unknown-${student.id}`;
+      
+      if (!familyMap[familyId]) {
+        const familyName = parent 
+          ? `${parent.firstName} ${parent.lastName}'s Family`
+          : student.familyId 
+            ? `${student.firstName} ${student.lastName}'s Family`
+            : 'Unknown Family';
+            
+        familyMap[familyId] = {
+          familyId: familyId,
+          students: [],
+          totalChallans: 0,
+          paidChallans: 0,
+          pendingChallans: 0,
+          totalAmount: 0,
+          paidAmount: 0,
+          pendingAmount: 0,
+          completionRate: 0,
+          familyName: familyName,
+          challans: []
+        };
+      }
+      
+      familyMap[familyId].students.push(student);
+      
+      if (student.feesHistory) {
+        student.feesHistory.forEach(challan => {
+          familyMap[familyId].challans.push({
+            ...challan,
+            studentName: `${student.firstName} ${student.lastName}`,
+            studentClass: student.class,
+            studentSection: student.section,
+            studentId: student.id
+          });
+        });
+      }
+      
+      familyMap[familyId].totalChallans += student.totalChallans;
+      familyMap[familyId].paidChallans += student.paidChallans;
+      familyMap[familyId].pendingChallans += student.pendingChallans;
+      familyMap[familyId].totalAmount += student.totalAmount;
+      familyMap[familyId].paidAmount += student.paidAmount;
+      familyMap[familyId].pendingAmount += student.pendingAmount;
+      
+      familyMap[familyId].completionRate = familyMap[familyId].totalChallans > 0 
+        ? Math.round((familyMap[familyId].paidChallans / familyMap[familyId].totalChallans) * 100)
+        : 0;
+    });
+    
+    return Object.values(familyMap);
+  };
+
+  const familyGroups = useMemo(() => viewMode === 'family' ? getFamilyChallans() : [], [viewMode, filteredStudents]);
+
+  const handleBulkGenerate = () => {
+    setShowBulkGenerateModal(true);
+  };
+
+  const handleBulkUpdate = () => {
+    setShowBulkUpdateModal(true);
+  };
+
+  const isChallanSelected = (challanId) => {
+    return bulkSelectedChallans.includes(challanId);
+  };
+
+  const handleSelectChallan = (challanId) => {
+    if (detailViewStudent && detailViewStudent.feesHistory) {
+      const challan = detailViewStudent.feesHistory.find(c => c.id === challanId);
+      if (challan && challan.status === 'paid') {
+        return;
+      }
+    }
+    
+    if (isChallanSelected(challanId)) {
+      setBulkSelectedChallans(bulkSelectedChallans.filter(id => id !== challanId));
+    } else {
+      setBulkSelectedChallans([...bulkSelectedChallans, challanId]);
+    }
+  };
+
+  const areAllChallansSelected = detailViewStudent && 
+    detailViewStudent.feesHistory && 
+    detailViewStudent.feesHistory.length > 0 &&
+    detailViewStudent.feesHistory
+      .filter(challan => challan.status !== 'paid')
+      .every(challan => isChallanSelected(challan.id));
+
+  const handleSelectAllChallans = () => {
+    if (areAllChallansSelected) {
+      setBulkSelectedChallans([]);
+    } else {
+      if (detailViewStudent && detailViewStudent.feesHistory) {
+        const pendingChallanIds = detailViewStudent.feesHistory
+          .filter(challan => challan.status !== 'paid')
+          .map(challan => challan.id);
+        setBulkSelectedChallans(pendingChallanIds);
+      }
+    }
+  };
+
+  const submitChallan = async (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!challanData.studentId || !challanData.month || !challanData.amount) {
+      alert('Please fill in all required fields.');
+      return;
+    }
+    
+    // Check if student is in current batch and not passed out
+    const student = students.find(s => s.id === challanData.studentId);
+    if (!student) {
+      alert('Selected student not found.');
+      return;
+    }
+    
+    // Check if student has passed out
+    if (student.status === 'passed_out' || student.status === 'left') {
+      alert('Cannot generate challan for passed out or left students.');
+      return;
+    }
+    
+    // Check if student is in current batch
+    if (selectedBatch && student.academicYear !== selectedBatch) {
+      alert('Cannot generate challan for students from a different batch.');
+      return;
+    }
+    
+    // Check if the selected month is valid for the student's batch
+    if (student.academicYear && challanData.month) {
+      const batch = batches.find(b => b.name === student.academicYear);
+      if (batch && batch.startDate && batch.endDate) {
+        // Parse the month (YYYY-MM format)
+        const [year, monthIndex] = challanData.month.split('-').map(Number);
+        const monthStart = new Date(year, monthIndex - 1, 1); // First day of the month
+        const monthEnd = new Date(year, monthIndex, 0); // Last day of the month
+        
+        // Parse batch dates
+        const batchStart = new Date(batch.startDate);
+        const batchEnd = new Date(batch.endDate);
+        
+        // Check if the month overlaps with the batch period
+        const isMonthValid = monthStart <= batchEnd && monthEnd >= batchStart;
+        
+        if (!isMonthValid) {
+          alert(`Selected month is outside the student's batch period (${batch.startDate} to ${batch.endDate}). Please select a month within the batch dates.`);
+          return;
+        }
+      }
+    }
+    
+    try {
+      // Dispatch the action to generate the challan
+      const result = await dispatch(generateChallan({
+        studentId: challanData.studentId,
+        month: challanData.month,
+        amount: parseFloat(challanData.amount),
+        dueDate: challanData.dueDate,
+        description: challanData.description || ''
+      })).unwrap(); // Use unwrap to catch errors properly
+    
+      // Get the student after generating the challan
+      const updatedStudent = students.find(s => s.id === challanData.studentId) || result;
+      
+      // Create the challan object for printing
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      
+      // Convert month format from YYYY-MM to Month YYYY
+      const [year, monthIndex] = challanData.month.split('-');
+      const monthName = monthNames[parseInt(monthIndex) - 1] || 'Unknown';
+      const formattedMonth = `${monthName} ${year}`;
+      
+      const newChallan = {
+        id: `challan-${challanData.studentId}-${Date.now()}`,
+        month: formattedMonth,
+        amount: parseFloat(challanData.amount) || 0,
+        dueDate: challanData.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        description: challanData.description || '',
+        paid: false,
+        date: null,
+        status: 'pending',
+        type: 'monthly'
+      };
+      
+      // Set the print view data and show print view
+      setPrintChallan(newChallan);
+      setPrintStudent(updatedStudent);
+      setShowPrintView(true);
+      
+      // Reset form and close modal on success
+      setShowGenerateModal(false);
+      setChallanData({
+        studentId: '',
+        month: '',
+        amount: '',
+        dueDate: '',
+        description: ''
+      });
+    } catch (error) {
+      console.error('Error generating challan:', error);
+      // Show a more user-friendly error message
+      if (error.message && error.message.includes('already exists')) {
+        alert(error.message);
+      } else {
+        alert('Failed to generate challan. Please try again.');
+      }
+      // Don't redirect, just show error
+    }
+  };
+
+  // Get class-based fees for bulk generation
+  const getClassBasedFees = (className) => {
+    // Find the class fees for this student's class
+    const studentClass = classes.find(c => c.name === className);
+    if (studentClass && studentClass.monthlyFees) {
+      return parseFloat(studentClass.monthlyFees) || 0;
+    }
+    
+    // If no class data found, return 0 as fallback
+    return 0;
+  };
+
+  const submitBulkGenerate = (data) => {
+    let studentIds = [];
+    
+    if (viewMode === 'student') {
+      if (selectedClass) {
+        if (selectedSection) {
+          studentIds = filteredStudents
+            .filter(student => student.class === selectedClass && student.section === selectedSection)
+            .map(student => student.id);
+        } else {
+          studentIds = filteredStudents
+            .filter(student => student.class === selectedClass)
+            .map(student => student.id);
+        }
+      } else {
+        studentIds = filteredStudents.map(student => student.id);
+      }
+    } else {
+      studentIds = filteredStudents.map(student => student.id);
+    }
+    
+    // Filter students to only include those from current batch who haven't passed out
+    const validStudents = studentIds
+      .map(id => students.find(s => s.id === id))
+      .filter(student => 
+        student && 
+        student.status !== 'passed_out' && 
+        student.status !== 'left' && 
+        (!selectedBatch || student.academicYear === selectedBatch)
+      );
+    
+    // If no valid students after filtering, show appropriate message
+    if (validStudents.length === 0) {
+      if (filteredStudents.length > 0) {
+        alert('No eligible students found. Only current batch students who have not passed out or left can have challans generated.');
+      } else {
+        alert('No students found for the selected criteria.');
+      }
+      return;
+    }
+    
+    // Check if the selected month is valid for the batch
+    if (selectedBatch && data.month) {
+      const batch = batches.find(b => b.name === selectedBatch);
+      if (batch && batch.startDate && batch.endDate) {
+        // Parse the month (YYYY-MM format)
+        const [year, monthIndex] = data.month.split('-').map(Number);
+        const monthStart = new Date(year, monthIndex - 1, 1); // First day of the month
+        const monthEnd = new Date(year, monthIndex, 0); // Last day of the month
+        
+        // Parse batch dates
+        const batchStart = new Date(batch.startDate);
+        const batchEnd = new Date(batch.endDate);
+        
+        // Check if the month overlaps with the batch period
+        const isMonthValid = monthStart <= batchEnd && monthEnd >= batchStart;
+        
+        if (!isMonthValid) {
+          alert(`Selected month is outside the batch period (${batch.startDate} to ${batch.endDate}). Please select a month within the batch dates.`);
+          return;
+        }
+      }
+    }
+    
+    // Use valid student IDs for challan generation
+    const validStudentIds = validStudents.map(student => student.id);
+    
+    if (validStudentIds.length > 0) {
+      // Generate the challan objects that will be created
+      const monthNames = ["January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"];
+      
+      // Default to current month if not provided
+      const monthToUse = data.month || new Date().toISOString().slice(0, 7);
+      const [year, monthIndex] = monthToUse.split('-');
+      const monthName = monthNames[parseInt(monthIndex) - 1] || 'Unknown';
+      const formattedMonth = `${monthName} ${year}`;
+      
+      // Create the challan objects that will be generated
+      const generatedChallans = validStudentIds.map(studentId => {
+        const student = students.find(s => s.id === studentId);
+        if (student) {
+          return {
+            id: `challan-${studentId}-${Date.now()}`,
+            month: formattedMonth,
+            amount: getClassBasedFees(student.class) || 0,
+            dueDate: data.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            description: data.description || '',
+            paid: false,
+            date: null,
+            status: 'pending',
+            type: 'monthly',
+            studentId: student.id
+          };
+        }
+        return null;
+      }).filter(challan => challan !== null);
+      
+      // Dispatch the bulk generation action
+      dispatch(bulkGenerateChallans({ 
+        studentIds: validStudentIds, 
+        challanTemplate: {
+          month: data.month,
+          dueDate: data.dueDate,
+          description: data.description
+        }
+      }))
+      .unwrap()
+      .then(() => {
+        // Set the generated challans and show the print view
+        setGeneratedChallans(generatedChallans);
+        setShowGeneratedChallansView(true);
+        
+        setShowBulkGenerateModal(false);
+        setBulkGenerateOptions({
+          generateFor: 'all',
+          selectedClass: '',
+          selectedSection: ''
+        });
+      })
+      .catch((error) => {
+        console.error('Error generating challans:', error);
+        // Show a more user-friendly error message
+        if (error.message && error.message.includes('already exists')) {
+          alert(error.message);
+        } else {
+          alert('Failed to generate challans. Please try again.');
+        }
+      });
+    } else {
+      alert('No students found for the selected criteria.');
+    }
+  };
+
+  const submitBulkUpdate = async (data) => {
+    const pendingChallanIds = bulkSelectedChallans.filter(challanId => {
+      if (detailViewStudent && detailViewStudent.feesHistory) {
+        const challan = detailViewStudent.feesHistory.find(c => c.id === challanId);
+        return challan && challan.status !== 'paid';
+      }
+      return false;
+    });
+    
+    if (pendingChallanIds.length === 0) {
+      alert('No pending challans selected for update.');
+      return;
+    }
+    
+    // Create challan updates with studentId included
+    const challanUpdates = pendingChallanIds.map(challanId => {
+      // Find the challan in the detailViewStudent's feesHistory
+      const challan = detailViewStudent.feesHistory.find(c => c.id === challanId);
+      if (challan) {
+        return {
+          studentId: detailViewStudent.id, // Include the studentId
+          challanId: challanId,
+          paymentMethod: data.paymentMethod,
+          paymentDate: data.paymentDate || new Date().toISOString().split('T')[0]
+        };
+      }
+      return null;
+    }).filter(update => update !== null); // Remove any null entries
+    
+    if (challanUpdates.length > 0) {
+      try {
+        // Dispatch the bulkUpdateChallanStatuses action and wait for it to complete
+        await dispatch(bulkUpdateChallanStatuses({ challanUpdates })).unwrap();
+        
+        // Update the timestamp to force a refresh of the detail view
+        lastUpdateTimestampRef.current = Date.now();
+        
+        // Also update the detailViewStudent directly to reflect the changes immediately
+        if (detailViewStudent) {
+          // Create a new detailViewStudent object with updated feesHistory
+          const updatedFeesHistory = detailViewStudent.feesHistory?.map(challan => {
+            // Check if this challan was in our update list
+            const wasUpdated = pendingChallanIds.includes(challan.id);
+            if (wasUpdated) {
+              return {
+                ...challan,
+                paid: true,
+                status: 'paid',
+                date: data.paymentDate || new Date().toISOString().split('T')[0],
+                paymentMethod: data.paymentMethod || 'cash'
+              };
+            }
+            return challan;
+          }) || [];
+          
+          // Calculate updated financial summary
+          const paidChallans = updatedFeesHistory.filter(ch => ch.status === 'paid');
+          const paidAmount = paidChallans.reduce((sum, challan) => sum + (parseFloat(challan.amount) || 0), 0);
+          const totalAmount = updatedFeesHistory.reduce((sum, challan) => sum + (parseFloat(challan.amount) || 0), 0);
+          const pendingAmount = totalAmount - paidAmount;
+          
+          const updatedDetailViewStudent = {
+            ...detailViewStudent,
+            feesHistory: updatedFeesHistory,
+            feesPaid: paidAmount,
+            pendingAmount: pendingAmount
+          };
+          
+          setDetailViewStudent(updatedDetailViewStudent);
+        }
+        
+        // Show success message
+        alert(`Successfully updated ${challanUpdates.length} challan(s)!`);
+      } catch (error) {
+        console.error('Error updating challans:', error);
+        alert('Failed to update challans. Please try again.');
+      }
+    }
+    
+    setBulkSelectedChallans([]);
+    setShowBulkUpdateModal(false);
+  };
+
+  const submitPayment = async (data) => {
+    if (!data.challanId || !data.paymentMethod) {
+      alert('Please provide all required payment information.');
+      return;
+    }
+    
+    try {
+      // Dispatch the payFees action and wait for it to complete
+      const result = await dispatch(payFees({
+        challanId: data.challanId,
+        paymentMethod: data.paymentMethod,
+        paymentDate: data.paymentDate || new Date().toISOString().split('T')[0]
+      })).unwrap();
+      
+      // Update the timestamp to force a refresh of the detail view
+      lastUpdateTimestampRef.current = Date.now();
+      
+      // Also update the detailViewStudent directly to reflect the change immediately
+      if (detailViewStudent && detailViewStudent.id === result.id) {
+        // Find the updated challan in the result
+        const updatedChallan = result.feesHistory?.find(ch => ch.id === data.challanId);
+        
+        if (updatedChallan) {
+          // Create a new detailViewStudent object with updated feesHistory
+          const updatedDetailViewStudent = {
+            ...detailViewStudent,
+            feesHistory: detailViewStudent.feesHistory?.map(challan => 
+              challan.id === data.challanId 
+                ? { ...challan, ...updatedChallan } 
+                : challan
+            ) || [],
+            // Update the financial summary
+            feesPaid: result.feesPaid,
+            pendingAmount: (detailViewStudent.totalAmount || 0) - (parseFloat(result.feesPaid) || 0)
+          };
+          
+          setDetailViewStudent(updatedDetailViewStudent);
+        }
+      }
+      
+      // Show success message
+      alert('Payment processed successfully!');
+      
+      // Close the payment modal
+      setShowPaymentModal(false);
+    } catch (error) {
+      console.error('Error processing payment:', error);
+      alert('Failed to process payment. Please try again.');
+      setShowPaymentModal(false);
+    }
+  };
+
+  const handlePayFees = (challanId) => {
+    setPaymentData({
+      challanId: challanId,
+      paymentMethod: 'cash',
+      paymentDate: new Date().toISOString().split('T')[0]
+    });
+    setShowPaymentModal(true);
+  };
+
+  const handleGenerateChallan = () => {
+    const today = new Date();
+    const currentMonth = today.toISOString().slice(0, 7);
+    const dueDate = new Date(today);
+    dueDate.setDate(today.getDate() + 7);
+    
+    setChallanData({
+      studentId: '',
+      month: currentMonth,
+      amount: '',
+      dueDate: dueDate.toISOString().split('T')[0],
+      description: ''
+    });
+    setShowGenerateModal(true);
+  };
+
+  const handleStudentChange = (e) => {
+    const studentId = e.target.value;
+    setChallanData(prev => ({
+      ...prev,
+      studentId: studentId
+    }));
+    
+    if (studentId) {
+      const student = students.find(s => s.id === studentId);
+      if (student) {
+        // Find the class fees for this student's class
+        const studentClass = classes.find(c => c.name === student.class);
+        let monthlyFees = 0;
+        if (studentClass && studentClass.monthlyFees) {
+          monthlyFees = parseFloat(studentClass.monthlyFees) || 0;
+        } else {
+          // Fallback to student's monthlyFees if class data not found
+          monthlyFees = student.monthlyFees ? parseFloat(student.monthlyFees) || 0 : 0;
+        }
+        
+        setChallanData(prev => ({
+          ...prev,
+          studentId: studentId,
+          amount: monthlyFees
+        }));
+      }
+    }
+  };
+
+  const exportToCSV = (data, filename) => {
+    const csvContent = [
+      Object.keys(data[0]).join(','),
+      ...data.map(item => Object.values(item).map(value => 
+        typeof value === 'string' ? `"${value.replace(/"/g, '""')}"` : value
+      ).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportStudentsToCSV = () => {
+    const csvData = filteredStudents.map(student => ({
+      name: `${student.firstName} ${student.lastName}`,
+      class: student.class,
+      section: student.section,
+      email: student.email,
+      phone: student.phone,
+      totalChallans: student.totalChallans,
+      paidChallans: student.paidChallans,
+      pendingChallans: student.pendingChallans,
+      totalAmount: student.totalAmount,
+      paidAmount: student.paidAmount,
+      pendingAmount: student.pendingAmount,
+      completionRate: `${student.completionRate}%`
+    }));
+    
+    exportToCSV(csvData, 'students_fees_summary.csv');
+  };
+
+  const handleViewDetails = (student) => {
+    setDetailViewStudent(student);
+    setShowStudentDetails(true);
+  };
+
+  const handleClosePrintView = () => {
+    setShowPrintView(false);
+    setPrintChallan(null);
+    setPrintStudent(null);
+  };
+
+  const handleCloseBulkPrintView = () => {
+    setShowBulkPrintView(false);
+    setBulkPrintChallans([]);
+  };
+
+  const handlePrintChallan = async (challan, student) => {
+    setPrintChallan(challan);
+    setPrintStudent(student);
+    setShowPrintView(true);
+  };
+
+  const handleBulkPrintChallans = () => {
+    const allPendingChallans = [];
+    
+    filteredStudents.forEach(student => {
+      if (student.feesHistory) {
+        student.feesHistory
+          .filter(challan => challan.status !== 'paid')
+          .forEach(challan => {
+            allPendingChallans.push({
+              ...challan,
+              studentId: student.id
+            });
+          });
+      }
+    });
+    
+    if (allPendingChallans.length > 0) {
+      setBulkPrintChallans(allPendingChallans);
+      setShowBulkPrintView(true);
+    } else {
+      alert('No pending challans found to print.');
+    }
+  };
+
+  const handlePrintAction = async () => {
+    // Simply trigger the browser's print functionality
+    // The SingleChallanPrintView component already has all the proper styling
+    window.print();
+  };
+
+  const handleDownloadAction = async () => {
+    if (printChallan && printStudent) {
+      try {
+        const filename = `challan_${printStudent.firstName}_${printStudent.lastName}_${printChallan.month.replace(/\s+/g, '_')}.pdf`;
+        const success = await printChallanAsPDF(printChallan, printStudent, filename);
+        if (success) {
+          console.log('Challan downloaded successfully');
+        } else {
+          console.error('Failed to download challan');
+        }
+      } catch (error) {
+        console.error('Error downloading challan:', error);
+      }
+    }
+  };
+
+  if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
+  if (error) return <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+    <div className="flex">
+      <div className="flex-shrink-0">
+        <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div className="ml-3">
+        <p className="text-sm text-red-700">Error: {error}</p>
+      </div>
+    </div>
+  </div>;
+
+  if (isNGOSchool) {
+    return (
+      <div className="p-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Fees Managementsss</h1>
+          <p className="text-gray-600 mb-6">Manage student fees and financial records</p>
+          
+          <NGOFundingInfo />
+          
+          <div className="mt-6 bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <div className="flex items-start">
+              <FaInfoCircle className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-blue-800">NGO Funded School</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>As an NGO funded school, this section is not applicable as no fees are collected from students.</p>
+                  <p className="mt-1">All financial management is handled through the NGO Subsidies section.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {showPrintView && printChallan && printStudent && (
+        <SingleChallanPrintView
+          challan={printChallan}
+          student={printStudent}
+          schoolInfo={{
+            name: "School Management System",
+            address: "123 Education Street, Learning City",
+            phone: "+1 (555) 123-4567",
+            bankAccount: "0123456789"
+          }}
+          onPrint={handlePrintAction}
+          onBack={handleClosePrintView}
+        />
+      )}
+
+      {showBulkPrintView && bulkPrintChallans.length > 0 && (
+        <div className="fixed inset-0 bg-white z-50 p-0 m-0 overflow-hidden">
+          <div className="print-container">
+            <div className="flex justify-between items-center mb-4 p-4 bg-white border-b print:hidden">
+              <h1 className="text-xl font-bold text-gray-900">Bulk Challan Print Preview</h1>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  <FaPrint className="mr-2" /> Print All Challans
+                </button>
+                <button
+                  onClick={handleCloseBulkPrintView}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Back to Fees
+                </button>
+              </div>
+            </div>
+            <BulkChallanPrintView
+              challans={bulkPrintChallans}
+              students={students}
+              schoolInfo={{
+                name: "School Management System",
+                address: "123 Education Street, Learning City",
+                phone: "+1 (555) 123-4567"
+              }}
+            />
+          </div>
+        </div>
+      )}
+      
+      {showGeneratedChallansView && generatedChallans.length > 0 && (
+        <BulkGeneratedChallansPrintView
+          challans={generatedChallans}
+          students={students}
+          schoolInfo={{
+            name: "School Management System",
+            address: "123 Education Street, Learning City",
+            phone: "+1 (555) 123-4567",
+            bankAccount: "0123456789"
+          }}
+          onPrint={() => window.print()}
+          onBack={() => {
+            setShowGeneratedChallansView(false);
+            setGeneratedChallans([]);
+          }}
+        />
+      )}
+
+      <ChallanModals
+        showGenerateModal={showGenerateModal}
+        setShowGenerateModal={setShowGenerateModal}
+        challanData={challanData}
+        setChallanData={setChallanData}
+        students={students}
+        classes={classes}
+        handleStudentChange={handleStudentChange}
+        submitChallan={submitChallan}
+        showBulkGenerateModal={showBulkGenerateModal}
+        setShowBulkGenerateModal={setShowBulkGenerateModal}
+        submitBulkGenerate={submitBulkGenerate}
+        showBulkUpdateModal={showBulkUpdateModal}
+        setShowBulkUpdateModal={setShowBulkUpdateModal}
+        submitBulkUpdate={submitBulkUpdate}
+        bulkSelectedChallans={bulkSelectedChallans}
+        showPaymentModal={showPaymentModal}
+        setShowPaymentModal={setShowPaymentModal}
+        paymentData={paymentData}
+        setPaymentData={setPaymentData}
+        submitPayment={submitPayment}
+        detailViewStudent={detailViewStudent}
+        batches={batches}
+      />
+
+      <div className="">
+        {/* Only show header when not viewing a specific student */}
+        {!showStudentDetails && (
+          <FeesHeader 
+            onGenerateChallan={handleGenerateChallan}
+            onExportCSV={exportStudentsToCSV}
+            onBulkPrint={handleBulkPrintChallans}
+            isGenerateDisabled={filteredStudents.length > 0 && filteredStudents.every(student => student.status === 'passed_out' || student.status === 'left')}
+          />
+        )}
+        
+        {/* Only show stats when not viewing a specific student */}
+        {!showStudentDetails && (
+          <FeesStats filteredStudents={filteredStudents} />
+        )}
+        
+        {/* <ViewTabs 
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+        /> */}
+        
+        {!showStudentDetails ? (
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              {viewMode === 'student' ? 'Student Fees Summary' : 'Family Fees Summary'}
+            </h3>
+            
+            <FeesFilters
+  viewMode={viewMode}
+  searchTerm={searchTerm}
+  setSearchTerm={setSearchTerm}
+  filterStatus={filterStatus}
+  setFilterStatus={setFilterStatus}
+  selectedClass={selectedClass}
+  setSelectedClass={setSelectedClass}
+  selectedSection={selectedSection}
+  setSelectedSection={setSelectedSection}
+  selectedBatch={selectedBatch}
+  setSelectedBatch={setSelectedBatch}
+  uniqueClasses={uniqueClasses}
+  classSections={classSections}
+  uniqueBatches={uniqueBatches}
+  onBulkGenerate={handleBulkGenerate}
+  onClearFilters={() => {
+    setSearchTerm('');
+    setFilterStatus('all');
+    setSelectedClass('');
+    setSelectedSection('');
+    setSelectedBatch('');
+  }}
+/>
+            
+            <div className="overflow-hidden rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {viewMode === 'student' ? (
+                      <>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GR No</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class/Section</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Challans</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completion</th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </>
+                    ) : (
+                      <>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class/Section</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                {viewMode === 'student' ? (
+                  <StudentFeesView 
+                    filteredStudents={currentStudents}
+                    onViewDetails={handleViewDetails}
+                    currentPage={currentPage}
+                    itemsPerPage={itemsPerPage}
+                  />
+                ) : (
+                  <FamilyFeesView 
+                    familyGroups={familyGroups}
+                    students={students}
+                    onPayFees={handlePayFees}
+                    onPrintChallan={handlePrintChallan}
+                  />
+                )}
+              </table>
+              {(viewMode === 'student' ? filteredStudents.length === 0 : familyGroups.every(f => f.challans.length === 0)) && (
+                <div className="text-center py-12">
+                  <FaUser className="mx-auto h-12 w-12 text-gray-400" />
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">No {viewMode === 'student' ? 'students' : 'challans'} found</h3>
+                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
+                </div>
+              )}
+              
+              {/* Pagination */}
+              {viewMode === 'student' && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  itemsPerPage={itemsPerPage}
+                  totalItems={filteredStudents.length}
+                  paginate={paginate}
+                  nextPage={nextPage}
+                  prevPage={prevPage}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          <StudentFeesDetailPage
+            detailViewStudent={detailViewStudent}
+            students={students}
+            classes={classes}
+            setShowStudentDetails={setShowStudentDetails}
+            handleSelectAllChallans={handleSelectAllChallans}
+            areAllChallansSelected={areAllChallansSelected}
+            bulkSelectedChallans={bulkSelectedChallans}
+            handleBulkUpdate={handleBulkUpdate}
+            isChallanSelected={isChallanSelected}
+            handleSelectChallan={handleSelectChallan}
+            handlePrintChallan={handlePrintChallan}
+            setPaymentData={setPaymentData}
+            setShowPaymentModal={setShowPaymentModal}
+            setChallanData={setChallanData}
+            setShowGenerateModal={setShowGenerateModal}
+          />
+        )}
+      </div>
+    </>
+  );
+};
+
+export default FeesSection;

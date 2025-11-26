@@ -1,0 +1,16 @@
+{
+  "name": "Government High School",
+  "logo": null,
+  "level": "high",
+  "fundingType": "traditional",
+  "hasPG": false,
+  "hasNursery": false,
+  "hasKG": false,
+  "gradingStructure": [
+    { "id": 1, "minPercentage": 85, "maxPercentage": 100, "grade": "A", "remarks": "Distinction" },
+    { "id": 2, "minPercentage": 75, "maxPercentage": 84, "grade": "B", "remarks": "First Division" },
+    { "id": 3, "minPercentage": 60, "maxPercentage": 74, "grade": "C", "remarks": "Second Division" },
+    { "id": 4, "minPercentage": 45, "maxPercentage": 59, "grade": "D", "remarks": "Third Division" },
+    { "id": 5, "minPercentage": 0, "maxPercentage": 44, "grade": "F", "remarks": "Fail" }
+  ]
+}

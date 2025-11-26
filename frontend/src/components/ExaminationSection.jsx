@@ -1,0 +1,930 @@
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchExams, addExam, updateExam, deleteExam } from '../store/examsSlice';
+import { fetchClasses } from '../store/classesSlice';
+import { fetchStudents } from '../store/studentsSlice';
+import { fetchMarks } from '../store/marksSlice';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaCalendarAlt, FaFileAlt, FaEye, FaCheck, FaChartBar } from 'react-icons/fa';
+import ExamSlipGenerator from './examinations/ExamSlipGenerator';
+import ExamResultsTracker from './examinations/ExamResultsTracker';
+import ClassExamResultsView from './examinations/ClassExamResultsView';
+import { getCurrentAcademicYear } from '../utils/dateUtils';
+
+const ExaminationSection = () => {
+  const dispatch = useDispatch();
+  const { exams, loading, error } = useSelector(state => state.exams);
+  const { classes } = useSelector(state => state.classes);
+  const { students } = useSelector(state => state.students);
+  const { marks } = useSelector(state => state.marks); // Get marks from the marks slice
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [currentExam, setCurrentExam] = useState(null);
+  const [view, setView] = useState('list'); // 'list', 'detail', 'slips', 'results', or 'class-results'
+  const [selectedExam, setSelectedExam] = useState(null);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    classes: [], // Changed from single class to array of classes
+    section: '',
+    examType: '',
+    startDate: '',
+    endDate: '',
+    subjects: [],
+    maxMarks: 100
+  });
+
+  useEffect(() => {
+    dispatch(fetchExams());
+    dispatch(fetchClasses());
+    dispatch(fetchStudents());
+    dispatch(fetchMarks()); // Add fetch marks
+  }, [dispatch]);
+
+  // Add effect to log when marks change
+  useEffect(() => {
+    console.log('=== MARKS STATE CHANGED ===');
+    console.log('Marks state:', marks);
+    console.log('Marks data:', marks.marks);
+    console.log('Marks loading:', marks.loading);
+    console.log('Marks error:', marks.error);
+  }, [marks]);
+
+  const handleEdit = (exam) => {
+    setCurrentExam(exam);
+    setFormData({
+      ...exam,
+      classes: [exam.class] // For editing, we'll show the single class as selected
+    });
+    setShowForm(true);
+  };
+
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this examination?')) {
+      dispatch(deleteExam(id));
+    }
+  };
+
+  const handleSave = (examData) => {
+    if (currentExam) {
+      // For editing, we need to preserve the scheduled subjects structure
+      dispatch(updateExam(examData));
+    } else {
+      // Create exams for each selected class
+      examData.classes.forEach(className => {
+        // Check if this class is eligible (has students in current batch who haven't passed out)
+        const isClassEligible = students.some(student => 
+          student.class === className && 
+          student.academicYear === currentAcademicYear && 
+          student.status !== 'passed_out' && 
+          student.status !== 'left'
+        );
+        
+        if (isClassEligible) {
+          // Get subjects for this class from the class data and apply schedule
+          const classSubjects = classes.find(c => c.name === className)?.subjects || [];
+          const scheduledSubjectsForClass = examData.scheduledSubjects?.find(sc => sc.className === className)?.subjects || [];
+          
+          // Merge scheduled data with class subjects
+          const subjectsWithSchedule = classSubjects.map(subject => {
+            const subjectId = subject.id || subject.name;
+            const scheduledSubject = scheduledSubjectsForClass.find(s => (s.id || s.name) === subjectId);
+            return {
+              ...subject,
+              date: scheduledSubject?.date || subject.date || '',
+              time: scheduledSubject?.time || subject.time || '',
+              duration: scheduledSubject?.duration || subject.duration || 180
+            };
+          });
+          
+          // Create a copy of examData and remove classes and scheduledSubjects
+          const examForClass = {
+            ...examData,
+            class: className,
+            subjects: subjectsWithSchedule
+          };
+          
+          // Remove the classes array and scheduledSubjects as we're creating individual exams
+          delete examForClass.classes;
+          delete examForClass.scheduledSubjects;
+          dispatch(addExam(examForClass));
+        }
+      });
+    }
+    resetForm();
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      classes: [],
+      section: '',
+      examType: '',
+      startDate: '',
+      endDate: '',
+      subjects: [],
+      maxMarks: 100
+    });
+    setCurrentExam(null);
+    setShowForm(false);
+  };
+
+  const handleViewDetails = (exam) => {
+    setSelectedExam(exam);
+    setView('detail');
+  };
+
+  const handleBackToList = () => {
+    setView('list');
+    setSelectedExam(null);
+  };
+
+  // Filter classes to only include those with students in current batch who haven't passed out
+  const currentAcademicYear = getCurrentAcademicYear();
+  const eligibleClasses = classes.filter(cls => {
+    // Check if this class has any students in the current academic year who haven't passed out
+    return students.some(student => 
+      student.class === cls.name && 
+      student.academicYear === currentAcademicYear && 
+      student.status !== 'passed_out' && 
+      student.status !== 'left'
+    );
+  });
+  
+  // Filter exams based on search term and current academic year
+  const filteredExams = exams.filter(exam => 
+    exam.academicYear === currentAcademicYear &&
+    (exam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exam.examType.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  if (loading) return <div className="flex justify-center items-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div></div>;
+  if (error) return <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+    <div className="flex">
+      <div className="flex-shrink-0">
+        <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+        </svg>
+      </div>
+      <div className="ml-3">
+        <p className="text-sm text-red-700">Error: {error}</p>
+      </div>
+    </div>
+  </div>;
+
+  return (
+    <div className="">
+      <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 text-xs">
+        <p>Debug Info - ExaminationSection:</p>
+        <p>Exams: {exams.length}</p>
+        <p>Students: {students.length}</p>
+        <p>Marks from Redux: {marks.marks ? marks.marks.length : 'undefined'}</p>
+        <p>Marks type: {marks.marks ? typeof marks.marks : 'undefined'}</p>
+        <p>Marks loading: {marks.loading ? 'true' : 'false'}</p>
+        <p>Marks error: {marks.error || 'none'}</p>
+      </div>
+      
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Examination Management</h1>
+          <p className="mt-1 text-sm text-gray-600">
+            {view === 'list' 
+              ? 'Manage examinations and exam schedules' 
+              : view === 'slips'
+                ? 'Generate exam slips for students'
+                : view === 'results'
+                  ? 'Track and analyze exam results'
+                  : view === 'class-results'
+                    ? 'View class-wise examination results with rankings'
+                    : `Details for ${selectedExam?.name}`}
+          </p>
+        </div>
+        <div className="mt-4 md:mt-0 flex space-x-2">
+          {view === 'list' ? (
+            <>
+              <button
+                onClick={() => setView('class-results')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaChartBar className="mr-2" /> Class Results
+              </button>
+              <button
+                onClick={() => setView('results')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaEye className="mr-2" /> Results
+              </button>
+              <button
+                onClick={() => setView('slips')}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaFileAlt className="mr-2" /> Exam Slips
+              </button>
+              <button
+                onClick={() => setShowForm(!showForm)}
+                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaPlus className="mr-2" /> {showForm ? 'Cancel' : 'Add Examination'}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleBackToList}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to List
+            </button>
+          )}
+        </div>
+      </div>
+
+      {view === 'list' && (
+        <>
+          {showForm && (
+            <ExamForm 
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleSave}
+              onCancel={resetForm}
+              classes={eligibleClasses} // Use eligibleClasses instead of all classes
+            />
+          )}
+
+          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+              <div className="relative flex-grow max-w-md">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <FaSearch className="text-gray-400" />
+                </div>
+                <input
+                  type="text"
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Search examinations..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Examination</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredExams.map((exam) => (
+                    <tr key={exam.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <FaCalendarAlt className="text-blue-600" />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{exam.name}</div>
+                            <div className="text-sm text-gray-500">{exam.section ? `${exam.section}` : 'All Sections'}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{exam.class}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                          {exam.examType}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {exam.startDate} to {exam.endDate}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {exam.academicYear}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                          {exam.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleViewDetails(exam)}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(exam)}
+                          className="text-indigo-600 hover:text-indigo-900 mr-3"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(exam.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {filteredExams.length === 0 && (
+              <div className="text-center py-12">
+                <FaCalendarAlt className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No examinations found</h3>
+                <p className="mt-1 text-sm text-gray-500">Get started by creating a new examination.</p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {view === 'detail' && selectedExam && (
+        <ExamDetail exam={selectedExam} classes={classes} />
+      )}
+      {view === 'slips' && (
+        <ExamSlipGenerator />
+      )}
+      {view === 'results' && (
+        <ExamResultsTracker />
+      )}
+      {view === 'class-results' && (
+        marks.loading ? (
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : marks.error ? (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">Error loading marks: {marks.error}</p>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <ClassExamResultsView 
+            exams={filteredExams} // Pass filtered exams instead of all exams
+            students={students}
+            marks={marks} // Pass the marks array directly, not marks.marks
+          />
+        )
+      )}
+
+    </div>
+  );
+};
+
+// Exam Form Component
+const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
+  const [subjectSchedule, setSubjectSchedule] = useState({});
+
+  // Initialize subject schedule when form data changes
+  useEffect(() => {
+    // Create a default schedule for all subjects in selected classes
+    const initialSchedule = {};
+    
+    // If we're editing an existing exam, initialize with existing subject data
+    if (formData.id && formData.subjects) {
+      formData.subjects.forEach(subject => {
+        const subjectKey = subject.id || subject.name;
+        initialSchedule[subjectKey] = {
+          date: subject.date || '',
+          time: subject.time || '',
+          duration: subject.duration || 180
+        };
+      });
+    } else {
+      // For new exams, initialize with default values
+      formData.classes.forEach(className => {
+        const classObj = classes.find(c => c.name === className);
+        if (classObj && classObj.subjects) {
+          classObj.subjects.forEach(subject => {
+            const subjectKey = subject.id || subject.name;
+            if (!initialSchedule[subjectKey]) {
+              initialSchedule[subjectKey] = {
+                date: subject.date || '',
+                time: subject.time || '',
+                duration: subject.duration || 180
+              };
+            }
+          });
+        }
+      });
+    }
+    
+    // Only update if we have new data
+    if (Object.keys(initialSchedule).length > 0) {
+      setSubjectSchedule(prev => ({
+        ...prev,
+        ...initialSchedule
+      }));
+    }
+  }, [formData.classes, classes, formData.id, formData.subjects]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle multiple class selection
+  const handleClassChange = (className) => {
+    setFormData(prev => {
+      const newClasses = prev.classes.includes(className)
+        ? prev.classes.filter(c => c !== className) // Remove if already selected
+        : [...prev.classes, className]; // Add if not selected
+      return {
+        ...prev,
+        classes: newClasses
+      };
+    });
+  };
+
+  // Handle subject schedule changes
+  const handleSubjectScheduleChange = (subjectId, field, value) => {
+    setSubjectSchedule(prev => ({
+      ...prev,
+      [subjectId]: {
+        ...prev[subjectId],
+        [field]: value
+      }
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Prepare subjects with schedule data
+    const classesWithScheduledSubjects = formData.classes.map(className => {
+      const classObj = classes.find(c => c.name === className);
+      if (!classObj) return { className, subjects: [] };
+      
+      const scheduledSubjects = classObj.subjects.map(subject => {
+        const schedule = subjectSchedule[subject.id] || subjectSchedule[subject.name] || {};
+        return {
+          ...subject,
+          date: schedule.date || '',
+          time: schedule.time || '',
+          duration: schedule.duration || 180
+        };
+      });
+      
+      return {
+        className,
+        subjects: scheduledSubjects
+      };
+    });
+    
+    // Pass the scheduled subjects data to onSubmit
+    onSubmit({
+      ...formData,
+      scheduledSubjects: classesWithScheduledSubjects
+    });
+  };
+
+  // Get sections for selected class
+  const getSectionsForClass = (className) => {
+    const classObj = classes.find(c => c.name === className);
+    return classObj ? classObj.sections : [];
+  };
+
+  // Get subjects for selected classes
+  const getSubjectsForSelectedClasses = () => {
+    if (formData.classes.length === 0) return [];
+    
+    // Get subjects from the first selected class as an example
+    // In a real implementation, you might want to show subjects for all selected classes
+    const firstClass = classes.find(c => c.name === formData.classes[0]);
+    return firstClass ? firstClass.subjects : [];
+  };
+
+  const selectedClassSubjects = getSubjectsForSelectedClasses();
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+      <h2 className="text-lg font-medium text-gray-900 mb-4">
+        {formData.id ? 'Edit Examination' : 'Create New Examination'}
+      </h2>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              Examination Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="examType" className="block text-sm font-medium text-gray-700 mb-1">
+              Exam Type
+            </label>
+            <select
+              id="examType"
+              name="examType"
+              value={formData.examType}
+              onChange={handleChange}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            >
+              <option value="">Select exam type</option>
+              <option value="Midterm">Midterm</option>
+              <option value="Final">Final</option>
+            </select>
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Classes (Select multiple classes)
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
+              {classes.map(cls => (
+                <div key={cls.id} className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id={`class-${cls.id}`}
+                    checked={formData.classes.includes(cls.name)}
+                    onChange={() => handleClassChange(cls.name)}
+                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor={`class-${cls.id}`} className="ml-2 text-sm text-gray-700">
+                    {cls.name}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div>
+            <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-1">
+              Section (Optional - applies to all selected classes)
+            </label>
+            <select
+              id="section"
+              name="section"
+              value={formData.section}
+              onChange={handleChange}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">All Sections</option>
+              {/* We'll show sections from the first selected class for simplicity */}
+              {formData.classes.length > 0 && getSectionsForClass(formData.classes[0]).map(sec => (
+                <option key={sec.id} value={sec.name}>{sec.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              value={formData.startDate}
+              onChange={handleChange}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
+              End Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              value={formData.endDate}
+              onChange={handleChange}
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="maxMarks" className="block text-sm font-medium text-gray-700 mb-1">
+              Maximum Marks
+            </label>
+            <input
+              type="number"
+              id="maxMarks"
+              name="maxMarks"
+              value={formData.maxMarks}
+              onChange={handleChange}
+              min="1"
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+        </div>
+        
+        {/* Subject Schedule Section */}
+        {formData.classes.length > 0 && selectedClassSubjects.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-md font-medium text-gray-900 mb-3">Subject Schedule</h3>
+            <p className="text-sm text-gray-500 mb-4">Set date, time, and duration for each subject (applies to all selected classes)</p>
+            
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (minutes)</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {selectedClassSubjects.map((subject) => {
+                    const schedule = subjectSchedule[subject.id] || subjectSchedule[subject.name] || {};
+                    return (
+                      <tr key={subject.id || subject.name} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {subject.name}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="date"
+                            value={schedule.date || ''}
+                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'date', e.target.value)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="time"
+                            value={schedule.time || ''}
+                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'time', e.target.value)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="number"
+                            min="1"
+                            value={schedule.duration || 180}
+                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'duration', parseInt(e.target.value) || 180)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        
+        <div className="flex justify-end space-x-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            disabled={formData.classes.length === 0}
+          >
+            {formData.id ? 'Update Examination' : 'Create Examination'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Exam Detail Component
+const ExamDetail = ({ exam, classes }) => {
+  const dispatch = useDispatch();
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedSubjects, setEditedSubjects] = useState([]);
+
+  useEffect(() => {
+    if (exam.subjects) {
+      setEditedSubjects([...exam.subjects]);
+    }
+  }, [exam]);
+
+  const getSubjectsForClass = (className) => {
+    const classObj = classes.find(c => c.name === className);
+    return classObj ? classObj.subjects : [];
+  };
+
+  const classSubjects = getSubjectsForClass(exam.class);
+
+  const handleEditSchedule = () => {
+    setIsEditing(true);
+  };
+
+  const handleSaveSchedule = () => {
+    // Update the exam with the new subject schedule
+    const updatedExam = {
+      ...exam,
+      subjects: editedSubjects
+    };
+    dispatch(updateExam(updatedExam));
+    setIsEditing(false);
+  };
+
+  const handleCancelEdit = () => {
+    // Reset to original subjects
+    setEditedSubjects(exam.subjects ? [...exam.subjects] : []);
+    setIsEditing(false);
+  };
+
+  const handleSubjectChange = (index, field, value) => {
+    const updatedSubjects = [...editedSubjects];
+    updatedSubjects[index] = {
+      ...updatedSubjects[index],
+      [field]: value
+    };
+    setEditedSubjects(updatedSubjects);
+  };
+
+  return (
+    <div className="bg-white rounded-2xl shadow-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">{exam.name}</h2>
+          <p className="text-gray-600">{exam.class} - {exam.section || 'All Sections'} ({exam.academicYear})</p>
+        </div>
+        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+          {exam.examType}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-1">Start Date</h3>
+          <p className="text-lg font-semibold text-gray-900">{exam.startDate}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-1">End Date</h3>
+          <p className="text-lg font-semibold text-gray-900">{exam.endDate}</p>
+        </div>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-sm font-medium text-gray-500 mb-1">Maximum Marks</h3>
+          <p className="text-lg font-semibold text-gray-900">{exam.maxMarks}</p>
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Exam Schedule</h3>
+          {!isEditing ? (
+            <button
+              onClick={handleEditSchedule}
+              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaEdit className="mr-1" /> Edit Schedule
+            </button>
+          ) : (
+            <div className="space-x-2">
+              <button
+                onClick={handleSaveSchedule}
+                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              >
+                <FaCheck className="mr-1" /> Save
+              </button>
+              <button
+                onClick={handleCancelEdit}
+                className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                {isEditing ? (
+                  <>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (minutes)</th>
+                  </>
+                ) : (
+                  <>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                  </>
+                )}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {editedSubjects && editedSubjects.length > 0 ? (
+                editedSubjects.map((subject, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{subject.name}</td>
+                    {isEditing ? (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="date"
+                            value={subject.date || ''}
+                            onChange={(e) => handleSubjectChange(index, 'date', e.target.value)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="time"
+                            value={subject.time || ''}
+                            onChange={(e) => handleSubjectChange(index, 'time', e.target.value)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          <input
+                            type="number"
+                            min="1"
+                            value={subject.duration || ''}
+                            onChange={(e) => handleSubjectChange(index, 'duration', parseInt(e.target.value) || 0)}
+                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+                          />
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subject.date || 'Not scheduled'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subject.time || 'Not scheduled'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {subject.duration ? `${subject.duration} minutes` : 'Not set'}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={isEditing ? "4" : "4"} className="px-6 py-4 text-center text-sm text-gray-500">
+                    No subjects scheduled for this examination
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Class Subjects</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {classSubjects.map((subject, index) => (
+            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+              <div className="flex items-center">
+                <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <FaFileAlt className="text-blue-600" />
+                </div>
+                <div className="ml-3">
+                  <h4 className="text-sm font-medium text-gray-900">{subject.name}</h4>
+                  <p className="text-xs text-gray-500">{subject.teacher || 'No teacher assigned'}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ExaminationSection;
