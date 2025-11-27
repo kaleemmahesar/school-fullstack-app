@@ -195,7 +195,9 @@ export const addSubjectToClass = createAsyncThunkWithToast(
       id: Date.now().toString(),
       class_id: classId,
       name: subject.name,
-      code: subject.code || ''
+      code: subject.code || '',
+      teacher_id: subject.teacherId || null,
+      maxMarks: subject.maxMarks || 100
     };
     
     const response = await fetch(`${API_BASE_URL}/subjects`, {
@@ -259,7 +261,9 @@ export const updateSubjectInClass = createAsyncThunkWithToast(
     const updatedSubject = {
       class_id: classId,
       name: updatedSubjectData.name,
-      code: updatedSubjectData.code || ''
+      code: updatedSubjectData.code || '',
+      teacher_id: updatedSubjectData.teacherId || null,
+      maxMarks: updatedSubjectData.maxMarks || 100
     };
     
     const response = await fetch(`${API_BASE_URL}/subjects/${subjectId}`, {

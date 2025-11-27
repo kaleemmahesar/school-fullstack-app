@@ -86,7 +86,6 @@ const ClassesSection = () => {
         name: subjectData.name,
         code: subjectData.code,
         teacherId: subjectData.teacherId || '', // Ensure teacherId is empty string if not selected
-        teacherName: subjectData.teacherName || '', // Ensure teacherName is empty string if not selected
         maxMarks: subjectData.maxMarks
       };
       dispatch(addSubjectToClass({ 
@@ -122,8 +121,8 @@ const ClassesSection = () => {
     setSubjectData({
       name: subject.name,
       code: subject.code,
-      teacherId: subject.teacherId || '',
-      teacherName: subject.teacherName || '',
+      teacherId: subject.teacher_id || '',
+      teacherName: subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : '',
       maxMarks: subject.maxMarks || 100
     });
   };
@@ -135,7 +134,6 @@ const ClassesSection = () => {
         name: subjectData.name,
         code: subjectData.code,
         teacherId: subjectData.teacherId || '',
-        teacherName: subjectData.teacherName || '',
         maxMarks: subjectData.maxMarks
       };
       
@@ -200,9 +198,7 @@ const ClassesSection = () => {
 
   // Filter teachers from staff
   const teachers = staff.filter(member => 
-    member.position.includes('Teacher') || 
-    member.position.includes('Principal') ||
-    member.position.includes('Counselor')
+    member.jobType === 'Teaching'
   );
 
   // Check if school is NGO funded
@@ -337,7 +333,7 @@ const ClassesSection = () => {
                     <div className="flex flex-wrap gap-1">
                       {classItem.subjects && classItem.subjects.map((subject) => (
                         <span key={subject.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          <FaGraduationCap className="mr-1" /> {subject.name} ({subject.teacherName || 'No teacher'})
+                          <FaGraduationCap className="mr-1" /> {subject.name} ({subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : 'No teacher'})
                         </span>
                       ))}
                       {(!classItem.subjects || classItem.subjects.length === 0) && (
@@ -539,7 +535,7 @@ const ClassesSection = () => {
                         <option value="">Select a teacher</option>
                         {teachers.map((teacher) => (
                           <option key={teacher.id} value={teacher.id}>
-                            {teacher.firstName} {teacher.lastName} ({teacher.position})
+                            {teacher.firstName} {teacher.lastName} {teacher.subject ? `(${teacher.subject})` : ''}
                           </option>
                         ))}
                       </select>
@@ -570,7 +566,7 @@ const ClassesSection = () => {
                           type="button"
                           onClick={() => {
                             setEditingSubject(null);
-                            setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
+                            setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
                           }}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
@@ -594,7 +590,7 @@ const ClassesSection = () => {
                             <div className="flex-1 min-w-0">
                               <div className="text-sm font-medium text-gray-900 truncate">{subject.name}</div>
                               <div className="text-xs text-gray-500 truncate">
-                                Teacher: {subject.teacherName || 'No teacher assigned'}
+                                Teacher: {subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : 'No teacher assigned'}
                               </div>
                               <div className="text-xs text-gray-500">
                                 Max Marks: {subject.maxMarks || 100}

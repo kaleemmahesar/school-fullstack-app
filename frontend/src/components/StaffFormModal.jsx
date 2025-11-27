@@ -7,7 +7,7 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    phone: '',
+    contactNumber: '',
     position: '',
     salary: '',
     dateOfJoining: '',
@@ -23,6 +23,7 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
     if (staffData) {
       setFormData({
         ...staffData,
+        contactNumber: staffData.contactNumber || staffData.phone || '', // Use contactNumber if available, otherwise phone
         jobType: staffData.position && (staffData.position.toLowerCase().includes('teacher') || staffData.position.toLowerCase().includes('professor')) 
           ? 'Teaching' 
           : 'Non-Teaching',
@@ -131,7 +132,9 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
     // Prepare data for submission
     const submissionData = {
       ...formData,
-      subject: formData.jobType === 'Teaching' ? formData.subject : undefined,
+      // Include jobType and subject directly in the submission data
+      jobType: formData.jobType,
+      subject: formData.jobType === 'Teaching' ? formData.subject : null,
       // For teaching staff, use the subject as part of the position
       position: formData.jobType === 'Teaching' ? 
         (formData.subject ? `${formData.subject} Teacher` : 'Teacher') : 
@@ -291,8 +294,8 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
                     </div>
                     <input
                       type="tel"
-                      name="phone"
-                      value={formData.phone}
+                      name="contactNumber"
+                      value={formData.contactNumber}
                       onChange={handleInputChange}
                       className="block w-full pl-7 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                       placeholder="+1 (555) 123-4567"

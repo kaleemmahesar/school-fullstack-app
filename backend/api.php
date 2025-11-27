@@ -702,7 +702,7 @@ function handleSubjects($method, $id, $input, $pdo) {
         case 'GET':
             if ($id) {
                 // Get specific subject
-                $stmt = $pdo->prepare("SELECT * FROM subjects WHERE id = ?");
+                $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.id = ?");
                 $stmt->execute([$id]);
                 $subject = $stmt->fetch(PDO::FETCH_ASSOC);
                 
@@ -718,13 +718,14 @@ function handleSubjects($method, $id, $input, $pdo) {
                 
                 if ($classId) {
                     // Get subjects for specific class
-                    $stmt = $pdo->prepare("SELECT * FROM subjects WHERE class_id = ?");
+                    $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.class_id = ?");
                     $stmt->execute([$classId]);
                     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     echo json_encode($subjects);
                 } else {
                     // Get all subjects
-                    $stmt = $pdo->query("SELECT * FROM subjects");
+                    $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id");
+                    $stmt->execute();
                     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     echo json_encode($subjects);
                 }
@@ -733,17 +734,19 @@ function handleSubjects($method, $id, $input, $pdo) {
             
         case 'POST':
             // Add new subject
-            $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO subjects (id, class_id, name, code) VALUES (?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO subjects (id, class_id, name, code, teacher_id, maxMarks) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([
-                $id,
+                $input['id'] ?? uniqid(),
                 $input['class_id'] ?? '',
                 $input['name'] ?? '',
-                $input['code'] ?? ''
+                $input['code'] ?? '',
+                $input['teacher_id'] ?? null,
+                $input['maxMarks'] ?? 100
             ]);
             
-            // Return the created subject
-            $stmt = $pdo->prepare("SELECT * FROM subjects WHERE id = ?");
+            // Return the created subject with teacher info
+            $id = $pdo->lastInsertId() ? $pdo->lastInsertId() : $input['id'];
+            $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.id = ?");
             $stmt->execute([$id]);
             $subject = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -758,16 +761,18 @@ function handleSubjects($method, $id, $input, $pdo) {
             }
             
             // Update subject
-            $stmt = $pdo->prepare("UPDATE subjects SET class_id = ?, name = ?, code = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE subjects SET class_id = ?, name = ?, code = ?, teacher_id = ?, maxMarks = ? WHERE id = ?");
             $stmt->execute([
                 $input['class_id'] ?? '',
                 $input['name'] ?? '',
                 $input['code'] ?? '',
+                $input['teacher_id'] ?? null,
+                $input['maxMarks'] ?? 100,
                 $id
             ]);
             
-            // Return the updated subject
-            $stmt = $pdo->prepare("SELECT * FROM subjects WHERE id = ?");
+            // Return the updated subject with teacher info
+            $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.id = ?");
             $stmt->execute([$id]);
             $subject = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -1050,7 +1055,7 @@ function handleStaff($method, $id, $input, $pdo) {
             
         case 'POST':
             // Add new staff member
-            $stmt = $pdo->prepare("INSERT INTO staff (photo, firstName, lastName, fatherName, cnic, gender, dateOfBirth, contactNumber, emergencyContact, email, address, department, designation, salary, dateOfJoining, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO staff (photo, firstName, lastName, fatherName, cnic, gender, dateOfBirth, contactNumber, emergencyContact, email, address, department, designation, salary, dateOfJoining, jobType, subject, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $stmt->execute([
                 $input['photo'] ?? '',
@@ -1068,6 +1073,8 @@ function handleStaff($method, $id, $input, $pdo) {
                 $input['designation'] ?? '',
                 $input['salary'] ?? 0,
                 $input['dateOfJoining'] ?? null,
+                $input['jobType'] ?? 'Teaching',
+                $input['subject'] ?? null,
                 $input['status'] ?? 'active'
             ]);
             
@@ -1116,7 +1123,7 @@ function handleStaff($method, $id, $input, $pdo) {
             }
             
             // Update staff member
-            $stmt = $pdo->prepare("UPDATE staff SET photo = ?, firstName = ?, lastName = ?, fatherName = ?, cnic = ?, gender = ?, dateOfBirth = ?, contactNumber = ?, emergencyContact = ?, email = ?, address = ?, department = ?, designation = ?, salary = ?, dateOfJoining = ?, status = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE staff SET photo = ?, firstName = ?, lastName = ?, fatherName = ?, cnic = ?, gender = ?, dateOfBirth = ?, contactNumber = ?, emergencyContact = ?, email = ?, address = ?, department = ?, designation = ?, salary = ?, dateOfJoining = ?, jobType = ?, subject = ?, status = ? WHERE id = ?");
             
             $stmt->execute([
                 $input['photo'] ?? '',
@@ -1134,6 +1141,8 @@ function handleStaff($method, $id, $input, $pdo) {
                 $input['designation'] ?? '',
                 $input['salary'] ?? 0,
                 $input['dateOfJoining'] ?? null,
+                $input['jobType'] ?? 'Teaching',
+                $input['subject'] ?? null,
                 $input['status'] ?? 'active',
                 $id
             ]);

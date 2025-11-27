@@ -102,8 +102,11 @@ CREATE TABLE IF NOT EXISTS subjects (
     class_id VARCHAR(50),
     name VARCHAR(100),
     code VARCHAR(20),
+    teacher_id INT NULL,
+    maxMarks INT DEFAULT 100,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE,
+    FOREIGN KEY (teacher_id) REFERENCES staff(id) ON DELETE SET NULL
 );
 
 -- Sections table
@@ -164,6 +167,8 @@ CREATE TABLE IF NOT EXISTS staff (
     designation VARCHAR(100),
     department VARCHAR(100),
     salary DECIMAL(10, 2),
+    jobType VARCHAR(20) DEFAULT 'Teaching',
+    subject VARCHAR(100) NULL,
     status VARCHAR(20) DEFAULT 'active',
     addedTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

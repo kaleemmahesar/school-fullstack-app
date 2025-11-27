@@ -222,7 +222,7 @@ const StaffDetails = () => {
             
             <div className="flex items-center text-sm">
               <FaPhone className="text-gray-400 mr-3" />
-              <span className="text-gray-600">{staffMember.phone || 'N/A'}</span>
+              <span className="text-gray-600">{staffMember.contactNumber || 'N/A'}</span>
             </div>
             
             <div className="flex items-center text-sm">

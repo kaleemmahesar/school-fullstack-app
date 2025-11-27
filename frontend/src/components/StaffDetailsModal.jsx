@@ -185,7 +185,7 @@ const StaffDetailsModal = ({ staffMember, onClose, classes }) => {
                 
                 <div className="flex items-center text-xs">
                   <FaPhone className="text-gray-400 mr-2" />
-                  <span className="text-gray-600">{staffMember.phone || 'N/A'}</span>
+                  <span className="text-gray-600">{staffMember.contactNumber || 'N/A'}</span>
                 </div>
                 
                 <div className="flex items-center text-xs">
