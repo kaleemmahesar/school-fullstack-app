@@ -274,6 +274,12 @@ CREATE TABLE IF NOT EXISTS settings (
     timezone VARCHAR(50),
     logo TEXT,
     holidays JSON,
+    level VARCHAR(20) DEFAULT 'primary',
+    hasPG BOOLEAN DEFAULT FALSE,
+    hasNursery BOOLEAN DEFAULT FALSE,
+    hasKG BOOLEAN DEFAULT FALSE,
+    vacations JSON,
+    weekendDays JSON,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -313,5 +319,5 @@ INSERT INTO batches (id, name, startDate, endDate, status, classes, sections) VA
 ('batch-1', '2025-2026', '2025-09-01', '2026-06-30', 'active', '["PG", "Nursery", "KG", "Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10"]', '["A", "B"]');
 
 -- Sample data for settings
-INSERT INTO settings (id, schoolName, schoolAddress, schoolPhone, schoolEmail, schoolWebsite, academicYear, currency, timezone) VALUES
-('settings-1', 'Greenwood School', '123 Education Street, Learning City', '+1 (555) 123-4567', 'info@greenwood.edu', 'www.greenwood.edu', '2025-2026', 'USD', 'America/New_York');
+INSERT INTO settings (id, schoolName, schoolAddress, schoolPhone, schoolEmail, schoolWebsite, academicYear, currency, timezone, level, hasPG, hasNursery, hasKG, vacations, weekendDays) VALUES
+('settings-1', 'Greenwood School', '123 Education Street, Learning City', '+1 (555) 123-4567', 'info@greenwood.edu', 'www.greenwood.edu', '2025-2026', 'USD', 'America/New_York', 'primary', TRUE, TRUE, TRUE, '{"summer":{"start":"2025-06-01","end":"2025-07-31"},"winter":{"start":"2025-12-20","end":"2026-01-05"}}', '[0]');

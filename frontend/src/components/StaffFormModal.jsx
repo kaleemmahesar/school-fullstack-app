@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FaUser, FaPhone, FaBriefcase, FaDollarSign, FaCalendar, FaChalkboardTeacher, FaTimes, FaCamera, FaTrash } from 'react-icons/fa';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
   const fileInputRef = useRef(null);
@@ -41,23 +42,7 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
     }
   }, [staffData]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-    
-    // Reset subject field when job type changes to Non-Teaching
-    if (name === 'jobType' && value === 'Non-Teaching') {
-      setFormData(prev => ({
-        ...prev,
-        subject: ''
-      }));
-    }
-  };
-
-  const handlePhotoChange = (e) => {
+  const handlePhotoChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       // Check if file is an image
@@ -91,8 +76,58 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Handle photo upload logic
+    let photoUrl = photoPreview || '';
+    
+    // If there's a photo file, upload it to the server
+    if (photoFile) {
+      const formDataObj = new FormData();
+      formDataObj.append('photo', photoFile);
+      
+      try {
+        const response = await fetch(`${API_BASE_URL}/photos`, {
+          method: 'POST',
+          body: formDataObj
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          // Store the URL of the uploaded photo
+          photoUrl = result.url;
+        } else {
+          console.error('Photo upload failed:', result.error);
+          alert('Failed to upload photo: ' + result.error);
+          return;
+        }
+      } catch (error) {
+        console.error('Photo upload error:', error);
+        alert('Failed to upload photo. Please try again. Error: ' + error.message);
+        return;
+      }
+    } else if (photoPreview) {
+      // If photoPreview exists, check if it's a URL or data URL
+      if (photoPreview.startsWith('http')) {
+        // If photoPreview is already a URL (from existing staff data), keep it
+        photoUrl = photoPreview;
+      } else if (photoPreview.startsWith('data:')) {
+        // If photoPreview is a data URL, we should not save it as-is
+        // Instead, we should either upload the file or clear the photo
+        // For now, we'll clear it to avoid storing base64 data
+        photoUrl = '';
+      }
+    } else {
+      // If no photo, clear the photo field
+      photoUrl = '';
+    }
+    
     // Prepare data for submission
     const submissionData = {
       ...formData,
@@ -101,15 +136,26 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
       position: formData.jobType === 'Teaching' ? 
         (formData.subject ? `${formData.subject} Teacher` : 'Teacher') : 
         formData.position,
+      photo: photoUrl
     };
     
-    // If there's a photo file, we would typically upload it to a server here
-    // For now, we'll just store the preview data URL
-    if (photoPreview) {
-      submissionData.photo = photoPreview;
-    }
-    
     onSubmit(submissionData);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value,
+    });
+    
+    // Reset subject field when job type changes to Non-Teaching
+    if (name === 'jobType' && value === 'Non-Teaching') {
+      setFormData(prev => ({
+        ...prev,
+        subject: ''
+      }));
+    }
   };
 
   // Get all unique subjects from classes

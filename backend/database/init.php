@@ -41,8 +41,8 @@ try {
     
     // Create fees_history table
     $sql = "CREATE TABLE IF NOT EXISTS fees_history (
-        id VARCHAR(100) PRIMARY KEY,
-        student_id VARCHAR(50),
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        student_id INT,
         month VARCHAR(50),
         amount DECIMAL(10, 2),
         paid BOOLEAN DEFAULT FALSE,
@@ -191,7 +191,7 @@ try {
     // Create marks table
     $sql = "CREATE TABLE IF NOT EXISTS marks (
         id VARCHAR(50) PRIMARY KEY,
-        studentId VARCHAR(50),
+        studentId INT,
         studentName VARCHAR(200),
         class VARCHAR(50),
         examId VARCHAR(50),

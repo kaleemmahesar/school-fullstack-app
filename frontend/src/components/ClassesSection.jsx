@@ -20,7 +20,7 @@ const ClassesSection = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [currentClass, setCurrentClass] = useState(null);
   const [feesAmount, setFeesAmount] = useState('');
-  const [subjectData, setSubjectData] = useState({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
+  const [subjectData, setSubjectData] = useState({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
   const [editingSubject, setEditingSubject] = useState(null);
 
   useEffect(() => {
@@ -36,7 +36,7 @@ const ClassesSection = () => {
       const totalStudents = students.filter(student => student.class === classItem.name).length;
       
       // Calculate students per section
-      const sectionsWithCounts = classItem.sections.map(section => {
+      const sectionsWithCounts = (classItem.sections || []).map(section => {
         const studentCount = students.filter(student => 
           student.class === classItem.name && student.section === section.name
         ).length;
@@ -74,7 +74,7 @@ const ClassesSection = () => {
   const handleManageSubjects = (classItem) => {
     setSelectedClass(classItem);
     // Reset the subject form when opening the modal
-    setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
+    setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
     setShowSubjectModal(true);
   };
 
@@ -84,6 +84,7 @@ const ClassesSection = () => {
       const newSubject = {
         id: `${selectedClass.id}-${Date.now()}`,
         name: subjectData.name,
+        code: subjectData.code,
         teacherId: subjectData.teacherId || '', // Ensure teacherId is empty string if not selected
         teacherName: subjectData.teacherName || '', // Ensure teacherName is empty string if not selected
         maxMarks: subjectData.maxMarks
@@ -93,7 +94,7 @@ const ClassesSection = () => {
         subject: newSubject 
       }));
       // Reset the form after submission
-      setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
+      setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
     }
   };
 
@@ -120,6 +121,7 @@ const ClassesSection = () => {
     setEditingSubject(subject);
     setSubjectData({
       name: subject.name,
+      code: subject.code,
       teacherId: subject.teacherId || '',
       teacherName: subject.teacherName || '',
       maxMarks: subject.maxMarks || 100
@@ -131,6 +133,7 @@ const ClassesSection = () => {
     if (selectedClass && editingSubject && subjectData.name) {
       const updatedSubjectData = {
         name: subjectData.name,
+        code: subjectData.code,
         teacherId: subjectData.teacherId || '',
         teacherName: subjectData.teacherName || '',
         maxMarks: subjectData.maxMarks
@@ -143,7 +146,7 @@ const ClassesSection = () => {
       }));
       
       // Reset the form and editing state
-      setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
+      setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
       setEditingSubject(null);
     }
   };
@@ -160,14 +163,29 @@ const ClassesSection = () => {
     }
   };
 
-  const handleClassSubmit = (classData) => {
-    if (currentClass) {
-      dispatch(updateClass({ ...currentClass, ...classData }));
-    } else {
-      dispatch(addClass(classData));
+  const handleClassSubmit = async (classData) => {
+    try {
+      let updatedClass;
+      
+      if (currentClass) {
+        // Update existing class
+        updatedClass = await dispatch(updateClass({ ...currentClass, ...classData })).unwrap();
+      } else {
+        // Add new class
+        updatedClass = await dispatch(addClass(classData)).unwrap();
+      }
+      
+      // If the class was successfully added/updated and has sections, add them
+      if (updatedClass && classData.sections && classData.sections.length > 0) {
+        // For now, we're just closing the modal since sections are managed separately
+        // In a full implementation, we would add sections here
+      }
+      
+      setShowClassModal(false);
+      setCurrentClass(null);
+    } catch (error) {
+      console.error('Failed to save class:', error);
     }
-    setShowClassModal(false);
-    setCurrentClass(null);
   };
 
   const filteredClasses = classesWithStudentCounts.filter(cls =>
@@ -308,7 +326,7 @@ const ClassesSection = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex flex-wrap gap-1">
-                      {classItem.sections.map((section) => (
+                      {(classItem.sections || []).map((section) => (
                         <span key={section.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {section.name}
                         </span>
@@ -494,6 +512,17 @@ const ClassesSection = () => {
                     </div>
                     
                     <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Subject Code</label>
+                      <input
+                        type="text"
+                        value={subjectData.code}
+                        onChange={(e) => setSubjectData({...subjectData, code: e.target.value})}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="MATH"
+                      />
+                    </div>
+                    
+                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
                       <select
                         value={subjectData.teacherId || ''}
@@ -570,6 +599,11 @@ const ClassesSection = () => {
                               <div className="text-xs text-gray-500">
                                 Max Marks: {subject.maxMarks || 100}
                               </div>
+                              {subject.code && (
+                                <div className="text-xs text-gray-500">
+                                  Code: {subject.code}
+                                </div>
+                              )}
                             </div>
                             <div className="ml-2 flex space-x-1">
                               <button

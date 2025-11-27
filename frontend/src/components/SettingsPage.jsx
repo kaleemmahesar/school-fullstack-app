@@ -39,11 +39,31 @@ const SettingsPage = () => {
       });
       
       // Set holidays from schoolInfo, converting to new format if needed
+      // Ensure holidays is an array before trying to map
       if (schoolInfo.holidays) {
-        const formattedHolidays = schoolInfo.holidays.map(holiday => 
-          typeof holiday === 'string' ? { title: '', date: holiday } : holiday
-        );
-        setHolidaysState(formattedHolidays);
+        // If holidays is a string, parse it as JSON
+        let holidaysData = schoolInfo.holidays;
+        if (typeof holidaysData === 'string') {
+          try {
+            holidaysData = JSON.parse(holidaysData);
+          } catch (e) {
+            holidaysData = [];
+          }
+        }
+        
+        // If holidays is an array, format it properly
+        if (Array.isArray(holidaysData)) {
+          const formattedHolidays = holidaysData.map(holiday => 
+            typeof holiday === 'string' ? { title: '', date: holiday } : holiday
+          );
+          setHolidaysState(formattedHolidays);
+        } else {
+          // If holidays is not an array, initialize with empty array
+          setHolidaysState([]);
+        }
+      } else {
+        // If no holidays data, initialize with empty array
+        setHolidaysState([]);
       }
       
       // Set vacations from schoolInfo
@@ -129,19 +149,26 @@ const SettingsPage = () => {
     e.preventDefault();
     try {
       // Format holidays to include both title and date
-      const formattedHolidays = holidays.map(holiday => 
-        typeof holiday === 'string' ? { title: '', date: holiday } : holiday
-      ).filter(holiday => holiday.date); // Filter out empty dates
+      // Ensure holidays is always an array before mapping
+      const formattedHolidays = Array.isArray(holidays) 
+        ? holidays.map(holiday => 
+            typeof holiday === 'string' ? { title: '', date: holiday } : holiday
+          ).filter(holiday => holiday.date) // Filter out empty dates
+        : [];
       
       // Update school info including holidays, vacations, and weekend days
-      await dispatch(updateSchoolInfo({
+      const result = await dispatch(updateSchoolInfo({
         ...formData,
         holidays: formattedHolidays,
         vacations,
         weekendDays // Add weekend days to the settings
       })).unwrap();
+      
+      console.log('Settings updated successfully:', result);
     } catch (err) {
       console.error('Failed to update school info:', err);
+      // Show error to user
+      alert('Failed to update school settings: ' + (err.message || 'Unknown error'));
     }
   };
 

@@ -27,11 +27,13 @@ export const fetchClasses = createAsyncThunkWithToast(
 export const addClass = createAddThunk(
   'classes/addClass',
   async (classData) => {
+    // Prepare class data for API (with sections)
     const newClass = {
       id: Date.now().toString(),
-      subjects: [], // Initialize with empty subjects array
-      sections: [], // Initialize with empty sections array
-      ...classData,
+      name: classData.name,
+      monthlyFees: classData.monthlyFees || 0,
+      admissionFees: classData.admissionFees || 0,
+      sections: classData.sections || [] // Include sections in the request
     };
     
     const response = await fetch(`${API_BASE_URL}/classes`, {
@@ -58,9 +60,13 @@ export const addClass = createAddThunk(
 export const updateClass = createUpdateThunk(
   'classes/updateClass',
   async (classData) => {
+    // Prepare class data for API (with sections)
     const updatedClass = {
-      subjects: [], // Ensure subjects array exists
-      ...classData,
+      id: classData.id,
+      name: classData.name,
+      monthlyFees: classData.monthlyFees || 0,
+      admissionFees: classData.admissionFees || 0,
+      sections: classData.sections || [] // Include sections in the request
     };
     
     const response = await fetch(`${API_BASE_URL}/classes/${classData.id}`, {
@@ -117,37 +123,100 @@ export const updateClassFees = createAsyncThunkWithToast(
   }
 );
 
+// New thunk for adding a section to a class
+export const addSectionToClass = createAsyncThunkWithToast(
+  'classes/addSectionToClass',
+  async ({ classId, section }) => {
+    const newSection = {
+      id: Date.now().toString(),
+      class_id: classId,
+      name: section.name
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/sections`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newSection),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to add section to class');
+    }
+    
+    // Fetch the updated class to get all sections
+    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
+    if (!classResponse.ok) {
+      throw new Error('Failed to fetch updated class');
+    }
+    
+    return await classResponse.json();
+  },
+  {
+    successMessage: 'Section added successfully',
+    errorMessage: 'Failed to add section',
+    delay: 500
+  }
+);
+
+// New thunk for removing a section from a class
+export const removeSectionFromClass = createAsyncThunkWithToast(
+  'classes/removeSectionFromClass',
+  async ({ classId, sectionId }) => {
+    const response = await fetch(`${API_BASE_URL}/sections/${sectionId}`, {
+      method: 'DELETE',
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to remove section from class');
+    }
+    
+    // Fetch the updated class to get all sections
+    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
+    if (!classResponse.ok) {
+      throw new Error('Failed to fetch updated class');
+    }
+    
+    return await classResponse.json();
+  },
+  {
+    successMessage: 'Section removed successfully',
+    errorMessage: 'Failed to remove section',
+    delay: 500
+  }
+);
+
 // New thunk for adding a subject to a class
 export const addSubjectToClass = createAsyncThunkWithToast(
   'classes/addSubjectToClass',
   async ({ classId, subject }) => {
-    // First, fetch the current class data
-    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
-    if (!classResponse.ok) {
-      throw new Error('Failed to fetch class');
-    }
-    const classData = await classResponse.json();
-    
-    // Add the new subject to the class
-    const updatedClass = {
-      ...classData,
-      subjects: [...(classData.subjects || []), subject]
+    const newSubject = {
+      id: Date.now().toString(),
+      class_id: classId,
+      name: subject.name,
+      code: subject.code || ''
     };
     
-    // Update the class with the new subject
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}`, {
-      method: 'PUT',
+    const response = await fetch(`${API_BASE_URL}/subjects`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedClass),
+      body: JSON.stringify(newSubject),
     });
     
     if (!response.ok) {
       throw new Error('Failed to add subject to class');
     }
     
-    return await response.json();
+    // Fetch the updated class to get all subjects
+    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
+    if (!classResponse.ok) {
+      throw new Error('Failed to fetch updated class');
+    }
+    
+    return await classResponse.json();
   },
   {
     successMessage: 'Subject added successfully',
@@ -160,33 +229,21 @@ export const addSubjectToClass = createAsyncThunkWithToast(
 export const removeSubjectFromClass = createAsyncThunkWithToast(
   'classes/removeSubjectFromClass',
   async ({ classId, subjectId }) => {
-    // First, fetch the current class data
-    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
-    if (!classResponse.ok) {
-      throw new Error('Failed to fetch class');
-    }
-    const classData = await classResponse.json();
-    
-    // Remove the subject from the class
-    const updatedClass = {
-      ...classData,
-      subjects: (classData.subjects || []).filter(subject => subject.id !== subjectId)
-    };
-    
-    // Update the class with the removed subject
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(updatedClass),
+    const response = await fetch(`${API_BASE_URL}/subjects/${subjectId}`, {
+      method: 'DELETE',
     });
     
     if (!response.ok) {
       throw new Error('Failed to remove subject from class');
     }
     
-    return await response.json();
+    // Fetch the updated class to get all subjects
+    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
+    if (!classResponse.ok) {
+      throw new Error('Failed to fetch updated class');
+    }
+    
+    return await classResponse.json();
   },
   {
     successMessage: 'Subject removed successfully',
@@ -199,35 +256,31 @@ export const removeSubjectFromClass = createAsyncThunkWithToast(
 export const updateSubjectInClass = createAsyncThunkWithToast(
   'classes/updateSubjectInClass',
   async ({ classId, subjectId, updatedSubjectData }) => {
-    // First, fetch the current class data
-    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
-    if (!classResponse.ok) {
-      throw new Error('Failed to fetch class');
-    }
-    const classData = await classResponse.json();
-    
-    // Update the subject in the class
-    const updatedClass = {
-      ...classData,
-      subjects: (classData.subjects || []).map(subject => 
-        subject.id === subjectId ? { ...subject, ...updatedSubjectData } : subject
-      )
+    const updatedSubject = {
+      class_id: classId,
+      name: updatedSubjectData.name,
+      code: updatedSubjectData.code || ''
     };
     
-    // Update the class with the updated subject
-    const response = await fetch(`${API_BASE_URL}/classes/${classId}`, {
+    const response = await fetch(`${API_BASE_URL}/subjects/${subjectId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updatedClass),
+      body: JSON.stringify(updatedSubject),
     });
     
     if (!response.ok) {
       throw new Error('Failed to update subject in class');
     }
     
-    return await response.json();
+    // Fetch the updated class to get all subjects
+    const classResponse = await fetch(`${API_BASE_URL}/classes/${classId}`);
+    if (!classResponse.ok) {
+      throw new Error('Failed to fetch updated class');
+    }
+    
+    return await classResponse.json();
   },
   {
     successMessage: 'Subject updated successfully',

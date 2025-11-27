@@ -30,7 +30,7 @@ DROP TABLE IF EXISTS subsidies;
 -- Students table
 -- Stores information about all students in the school
 CREATE TABLE IF NOT EXISTS students (
-    id VARCHAR(50) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     photo TEXT,
     grNo VARCHAR(50),
     firstName VARCHAR(100),
@@ -65,8 +65,8 @@ CREATE TABLE IF NOT EXISTS students (
 -- Fees history table
 -- Tracks all fee payments and challans for students
 CREATE TABLE IF NOT EXISTS fees_history (
-    id VARCHAR(100) PRIMARY KEY,
-    student_id VARCHAR(50),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT,
     month VARCHAR(50),
     amount DECIMAL(10, 2),
     paid BOOLEAN DEFAULT FALSE,
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS exams (
 -- Staff table
 -- Contains information about all staff members
 CREATE TABLE IF NOT EXISTS staff (
-    id VARCHAR(50) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     photo TEXT,
     firstName VARCHAR(100),
     lastName VARCHAR(100),
@@ -174,7 +174,7 @@ CREATE TABLE IF NOT EXISTS staff (
 -- Tracks salary payments and history for staff members
 CREATE TABLE IF NOT EXISTS staff_salary_history (
     id VARCHAR(100) PRIMARY KEY,
-    staff_id VARCHAR(50),
+    staff_id INT,
     month VARCHAR(50),
     baseSalary DECIMAL(10, 2),
     allowances DECIMAL(10, 2),
@@ -215,7 +215,7 @@ CREATE TABLE IF NOT EXISTS attendance (
 -- Stores exam marks for students
 CREATE TABLE IF NOT EXISTS marks (
     id VARCHAR(50) PRIMARY KEY,
-    studentId VARCHAR(50),
+    studentId INT,
     studentName VARCHAR(200),
     class VARCHAR(50),
     examId VARCHAR(50),
@@ -288,6 +288,12 @@ CREATE TABLE IF NOT EXISTS settings (
     timezone VARCHAR(50),
     logo TEXT,
     holidays JSON,
+    level VARCHAR(20) DEFAULT 'primary',
+    hasPG BOOLEAN DEFAULT FALSE,
+    hasNursery BOOLEAN DEFAULT FALSE,
+    hasKG BOOLEAN DEFAULT FALSE,
+    vacations JSON,
+    weekendDays JSON,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -308,7 +314,7 @@ CREATE TABLE IF NOT EXISTS events (
 -- Tracks student promotions between classes
 CREATE TABLE IF NOT EXISTS promotions (
     id VARCHAR(50) PRIMARY KEY,
-    studentId VARCHAR(50),
+    studentId INT,
     fromClass VARCHAR(20),
     toClass VARCHAR(20),
     academicYear VARCHAR(20),
@@ -321,7 +327,7 @@ CREATE TABLE IF NOT EXISTS promotions (
 -- Stores information about former students
 CREATE TABLE IF NOT EXISTS alumni (
     id VARCHAR(50) PRIMARY KEY,
-    studentId VARCHAR(50),
+    studentId INT,
     graduationYear INT,
     currentOccupation VARCHAR(100),
     contactInfo VARCHAR(100),
@@ -349,8 +355,8 @@ ALTER TABLE attendance
   ADD INDEX idx_academic_year (academicYear);
 
 -- Sample data for settings
-INSERT INTO settings (id, schoolName, schoolAddress, schoolPhone, schoolEmail, schoolWebsite, academicYear, currency, timezone) VALUES
-('settings-1', 'Greenwood School', '123 Education Street, Learning City', '+1 (555) 123-4567', 'info@greenwood.edu', 'www.greenwood.edu', '2025-2026', 'USD', 'America/New_York');
+INSERT INTO settings (id, schoolName, schoolAddress, schoolPhone, schoolEmail, schoolWebsite, academicYear, currency, timezone, level, hasPG, hasNursery, hasKG, holidays, vacations, weekendDays) VALUES
+('settings-1', 'Greenwood School', '123 Education Street, Learning City', '+1 (555) 123-4567', 'info@greenwood.edu', 'www.greenwood.edu', '2025-2026', 'USD', 'America/New_York', 'primary', TRUE, TRUE, TRUE, '[]', '{"summer":{"start":"2025-06-01","end":"2025-07-31"},"winter":{"start":"2025-12-20","end":"2026-01-05"}}', '[0]');
 
 -- Sample data for classes
 INSERT INTO classes (id, name, monthlyFees, admissionFees) VALUES
@@ -366,16 +372,16 @@ INSERT INTO classes (id, name, monthlyFees, admissionFees) VALUES
 ('class-10', 'Class 10', 4800, 5800);
 
 -- Sample data for students
-INSERT INTO students (id, photo, grNo, firstName, lastName, fatherName, religion, address, dateOfBirth, birthPlace, lastSchoolAttended, dateOfAdmission, class, section, monthlyFees, admissionFees, feesPaid, totalFees, familyId, relationship, parentId, status, academicYear) VALUES
-('1', '', 'GR001', 'Ahmed', 'Khan', 'Muhammad Khan', 'Islam', '123 Main Street, Karachi, Sindh', '2005-05-15', 'Aga Khan Hospital', 'Karachi Grammar School', '2025-11-05', 'Class 10', 'A', 4800, 5800, 10600, 10600, 'family-1', 'self', null, 'studying', '2025-2026'),
-('2', '', 'GR002', 'Fatima', 'Ahmed', 'Ali Ahmed', 'Islam', '456 Oak Avenue, Lahore, Punjab', '2006-08-22', 'Shalamar Hospital', 'Lahore Grammar School', '2025-11-05', 'Class 9', 'B', 4600, 5600, 10200, 10200, 'family-1', 'sister', '1', 'studying', '2025-2026');
+INSERT INTO students (photo, grNo, firstName, lastName, fatherName, religion, address, dateOfBirth, birthPlace, lastSchoolAttended, dateOfAdmission, class, section, monthlyFees, admissionFees, feesPaid, totalFees, familyId, relationship, parentId, status, academicYear) VALUES
+('', 'GR001', 'Ahmed', 'Khan', 'Muhammad Khan', 'Islam', '123 Main Street, Karachi, Sindh', '2005-05-15', 'Aga Khan Hospital', 'Karachi Grammar School', '2025-11-05', 'Class 10', 'A', 4800, 5800, 10600, 10600, 'family-1', 'self', null, 'studying', '2025-2026'),
+('', 'GR002', 'Fatima', 'Ahmed', 'Ali Ahmed', 'Islam', '456 Oak Avenue, Lahore, Punjab', '2006-08-22', 'Shalamar Hospital', 'Lahore Grammar School', '2025-11-05', 'Class 9', 'B', 4600, 5600, 10200, 10200, 'family-1', 'sister', null, 'studying', '2025-2026');
 
 -- Sample data for fees history
-INSERT INTO fees_history (id, student_id, month, amount, paid, date, dueDate, status, type, academicYear) VALUES
-('challan-1-0', '1', 'Admission Fees', 5800, true, '2025-11-05', '2025-11-05', 'paid', 'admission', '2025-2026'),
-('challan-1-1', '1', 'November 2025', 4800, true, '2025-11-15', '2025-12-10', 'paid', 'monthly', '2025-2026'),
-('challan-2-0', '2', 'Admission Fees', 5600, true, '2025-11-05', '2025-11-05', 'paid', 'admission', '2025-2026'),
-('challan-2-1', '2', 'November 2025', 4600, true, '2025-11-15', '2025-12-10', 'paid', 'monthly', '2025-2026');
+INSERT INTO fees_history (student_id, month, amount, paid, date, dueDate, status, type, academicYear) VALUES
+(1, 'Admission Fees', 5800, true, '2025-11-05', '2025-11-05', 'paid', 'admission', '2025-2026'),
+(1, 'November 2025', 4800, true, '2025-11-15', '2025-12-10', 'paid', 'monthly', '2025-2026'),
+(2, 'Admission Fees', 5600, true, '2025-11-05', '2025-11-05', 'paid', 'admission', '2025-2026'),
+(2, 'November 2025', 4600, true, '2025-11-15', '2025-12-10', 'paid', 'monthly', '2025-2026');
 
 -- Sample data for subsidies
 INSERT INTO subsidies (id, quarter, year, amount, ngoName, description, receivedDate, expectedDate, status) VALUES

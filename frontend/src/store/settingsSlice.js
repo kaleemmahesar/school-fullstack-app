@@ -16,7 +16,8 @@ export const fetchSchoolInfo = createAsyncThunk(
       }
       
       const data = await response.json();
-      return data;
+      // Return the first settings object if it's an array
+      return Array.isArray(data) && data.length > 0 ? data[0] : data;
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch school information');
     }
@@ -26,9 +27,13 @@ export const fetchSchoolInfo = createAsyncThunk(
 // Async thunk for updating school settings via the API
 export const updateSchoolInfo = createAsyncThunk(
   'settings/updateSchoolInfo',
-  async (settingsData, { rejectWithValue }) => {
+  async (settingsData, { getState, rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/notifications`, {
+      // Get the current settings ID from the state
+      const state = getState();
+      const settingsId = state.settings.schoolInfo?.id || 'settings-1';
+      
+      const response = await fetch(`${API_BASE_URL}/settings/${settingsId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +42,8 @@ export const updateSchoolInfo = createAsyncThunk(
       });
       
       if (!response.ok) {
-        throw new Error('Failed to update school settings');
+        const errorText = await response.text();
+        throw new Error(`Failed to update school settings: ${errorText}`);
       }
       
       const data = await response.json();

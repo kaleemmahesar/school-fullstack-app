@@ -13,7 +13,7 @@ if (!defined('DB_PASS')) {
     define('DB_PASS', '');
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'school_management_app');
+    define('DB_NAME', 'school_management_system');
 }
 
 // Load configuration from ini file if it exists

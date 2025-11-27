@@ -1,17 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux'; // Add useSelector import
-import { FaBook, FaDollarSign, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaBook, FaDollarSign, FaTrash, FaPlus, FaExclamationTriangle } from 'react-icons/fa';
 
 const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add students prop
   const [formData, setFormData] = useState({
     name: '',
     monthlyFees: '',
-    sections: [{ id: `${Date.now()}-A`, name: 'A' }], // Default section A with proper ID
+    sections: [] // Initialize as empty array
   });
   
-  // Access school settings to check funding type
+  const [errors, setErrors] = useState({}); // Add state for validation errors
+  
+  // Access school settings to check funding type and level
   const { schoolInfo } = useSelector(state => state.settings);
   const isNGOFunded = schoolInfo?.fundingType === 'ngo';
+  const schoolLevel = schoolInfo?.level || 'primary';
+  const hasPG = schoolInfo?.hasPG || false;
+  const hasNursery = schoolInfo?.hasNursery || false;
+  const hasKG = schoolInfo?.hasKG || false;
+  
+  // Define class range based on school level
+  const getClassRange = () => {
+    switch (schoolLevel) {
+      case 'primary': return { min: 1, max: 5 };
+      case 'middle': return { min: 1, max: 8 };
+      case 'high': return { min: 1, max: 10 };
+      default: return { min: 1, max: 5 };
+    }
+  };
+  
+  const classRange = getClassRange();
   
   const isEditMode = !!classData;
 
@@ -20,11 +38,19 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
       setFormData({
         name: classData.name,
         monthlyFees: classData.monthlyFees || '',
-        sections: classData.sections.map((section, index) => ({ 
-          id: section.id || `${classData.id || Date.now()}-${index}`, 
-          name: section.name 
-        })), // Ensure sections have proper IDs
+        sections: classData.sections && classData.sections.length > 0 
+          ? classData.sections.map((section, index) => ({ 
+              id: section.id || `${classData.id || Date.now()}-${index}`, 
+              name: section.name 
+            }))
+          : [{ id: `${classData.id || Date.now()}-A`, name: 'A' }] // Default to section A if none exist
       });
+    } else {
+      // For new classes, initialize with section A
+      setFormData(prev => ({
+        ...prev,
+        sections: [{ id: `${Date.now()}-A`, name: 'A' }]
+      }));
     }
   }, [classData]);
 
@@ -52,6 +78,14 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
       ...formData,
       [e.target.name]: e.target.value,
     });
+    
+    // Clear error when user starts typing
+    if (errors[e.target.name]) {
+      setErrors(prev => ({
+        ...prev,
+        [e.target.name]: ''
+      }));
+    }
   };
 
   const handleSectionChange = (index, field, value) => {
@@ -94,19 +128,58 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
     }
   };
 
+  // Validate class name based on school level
+  const validateClassName = (className) => {
+    // Check for pre-primary classes
+    if (className === 'PG' && !hasPG) {
+      return 'Play Group (PG) is not enabled for this school';
+    }
+    if (className === 'Nursery' && !hasNursery) {
+      return 'Nursery is not enabled for this school';
+    }
+    if (className === 'KG' && !hasKG) {
+      return 'Kindergarten (KG) is not enabled for this school';
+    }
+    
+    // Check for numbered classes
+    const classNumberMatch = className.match(/^Class\s+(\d+)$/);
+    if (classNumberMatch) {
+      const classNumber = parseInt(classNumberMatch[1]);
+      if (classNumber < classRange.min || classNumber > classRange.max) {
+        return `For a ${schoolLevel} school, classes must be between Class ${classRange.min} and Class ${classRange.max}`;
+      }
+    }
+    
+    // If it's a numbered class, check if it's within the allowed range
+    const numberMatch = className.match(/^(\d+)$/);
+    if (numberMatch) {
+      const classNumber = parseInt(numberMatch[1]);
+      if (classNumber < classRange.min || classNumber > classRange.max) {
+        return `For a ${schoolLevel} school, classes must be between ${classRange.min} and ${classRange.max}`;
+      }
+    }
+    
+    return '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Ensure sections have proper IDs
-    const sectionsWithIds = formData.sections.map((section, index) => ({
-      ...section,
-      id: section.id || `${Date.now()}-${index}` // Generate ID if not present
-    }));
     
-    // Calculate section counts based on student records
-    const sectionsWithCounts = calculateSectionCounts(formData.name, sectionsWithIds);
-    // Calculate total students
-    const totalStudents = sectionsWithCounts.reduce((sum, section) => sum + (section.studentCount || 0), 0);
-    onSubmit({ ...formData, sections: sectionsWithCounts, totalStudents });
+    // Validate class name
+    const classNameError = validateClassName(formData.name);
+    if (classNameError) {
+      setErrors({ name: classNameError });
+      return;
+    }
+    
+    // When creating/updating a class, we need to handle sections separately
+    const classData = {
+      name: formData.name,
+      monthlyFees: formData.monthlyFees || 0,
+      admissionFees: 0 // Default value
+    };
+    
+    onSubmit({ ...classData, sections: formData.sections });
   };
 
   return (
@@ -139,10 +212,23 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Grade 10"
+                  className={`block w-full pl-10 pr-3 py-2 border ${errors.name ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-blue-500 focus:border-blue-500`}
+                  placeholder="e.g., Class 10 or 10"
                   required
                 />
+              </div>
+              {errors.name && (
+                <div className="mt-1 flex items-center text-sm text-red-600">
+                  <FaExclamationTriangle className="mr-1" />
+                  {errors.name}
+                </div>
+              )}
+              <div className="mt-1 text-xs text-gray-500">
+                {`For a ${schoolLevel} school, valid classes are: `}
+                {hasPG && 'PG, '}
+                {hasNursery && 'Nursery, '}
+                {hasKG && 'KG, '}
+                {`Class ${classRange.min}-${classRange.max}`}
               </div>
             </div>
 

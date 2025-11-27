@@ -36,21 +36,15 @@ export const fetchStaffAttendanceByDate = createAsyncThunk('staff/fetchStaffAtte
 });
 
 export const addStaff = createAsyncThunk('staff/addStaff', async (newStaff) => {
-  const staffWithDefaults = {
-    ...newStaff,
-    id: `${Date.now()}`, // Use timestamp for unique ID
-    salaryHistory: [],
-    attendance: [],
-    // Add timestamp for when staff member was added
-    addedTimestamp: new Date().toISOString()
-  };
+  // Remove the ID from newStaff so the backend can generate it
+  const { id, ...staffWithoutId } = newStaff;
   
   const response = await fetch(`${API_BASE_URL}/staff`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify(staffWithDefaults),
+    body: JSON.stringify(staffWithoutId),
   });
   
   if (!response.ok) {

@@ -198,13 +198,6 @@ try {
             break;
     }
 } catch (Exception $e) {
-    // Set CORS headers for error responses
-    header("Content-Type: application/json");
-    header("Access-Control-Allow-Origin: http://localhost:5173");
-    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization");
-    header("Vary: Origin");
-    
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
 }
@@ -295,6 +288,80 @@ function handleStudents($method, $id, $input, $pdo) {
                     $stmt = $pdo->prepare("INSERT INTO fees_history (id, student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([
                         $feeId,
+                        $id,
+                        $fee['month'] ?? '',
+                        $fee['amount'] ?? 0,
+                        $fee['paid'] ?? false,
+                        $fee['date'] ?? null,
+                        $fee['dueDate'] ?? null,
+                        $fee['status'] ?? 'pending',
+                        $fee['type'] ?? '',
+                        $fee['academicYear'] ?? '',
+                        $fee['paymentTimestamp'] ?? null,
+                        $fee['generationTimestamp'] ?? null,
+                        $fee['paymentMethod'] ?? null,
+                        $fee['fineAmount'] ?? 0,
+                        $fee['description'] ?? ''
+                    ]);
+                }
+            }
+            
+            // Return the created student
+            $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+            $stmt->execute([$id]);
+            $student = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Get fees history for this student
+            $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$id]);
+            $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $student['feesHistory'] = $feesHistory;
+            
+            // Format the student data to ensure proper data types
+            $student = formatStudentData($student);
+            
+            echo json_encode($student);
+            break;
+            
+        case 'POST':
+            // Add new student
+            // Let the database generate the auto-incrementing ID
+            $stmt = $pdo->prepare("INSERT INTO students (photo, grNo, firstName, lastName, fatherName, religion, address, dateOfBirth, birthPlace, lastSchoolAttended, dateOfAdmission, class, section, monthlyFees, admissionFees, feesPaid, totalFees, familyId, relationship, parentId, status, academicYear, admissionTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            $stmt->execute([
+                $input['photo'] ?? '',
+                $input['grNo'] ?? '',
+                $input['firstName'] ?? '',
+                $input['lastName'] ?? '',
+                $input['fatherName'] ?? '',
+                $input['religion'] ?? '',
+                $input['address'] ?? '',
+                $input['dateOfBirth'] ?? null,
+                $input['birthPlace'] ?? '',
+                $input['lastSchoolAttended'] ?? '',
+                $input['dateOfAdmission'] ?? null,
+                $input['class'] ?? '',
+                $input['section'] ?? '',
+                $input['monthlyFees'] ?? 0,
+                $input['admissionFees'] ?? 0,
+                $input['feesPaid'] ?? 0,
+                $input['totalFees'] ?? 0,
+                $input['familyId'] ?? '',
+                $input['relationship'] ?? '',
+                $input['parentId'] ?? null,
+                $input['status'] ?? 'studying',
+                $input['academicYear'] ?? '',
+                $input['admissionTimestamp'] ?? date('Y-m-d H:i:s')
+            ]);
+            
+            // Get the auto-generated ID
+            $id = $pdo->lastInsertId();
+            
+            // If fees history is provided, insert it
+            if (isset($input['feesHistory']) && is_array($input['feesHistory'])) {
+                foreach ($input['feesHistory'] as $fee) {
+                    $stmt = $pdo->prepare("INSERT INTO fees_history (student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([
                         $id,
                         $fee['month'] ?? '',
                         $fee['amount'] ?? 0,
@@ -484,6 +551,14 @@ function handleClasses($method, $id, $input, $pdo) {
                 }
                 
                 echo json_encode($classes);
+                    
+                    $stmt = $pdo->prepare("SELECT * FROM sections WHERE class_id = ?");
+                    $stmt->execute([$class['id']]);
+                    $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $class['sections'] = $sections;
+                }
+                
+                echo json_encode($sections);
             }
             break;
             
@@ -498,30 +573,12 @@ function handleClasses($method, $id, $input, $pdo) {
                 $input['admissionFees'] ?? 0
             ]);
             
-            // Handle sections if provided
-            if (isset($input['sections']) && is_array($input['sections'])) {
-                foreach ($input['sections'] as $section) {
-                    $sectionId = $section['id'] ?? uniqid();
-                    $stmt = $pdo->prepare("INSERT INTO sections (id, class_id, name) VALUES (?, ?, ?)");
-                    $stmt->execute([
-                        $sectionId,
-                        $id,
-                        $section['name'] ?? ''
-                    ]);
-                }
-            }
-            
-            // Return the created class with sections
+            // Return the created class
             $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
             $stmt->execute([$id]);
             $class = $stmt->fetch(PDO::FETCH_ASSOC);
             $class['subjects'] = [];
-            
-            // Get sections for this class
-            $stmt = $pdo->prepare("SELECT * FROM sections WHERE class_id = ?");
-            $stmt->execute([$id]);
-            $sections = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $class['sections'] = $sections;
+            $class['sections'] = [];
             
             echo json_encode($class);
             break;
@@ -541,24 +598,6 @@ function handleClasses($method, $id, $input, $pdo) {
                 $input['admissionFees'] ?? 0,
                 $id
             ]);
-            
-            // Handle sections if provided
-            if (isset($input['sections']) && is_array($input['sections'])) {
-                // First, delete existing sections for this class
-                $stmt = $pdo->prepare("DELETE FROM sections WHERE class_id = ?");
-                $stmt->execute([$id]);
-                
-                // Then add the new sections
-                foreach ($input['sections'] as $section) {
-                    $sectionId = $section['id'] ?? uniqid();
-                    $stmt = $pdo->prepare("INSERT INTO sections (id, class_id, name) VALUES (?, ?, ?)");
-                    $stmt->execute([
-                        $sectionId,
-                        $id,
-                        $section['name'] ?? ''
-                    ]);
-                }
-            }
             
             // Return the updated class
             $stmt = $pdo->prepare("SELECT * FROM classes WHERE id = ?");
@@ -1008,13 +1047,13 @@ function handleStaff($method, $id, $input, $pdo) {
     switch ($method) {
         case 'GET':
             if ($id) {
-                // Get specific staff member
+                // Get specific staff
                 $stmt = $pdo->prepare("SELECT * FROM staff WHERE id = ?");
                 $stmt->execute([$id]);
                 $staff = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($staff) {
-                    // Get salary history for this staff member
+                    // Get salary history for this staff
                     $stmt = $pdo->prepare("SELECT * FROM staff_salary_history WHERE staff_id = ? ORDER BY created_at DESC");
                     $stmt->execute([$id]);
                     $salaryHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -1026,84 +1065,63 @@ function handleStaff($method, $id, $input, $pdo) {
                     echo json_encode($staff);
                 } else {
                     http_response_code(404);
-                    echo json_encode(['error' => 'Staff member not found']);
+                    echo json_encode(['error' => 'Staff not found']);
                 }
             } else {
-                // Get all staff members
+                // Get all staff
                 $stmt = $pdo->query("SELECT * FROM staff");
-                $staffMembers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                $staff = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
                 // Add salary history to each staff member
-                foreach ($staffMembers as &$staff) {
+                foreach ($staff as &$member) {
                     $stmt = $pdo->prepare("SELECT * FROM staff_salary_history WHERE staff_id = ? ORDER BY created_at DESC");
-                    $stmt->execute([$staff['id']]);
+                    $stmt->execute([$member['id']]);
                     $salaryHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                    $staff['salaryHistory'] = $salaryHistory;
+                    $member['salaryHistory'] = $salaryHistory;
                 }
                 
                 // Format all staff data to ensure proper data types
-                $staffMembers = formatStaffDataArray($staffMembers);
+                $staff = formatStaffDataArray($staff);
                 
-                echo json_encode($staffMembers);
+                echo json_encode($staff);
             }
             break;
             
         case 'POST':
-            // Add new staff member
-            $stmt = $pdo->prepare("INSERT INTO staff (photo, firstName, lastName, fatherName, cnic, gender, dateOfBirth, contactNumber, emergencyContact, email, address, department, designation, salary, dateOfJoining, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            // Add new staff
+            $id = $input['id'] ?? uniqid();
+            $stmt = $pdo->prepare("INSERT INTO staff (id, photo, firstName, lastName, fatherName, cnic, dateOfBirth, gender, religion, address, contactNumber, emergencyContact, email, dateOfJoining, designation, department, salary, status, addedTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $stmt->execute([
+                $id,
                 $input['photo'] ?? '',
                 $input['firstName'] ?? '',
                 $input['lastName'] ?? '',
                 $input['fatherName'] ?? '',
                 $input['cnic'] ?? '',
-                $input['gender'] ?? '',
                 $input['dateOfBirth'] ?? null,
+                $input['gender'] ?? '',
+                $input['religion'] ?? '',
+                $input['address'] ?? '',
                 $input['contactNumber'] ?? '',
                 $input['emergencyContact'] ?? '',
                 $input['email'] ?? '',
-                $input['address'] ?? '',
-                $input['department'] ?? '',
-                $input['designation'] ?? '',
-                $input['salary'] ?? 0,
                 $input['dateOfJoining'] ?? null,
-                $input['status'] ?? 'active'
+                $input['designation'] ?? '',
+                $input['department'] ?? '',
+                $input['salary'] ?? 0,
+                $input['status'] ?? 'active',
+                $input['addedTimestamp'] ?? date('Y-m-d H:i:s')
             ]);
             
-            // Get the auto-generated ID
-            $id = $pdo->lastInsertId();
-            
-            // If salary history is provided, insert it
-            if (isset($input['salaryHistory']) && is_array($input['salaryHistory'])) {
-                foreach ($input['salaryHistory'] as $salary) {
-                    $stmt = $pdo->prepare("INSERT INTO staff_salary_history (id, staff_id, month, baseSalary, allowances, deductions, netSalary, status, paymentDate, paymentMethod, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-                    $stmt->execute([
-                        uniqid(),
-                        $id,
-                        $salary['month'] ?? '',
-                        $salary['baseSalary'] ?? 0,
-                        $salary['allowances'] ?? 0,
-                        $salary['deductions'] ?? 0,
-                        $salary['netSalary'] ?? 0,
-                        $salary['status'] ?? 'pending',
-                        $salary['paymentDate'] ?? null,
-                        $salary['paymentMethod'] ?? '',
-                        $salary['reason'] ?? ''
-                    ]);
-                }
-            }
-            
-            // Return the created staff member
+            // Return the created staff
             $stmt = $pdo->prepare("SELECT * FROM staff WHERE id = ?");
             $stmt->execute([$id]);
             $staff = $stmt->fetch(PDO::FETCH_ASSOC);
+            $staff['salaryHistory'] = [];
             
-            // Get salary history for this staff member
-            $stmt = $pdo->prepare("SELECT * FROM staff_salary_history WHERE staff_id = ? ORDER BY created_at DESC");
-            $stmt->execute([$id]);
-            $salaryHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            $staff['salaryHistory'] = $salaryHistory;
+            // Format the staff data to ensure proper data types
+            $staff = formatStaffData($staff);
             
             echo json_encode($staff);
             break;
@@ -1115,8 +1133,8 @@ function handleStaff($method, $id, $input, $pdo) {
                 return;
             }
             
-            // Update staff member
-            $stmt = $pdo->prepare("UPDATE staff SET photo = ?, firstName = ?, lastName = ?, fatherName = ?, cnic = ?, gender = ?, dateOfBirth = ?, contactNumber = ?, emergencyContact = ?, email = ?, address = ?, department = ?, designation = ?, salary = ?, dateOfJoining = ?, status = ? WHERE id = ?");
+            // Update staff
+            $stmt = $pdo->prepare("UPDATE staff SET photo = ?, firstName = ?, lastName = ?, fatherName = ?, cnic = ?, dateOfBirth = ?, gender = ?, religion = ?, address = ?, contactNumber = ?, emergencyContact = ?, email = ?, dateOfJoining = ?, designation = ?, department = ?, salary = ?, status = ? WHERE id = ?");
             
             $stmt->execute([
                 $input['photo'] ?? '',
@@ -1124,55 +1142,61 @@ function handleStaff($method, $id, $input, $pdo) {
                 $input['lastName'] ?? '',
                 $input['fatherName'] ?? '',
                 $input['cnic'] ?? '',
-                $input['gender'] ?? '',
                 $input['dateOfBirth'] ?? null,
+                $input['gender'] ?? '',
+                $input['religion'] ?? '',
+                $input['address'] ?? '',
                 $input['contactNumber'] ?? '',
                 $input['emergencyContact'] ?? '',
                 $input['email'] ?? '',
-                $input['address'] ?? '',
-                $input['department'] ?? '',
-                $input['designation'] ?? '',
-                $input['salary'] ?? 0,
                 $input['dateOfJoining'] ?? null,
+                $input['designation'] ?? '',
+                $input['department'] ?? '',
+                $input['salary'] ?? 0,
                 $input['status'] ?? 'active',
                 $id
             ]);
             
             // If salary history is provided, update it
             if (isset($input['salaryHistory']) && is_array($input['salaryHistory'])) {
-                // First delete existing salary history for this staff member
+                // First delete existing salary history for this staff
                 $stmt = $pdo->prepare("DELETE FROM staff_salary_history WHERE staff_id = ?");
                 $stmt->execute([$id]);
                 
                 // Then insert new salary history
                 foreach ($input['salaryHistory'] as $salary) {
-                    $stmt = $pdo->prepare("INSERT INTO staff_salary_history (id, staff_id, month, baseSalary, allowances, deductions, netSalary, status, paymentDate, paymentMethod, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $salaryId = $salary['id'] ?? uniqid('sal-');
+                    $stmt = $pdo->prepare("INSERT INTO staff_salary_history (id, staff_id, month, baseSalary, allowances, deductions, netSalary, status, paymentDate, paymentMethod, paymentTimestamp, reason) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([
-                        uniqid(),
+                        $salaryId,
                         $id,
                         $salary['month'] ?? '',
                         $salary['baseSalary'] ?? 0,
                         $salary['allowances'] ?? 0,
                         $salary['deductions'] ?? 0,
                         $salary['netSalary'] ?? 0,
-                        $salary['status'] ?? 'pending',
+                        $salary['status'] ?? '',
                         $salary['paymentDate'] ?? null,
-                        $salary['paymentMethod'] ?? '',
+                        $salary['paymentMethod'] ?? null,
+                        $salary['paymentTimestamp'] ?? null,
                         $salary['reason'] ?? ''
                     ]);
                 }
             }
             
-            // Return the updated staff member
+            // Return the updated staff
             $stmt = $pdo->prepare("SELECT * FROM staff WHERE id = ?");
             $stmt->execute([$id]);
             $staff = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Get salary history for this staff member
+            // Get salary history for this staff
             $stmt = $pdo->prepare("SELECT * FROM staff_salary_history WHERE staff_id = ? ORDER BY created_at DESC");
             $stmt->execute([$id]);
             $salaryHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $staff['salaryHistory'] = $salaryHistory;
+            
+            // Format the staff data to ensure proper data types
+            $staff = formatStaffData($staff);
             
             echo json_encode($staff);
             break;
@@ -1184,11 +1208,11 @@ function handleStaff($method, $id, $input, $pdo) {
                 return;
             }
             
-            // Delete staff member (cascades to staff_salary_history)
+            // Delete staff (cascades to salary_history)
             $stmt = $pdo->prepare("DELETE FROM staff WHERE id = ?");
             $stmt->execute([$id]);
             
-            echo json_encode(['message' => 'Staff member deleted successfully']);
+            echo json_encode(['message' => 'Staff deleted successfully']);
             break;
             
         default:
@@ -1201,9 +1225,6 @@ function handleStaff($method, $id, $input, $pdo) {
 function handleStaffAttendance($method, $id, $input, $pdo) {
     switch ($method) {
         case 'GET':
-            // Check if date parameter is provided
-            $date = isset($_GET['date']) ? $_GET['date'] : null;
-            
             if ($id) {
                 // Get specific staff attendance record
                 $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE id = ?");
@@ -1216,17 +1237,22 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
                     http_response_code(404);
                     echo json_encode(['error' => 'Staff attendance record not found']);
                 }
-            } else if ($date) {
-                // Get staff attendance for specific date
-                $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE date = ?");
-                $stmt->execute([$date]);
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
             } else {
-                // Get all staff attendance records
-                $stmt = $pdo->query("SELECT * FROM staff_attendance");
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
+                // Check if date parameter is provided
+                $date = isset($_GET['date']) ? $_GET['date'] : null;
+                
+                if ($date) {
+                    // Get staff attendance for specific date
+                    $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE date = ?");
+                    $stmt->execute([$date]);
+                    $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($attendance);
+                } else {
+                    // Get all staff attendance records
+                    $stmt = $pdo->query("SELECT * FROM staff_attendance");
+                    $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($attendance);
+                }
             }
             break;
             
@@ -1240,7 +1266,7 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
                 json_encode($input['records'] ?? [])
             ]);
             
-            // Return the created staff attendance record
+            // Return the created attendance record
             $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1263,7 +1289,7 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
                 $id
             ]);
             
-            // Return the updated staff attendance record
+            // Return the updated attendance record
             $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -1295,11 +1321,6 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
 function handleAttendance($method, $id, $input, $pdo) {
     switch ($method) {
         case 'GET':
-            // Check if date parameter is provided
-            $date = isset($_GET['date']) ? $_GET['date'] : null;
-            $class = isset($_GET['class']) ? $_GET['class'] : null;
-            $section = isset($_GET['section']) ? $_GET['section'] : null;
-            
             if ($id) {
                 // Get specific attendance record
                 $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
@@ -1312,38 +1333,42 @@ function handleAttendance($method, $id, $input, $pdo) {
                     http_response_code(404);
                     echo json_encode(['error' => 'Attendance record not found']);
                 }
-            } else if ($date && $class && $section) {
-                // Get attendance for specific date, class and section
-                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ? AND class = ? AND section = ?");
-                $stmt->execute([$date, $class, $section]);
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
-            } else if ($date) {
-                // Get attendance for specific date
-                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ?");
-                $stmt->execute([$date]);
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
             } else {
-                // Get all attendance records
-                $stmt = $pdo->query("SELECT * FROM attendance");
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
+                // Check if date parameter is provided
+                $date = isset($_GET['date']) ? $_GET['date'] : null;
+                $classId = isset($_GET['classId']) ? $_GET['classId'] : null;
+                
+                if ($date && $classId) {
+                    // Get attendance for specific date and class
+                    $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ? AND classId = ?");
+                    $stmt->execute([$date, $classId]);
+                    $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($attendance);
+                } else if ($date) {
+                    // Get attendance for specific date
+                    $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ?");
+                    $stmt->execute([$date]);
+                    $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($attendance);
+                } else {
+                    // Get all attendance records
+                    $stmt = $pdo->query("SELECT * FROM attendance");
+                    $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    echo json_encode($attendance);
+                }
             }
             break;
             
         case 'POST':
             // Add new attendance record
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO attendance (id, date, class, section, subject, records, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO attendance (id, date, classId, academicYear, records) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['date'] ?? null,
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
-                $input['academicYear'] ?? ''
+                $input['classId'] ?? '',
+                $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? [])
             ]);
             
             // Return the created attendance record
@@ -1362,14 +1387,12 @@ function handleAttendance($method, $id, $input, $pdo) {
             }
             
             // Update attendance record
-            $stmt = $pdo->prepare("UPDATE attendance SET date = ?, class = ?, section = ?, subject = ?, records = ?, academicYear = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE attendance SET date = ?, classId = ?, academicYear = ?, records = ? WHERE id = ?");
             $stmt->execute([
                 $input['date'] ?? null,
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
+                $input['classId'] ?? '',
                 $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? []),
                 $id
             ]);
             
@@ -1405,61 +1428,69 @@ function handleAttendance($method, $id, $input, $pdo) {
 function handleStudentsAttendance($method, $id, $input, $pdo) {
     switch ($method) {
         case 'GET':
-            // Check if date parameter is provided
+            // Check for query parameters
             $date = isset($_GET['date']) ? $_GET['date'] : null;
-            $class = isset($_GET['class']) ? $_GET['class'] : null;
-            $section = isset($_GET['section']) ? $_GET['section'] : null;
+            $classId = isset($_GET['classId']) ? $_GET['classId'] : null;
             
             if ($id) {
-                // Get specific students attendance record
-                $stmt = $pdo->prepare("SELECT * FROM students_attendance WHERE id = ?");
+                // Get specific attendance record
+                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
                 $stmt->execute([$id]);
                 $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($attendance) {
+                    // Decode JSON records
+                    $attendance['records'] = json_decode($attendance['records'], true) ?: [];
                     echo json_encode($attendance);
                 } else {
                     http_response_code(404);
-                    echo json_encode(['error' => 'Students attendance record not found']);
+                    echo json_encode(['error' => 'Attendance record not found']);
                 }
-            } else if ($date && $class && $section) {
-                // Get students attendance for specific date, class and section
-                $stmt = $pdo->prepare("SELECT * FROM students_attendance WHERE date = ? AND class = ? AND section = ?");
-                $stmt->execute([$date, $class, $section]);
+            } else if ($date && $classId) {
+                // Get attendance for specific date and class
+                $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ? AND classId = ?");
+                $stmt->execute([$date, $classId]);
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                echo json_encode($attendance);
-            } else if ($date) {
-                // Get students attendance for specific date
-                $stmt = $pdo->prepare("SELECT * FROM students_attendance WHERE date = ?");
-                $stmt->execute([$date]);
-                $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             } else {
-                // Get all students attendance records
-                $stmt = $pdo->query("SELECT * FROM students_attendance");
+                // Get all attendance records
+                $stmt = $pdo->query("SELECT * FROM attendance");
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             }
             break;
             
         case 'POST':
-            // Add new students attendance record
+            // Add new attendance record
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO students_attendance (id, date, class, section, subject, records, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO attendance (id, date, classId, academicYear, records) VALUES (?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['date'] ?? null,
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
-                $input['academicYear'] ?? ''
+                $input['classId'] ?? '',
+                $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? [])
             ]);
             
-            // Return the created students attendance record
-            $stmt = $pdo->prepare("SELECT * FROM students_attendance WHERE id = ?");
+            // Return the created attendance record
+            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Decode JSON records
+            $attendance['records'] = json_decode($attendance['records'], true) ?: [];
             
             echo json_encode($attendance);
             break;
@@ -1467,26 +1498,27 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
         case 'PUT':
             if (!$id) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Students attendance ID is required']);
+                echo json_encode(['error' => 'Attendance ID is required']);
                 return;
             }
             
-            // Update students attendance record
-            $stmt = $pdo->prepare("UPDATE students_attendance SET date = ?, class = ?, section = ?, subject = ?, records = ?, academicYear = ? WHERE id = ?");
+            // Update attendance record
+            $stmt = $pdo->prepare("UPDATE attendance SET date = ?, classId = ?, academicYear = ?, records = ? WHERE id = ?");
             $stmt->execute([
                 $input['date'] ?? null,
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
+                $input['classId'] ?? '',
                 $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? []),
                 $id
             ]);
             
-            // Return the updated students attendance record
-            $stmt = $pdo->prepare("SELECT * FROM students_attendance WHERE id = ?");
+            // Return the updated attendance record
+            $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Decode JSON records
+            $attendance['records'] = json_decode($attendance['records'], true) ?: [];
             
             echo json_encode($attendance);
             break;
@@ -1494,15 +1526,15 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
         case 'DELETE':
             if (!$id) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Students attendance ID is required']);
+                echo json_encode(['error' => 'Attendance ID is required']);
                 return;
             }
             
-            // Delete students attendance record
-            $stmt = $pdo->prepare("DELETE FROM students_attendance WHERE id = ?");
+            // Delete attendance record
+            $stmt = $pdo->prepare("DELETE FROM attendance WHERE id = ?");
             $stmt->execute([$id]);
             
-            echo json_encode(['message' => 'Students attendance record deleted successfully']);
+            echo json_encode(['message' => 'Attendance record deleted successfully']);
             break;
             
         default:
@@ -1636,7 +1668,7 @@ function handleSubsidies($method, $id, $input, $pdo) {
                 
                 if ($subsidy) {
                     // Convert numeric fields to proper numbers
-                    $subsidy = convertFieldsToNumbers($subsidy, ['amount']);
+                    $subsidy = convertFieldsToNumbers($subsidy, ['amount', 'year']);
                     echo json_encode($subsidy);
                 } else {
                     http_response_code(404);
@@ -1648,7 +1680,7 @@ function handleSubsidies($method, $id, $input, $pdo) {
                 $subsidies = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 // Convert numeric fields to proper numbers
                 foreach ($subsidies as &$subsidy) {
-                    $subsidy = convertFieldsToNumbers($subsidy, ['amount']);
+                    $subsidy = convertFieldsToNumbers($subsidy, ['amount', 'year']);
                 }
                 echo json_encode($subsidies);
             }
@@ -1657,21 +1689,18 @@ function handleSubsidies($method, $id, $input, $pdo) {
         case 'POST':
             // Add new subsidy
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO subsidies (id, studentId, studentName, class, section, fatherName, cnic, contactNumber, description, amount, date, academicYear, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO subsidies (id, quarter, year, amount, ngoName, description, receivedDate, expectedDate, status, addedTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
-                $input['studentId'] ?? '',
-                $input['studentName'] ?? '',
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['fatherName'] ?? '',
-                $input['cnic'] ?? '',
-                $input['contactNumber'] ?? '',
-                $input['description'] ?? '',
+                $input['quarter'] ?? '',
+                $input['year'] ?? date('Y'),
                 $input['amount'] ?? 0,
-                $input['date'] ?? null,
-                $input['academicYear'] ?? '',
-                $input['status'] ?? 'pending'
+                $input['ngoName'] ?? '',
+                $input['description'] ?? '',
+                $input['receivedDate'] ?? null,
+                $input['expectedDate'] ?? null,
+                $input['status'] ?? 'expected',
+                $input['addedTimestamp'] ?? date('Y-m-d H:i:s')
             ]);
             
             // Return the created subsidy
@@ -1680,7 +1709,7 @@ function handleSubsidies($method, $id, $input, $pdo) {
             $subsidy = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Convert numeric fields to proper numbers
-            $subsidy = convertFieldsToNumbers($subsidy, ['amount']);
+            $subsidy = convertFieldsToNumbers($subsidy, ['amount', 'year']);
             
             echo json_encode($subsidy);
             break;
@@ -1693,20 +1722,16 @@ function handleSubsidies($method, $id, $input, $pdo) {
             }
             
             // Update subsidy
-            $stmt = $pdo->prepare("UPDATE subsidies SET studentId = ?, studentName = ?, class = ?, section = ?, fatherName = ?, cnic = ?, contactNumber = ?, description = ?, amount = ?, date = ?, academicYear = ?, status = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE subsidies SET quarter = ?, year = ?, amount = ?, ngoName = ?, description = ?, receivedDate = ?, expectedDate = ?, status = ? WHERE id = ?");
             $stmt->execute([
-                $input['studentId'] ?? '',
-                $input['studentName'] ?? '',
-                $input['class'] ?? '',
-                $input['section'] ?? '',
-                $input['fatherName'] ?? '',
-                $input['cnic'] ?? '',
-                $input['contactNumber'] ?? '',
-                $input['description'] ?? '',
+                $input['quarter'] ?? '',
+                $input['year'] ?? date('Y'),
                 $input['amount'] ?? 0,
-                $input['date'] ?? null,
-                $input['academicYear'] ?? '',
-                $input['status'] ?? 'pending',
+                $input['ngoName'] ?? '',
+                $input['description'] ?? '',
+                $input['receivedDate'] ?? null,
+                $input['expectedDate'] ?? null,
+                $input['status'] ?? 'expected',
                 $id
             ]);
             
@@ -1716,7 +1741,7 @@ function handleSubsidies($method, $id, $input, $pdo) {
             $subsidy = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Convert numeric fields to proper numbers
-            $subsidy = convertFieldsToNumbers($subsidy, ['amount']);
+            $subsidy = convertFieldsToNumbers($subsidy, ['amount', 'year']);
             
             echo json_encode($subsidy);
             break;
@@ -1752,8 +1777,9 @@ function handleBatches($method, $id, $input, $pdo) {
                 $batch = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($batch) {
-                    // Convert numeric fields to proper numbers
-                    $batch = convertFieldsToNumbers($batch, ['capacity']);
+                    // Decode JSON fields
+                    $batch['classes'] = json_decode($batch['classes'], true) ?: [];
+                    $batch['sections'] = json_decode($batch['sections'], true) ?: [];
                     echo json_encode($batch);
                 } else {
                     http_response_code(404);
@@ -1763,28 +1789,30 @@ function handleBatches($method, $id, $input, $pdo) {
                 // Get all batches
                 $stmt = $pdo->query("SELECT * FROM batches");
                 $batches = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // Convert numeric fields to proper numbers
+                
+                // Decode JSON fields for each batch
                 foreach ($batches as &$batch) {
-                    $batch = convertFieldsToNumbers($batch, ['capacity']);
+                    $batch['classes'] = json_decode($batch['classes'], true) ?: [];
+                    $batch['sections'] = json_decode($batch['sections'], true) ?: [];
                 }
-                echo json_encode($batches);
+                
+                echo json_encode($classes);
             }
             break;
             
         case 'POST':
             // Add new batch
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO batches (id, name, program, startDate, endDate, capacity, status, description, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO batches (id, name, startDate, endDate, status, classes, sections, addedTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['name'] ?? '',
-                $input['program'] ?? '',
                 $input['startDate'] ?? null,
                 $input['endDate'] ?? null,
-                $input['capacity'] ?? 0,
                 $input['status'] ?? 'active',
-                $input['description'] ?? '',
-                $input['academicYear'] ?? ''
+                json_encode($input['classes'] ?? []),
+                json_encode($input['sections'] ?? []),
+                $input['addedTimestamp'] ?? date('Y-m-d H:i:s')
             ]);
             
             // Return the created batch
@@ -1792,8 +1820,9 @@ function handleBatches($method, $id, $input, $pdo) {
             $stmt->execute([$id]);
             $batch = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Convert numeric fields to proper numbers
-            $batch = convertFieldsToNumbers($batch, ['capacity']);
+            // Decode JSON fields
+            $batch['classes'] = json_decode($batch['classes'], true) ?: [];
+            $batch['sections'] = json_decode($batch['sections'], true) ?: [];
             
             echo json_encode($batch);
             break;
@@ -1806,16 +1835,14 @@ function handleBatches($method, $id, $input, $pdo) {
             }
             
             // Update batch
-            $stmt = $pdo->prepare("UPDATE batches SET name = ?, program = ?, startDate = ?, endDate = ?, capacity = ?, status = ?, description = ?, academicYear = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE batches SET name = ?, startDate = ?, endDate = ?, status = ?, classes = ?, sections = ? WHERE id = ?");
             $stmt->execute([
                 $input['name'] ?? '',
-                $input['program'] ?? '',
                 $input['startDate'] ?? null,
                 $input['endDate'] ?? null,
-                $input['capacity'] ?? 0,
                 $input['status'] ?? 'active',
-                $input['description'] ?? '',
-                $input['academicYear'] ?? '',
+                json_encode($input['classes'] ?? []),
+                json_encode($input['sections'] ?? []),
                 $id
             ]);
             
@@ -1824,8 +1851,9 @@ function handleBatches($method, $id, $input, $pdo) {
             $stmt->execute([$id]);
             $batch = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Convert numeric fields to proper numbers
-            $batch = convertFieldsToNumbers($batch, ['capacity']);
+            // Decode JSON fields
+            $batch['classes'] = json_decode($batch['classes'], true) ?: [];
+            $batch['sections'] = json_decode($batch['sections'], true) ?: [];
             
             echo json_encode($batch);
             break;
@@ -1861,6 +1889,8 @@ function handleNotifications($method, $id, $input, $pdo) {
                 $notification = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($notification) {
+                    // Convert boolean fields
+                    $notification = convertFieldsToBooleans($notification, ['is_read']);
                     echo json_encode($notification);
                 } else {
                     http_response_code(404);
@@ -1868,8 +1898,12 @@ function handleNotifications($method, $id, $input, $pdo) {
                 }
             } else {
                 // Get all notifications
-                $stmt = $pdo->query("SELECT * FROM notifications ORDER BY created_at DESC");
+                $stmt = $pdo->query("SELECT * FROM notifications ORDER BY createdAt DESC");
                 $notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                // Convert boolean fields
+                foreach ($notifications as &$notification) {
+                    $notification = convertFieldsToBooleans($notification, ['is_read']);
+                }
                 echo json_encode($notifications);
             }
             break;
@@ -1877,24 +1911,23 @@ function handleNotifications($method, $id, $input, $pdo) {
         case 'POST':
             // Add new notification
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO notifications (id, title, message, type, priority, recipientType, recipients, status, scheduledTime, sentTime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO notifications (id, title, message, type, is_read, userId) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['title'] ?? '',
                 $input['message'] ?? '',
                 $input['type'] ?? 'info',
-                $input['priority'] ?? 'normal',
-                $input['recipientType'] ?? 'all',
-                json_encode($input['recipients'] ?? []),
-                $input['status'] ?? 'draft',
-                $input['scheduledTime'] ?? null,
-                $input['sentTime'] ?? null
+                $input['is_read'] ?? false,
+                $input['userId'] ?? null
             ]);
             
             // Return the created notification
             $stmt = $pdo->prepare("SELECT * FROM notifications WHERE id = ?");
             $stmt->execute([$id]);
             $notification = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Convert boolean fields
+            $notification = convertFieldsToBooleans($notification, ['is_read']);
             
             echo json_encode($notification);
             break;
@@ -1907,17 +1940,13 @@ function handleNotifications($method, $id, $input, $pdo) {
             }
             
             // Update notification
-            $stmt = $pdo->prepare("UPDATE notifications SET title = ?, message = ?, type = ?, priority = ?, recipientType = ?, recipients = ?, status = ?, scheduledTime = ?, sentTime = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE notifications SET title = ?, message = ?, type = ?, is_read = ?, userId = ? WHERE id = ?");
             $stmt->execute([
                 $input['title'] ?? '',
                 $input['message'] ?? '',
                 $input['type'] ?? 'info',
-                $input['priority'] ?? 'normal',
-                $input['recipientType'] ?? 'all',
-                json_encode($input['recipients'] ?? []),
-                $input['status'] ?? 'draft',
-                $input['scheduledTime'] ?? null,
-                $input['sentTime'] ?? null,
+                $input['is_read'] ?? false,
+                $input['userId'] ?? null,
                 $id
             ]);
             
@@ -1925,6 +1954,9 @@ function handleNotifications($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM notifications WHERE id = ?");
             $stmt->execute([$id]);
             $notification = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Convert boolean fields
+            $notification = convertFieldsToBooleans($notification, ['is_read']);
             
             echo json_encode($notification);
             break;
@@ -1960,47 +1992,25 @@ function handleSettings($method, $id, $input, $pdo) {
                 $setting = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($setting) {
-                    // Ensure holidays is properly formatted as JSON array
-                    if (isset($setting['holidays']) && is_string($setting['holidays'])) {
-                        $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
-                    }
-                    
-                    // Ensure vacations is properly formatted as JSON array
-                    if (isset($setting['vacations']) && is_string($setting['vacations'])) {
-                        $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
-                    }
-                    
-                    // Ensure weekendDays is properly formatted as JSON array
-                    if (isset($setting['weekendDays']) && is_string($setting['weekendDays'])) {
-                        $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
-                    }
-                    
+                    // Decode JSON fields
+                    $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
+                    $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
+                    $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
                     echo json_encode($setting);
                 } else {
                     http_response_code(404);
                     echo json_encode(['error' => 'Setting not found']);
                 }
             } else {
-                // Get all settings
+                // Get all settings (should typically be just one)
                 $stmt = $pdo->query("SELECT * FROM settings");
                 $settings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 
-                // Ensure holidays, vacations, and weekendDays are properly formatted for all settings
+                // Decode JSON fields for each setting
                 foreach ($settings as &$setting) {
-                    // Ensure holidays is properly formatted as JSON array
-                    if (isset($setting['holidays']) && is_string($setting['holidays'])) {
-                        $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
-                    }
-                    
-                    // Ensure vacations is properly formatted as JSON array
-                    if (isset($setting['vacations']) && is_string($setting['vacations'])) {
-                        $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
-                    }
-                    
-                    // Ensure weekendDays is properly formatted as JSON array
-                    if (isset($setting['weekendDays']) && is_string($setting['weekendDays'])) {
-                        $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
-                    }
+                    $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
+                    $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
+                    $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
                 }
                 
                 echo json_encode($settings);
@@ -2010,22 +2020,25 @@ function handleSettings($method, $id, $input, $pdo) {
         case 'POST':
             // Add new setting
             $id = $input['id'] ?? uniqid();
-            
-            // Ensure holidays, vacations, and weekendDays are properly encoded as JSON
-            $holidays = isset($input['holidays']) ? json_encode($input['holidays']) : null;
-            $vacations = isset($input['vacations']) ? json_encode($input['vacations']) : null;
-            $weekendDays = isset($input['weekendDays']) ? json_encode($input['weekendDays']) : null;
-            
-            $stmt = $pdo->prepare("INSERT INTO settings (id, name, value, description, category, holidays, vacations, weekendDays) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO settings (id, schoolName, schoolAddress, schoolPhone, schoolEmail, schoolWebsite, academicYear, currency, timezone, logo, holidays, level, hasPG, hasNursery, hasKG, vacations, weekendDays) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
-                $input['name'] ?? '',
-                $input['value'] ?? '',
-                $input['description'] ?? '',
-                $input['category'] ?? 'general',
-                $holidays,
-                $vacations,
-                $weekendDays
+                $input['schoolName'] ?? '',
+                $input['schoolAddress'] ?? '',
+                $input['schoolPhone'] ?? '',
+                $input['schoolEmail'] ?? '',
+                $input['schoolWebsite'] ?? '',
+                $input['academicYear'] ?? '',
+                $input['currency'] ?? 'USD',
+                $input['timezone'] ?? 'UTC',
+                $input['logo'] ?? '',
+                json_encode($input['holidays'] ?? []),
+                $input['level'] ?? 'primary',
+                $input['hasPG'] ?? false,
+                $input['hasNursery'] ?? false,
+                $input['hasKG'] ?? false,
+                json_encode($input['vacations'] ?? []),
+                json_encode($input['weekendDays'] ?? [])
             ]);
             
             // Return the created setting
@@ -2033,18 +2046,10 @@ function handleSettings($method, $id, $input, $pdo) {
             $stmt->execute([$id]);
             $setting = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Ensure holidays, vacations, and weekendDays are properly formatted
-            if (isset($setting['holidays']) && is_string($setting['holidays'])) {
-                $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
-            }
-            
-            if (isset($setting['vacations']) && is_string($setting['vacations'])) {
-                $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
-            }
-            
-            if (isset($setting['weekendDays']) && is_string($setting['weekendDays'])) {
-                $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
-            }
+            // Decode JSON fields
+            $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
+            $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
+            $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
             
             echo json_encode($setting);
             break;
@@ -2056,21 +2061,25 @@ function handleSettings($method, $id, $input, $pdo) {
                 return;
             }
             
-            // Ensure holidays, vacations, and weekendDays are properly encoded as JSON
-            $holidays = isset($input['holidays']) ? json_encode($input['holidays']) : null;
-            $vacations = isset($input['vacations']) ? json_encode($input['vacations']) : null;
-            $weekendDays = isset($input['weekendDays']) ? json_encode($input['weekendDays']) : null;
-            
             // Update setting
-            $stmt = $pdo->prepare("UPDATE settings SET name = ?, value = ?, description = ?, category = ?, holidays = ?, vacations = ?, weekendDays = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE settings SET schoolName = ?, schoolAddress = ?, schoolPhone = ?, schoolEmail = ?, schoolWebsite = ?, academicYear = ?, currency = ?, timezone = ?, logo = ?, holidays = ?, level = ?, hasPG = ?, hasNursery = ?, hasKG = ?, vacations = ?, weekendDays = ? WHERE id = ?");
             $stmt->execute([
-                $input['name'] ?? '',
-                $input['value'] ?? '',
-                $input['description'] ?? '',
-                $input['category'] ?? 'general',
-                $holidays,
-                $vacations,
-                $weekendDays,
+                $input['schoolName'] ?? '',
+                $input['schoolAddress'] ?? '',
+                $input['schoolPhone'] ?? '',
+                $input['schoolEmail'] ?? '',
+                $input['schoolWebsite'] ?? '',
+                $input['academicYear'] ?? '',
+                $input['currency'] ?? 'USD',
+                $input['timezone'] ?? 'UTC',
+                $input['logo'] ?? '',
+                json_encode($input['holidays'] ?? []),
+                $input['level'] ?? 'primary',
+                $input['hasPG'] ?? false,
+                $input['hasNursery'] ?? false,
+                $input['hasKG'] ?? false,
+                json_encode($input['vacations'] ?? []),
+                json_encode($input['weekendDays'] ?? []),
                 $id
             ]);
             
@@ -2079,18 +2088,10 @@ function handleSettings($method, $id, $input, $pdo) {
             $stmt->execute([$id]);
             $setting = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Ensure holidays, vacations, and weekendDays are properly formatted
-            if (isset($setting['holidays']) && is_string($setting['holidays'])) {
-                $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
-            }
-            
-            if (isset($setting['vacations']) && is_string($setting['vacations'])) {
-                $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
-            }
-            
-            if (isset($setting['weekendDays']) && is_string($setting['weekendDays'])) {
-                $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
-            }
+            // Decode JSON fields
+            $setting['holidays'] = json_decode($setting['holidays'], true) ?: [];
+            $setting['vacations'] = json_decode($setting['vacations'], true) ?: [];
+            $setting['weekendDays'] = json_decode($setting['weekendDays'], true) ?: [];
             
             echo json_encode($setting);
             break;
@@ -2126,9 +2127,6 @@ function handleEvents($method, $id, $input, $pdo) {
                 $event = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($event) {
-                    // Convert date fields to proper format
-                    $event['startDate'] = $event['startDate'] ? date('Y-m-d', strtotime($event['startDate'])) : null;
-                    $event['endDate'] = $event['endDate'] ? date('Y-m-d', strtotime($event['endDate'])) : null;
                     echo json_encode($event);
                 } else {
                     http_response_code(404);
@@ -2136,13 +2134,8 @@ function handleEvents($method, $id, $input, $pdo) {
                 }
             } else {
                 // Get all events
-                $stmt = $pdo->query("SELECT * FROM events ORDER BY startDate DESC");
+                $stmt = $pdo->query("SELECT * FROM events");
                 $events = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // Convert date fields to proper format
-                foreach ($events as &$event) {
-                    $event['startDate'] = $event['startDate'] ? date('Y-m-d', strtotime($event['startDate'])) : null;
-                    $event['endDate'] = $event['endDate'] ? date('Y-m-d', strtotime($event['endDate'])) : null;
-                }
                 echo json_encode($events);
             }
             break;
@@ -2150,27 +2143,21 @@ function handleEvents($method, $id, $input, $pdo) {
         case 'POST':
             // Add new event
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO events (id, title, description, startDate, endDate, eventType, location, status, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO events (id, title, description, date, startTime, endTime, type) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['title'] ?? '',
                 $input['description'] ?? '',
-                $input['startDate'] ?? null,
-                $input['endDate'] ?? null,
-                $input['eventType'] ?? 'general',
-                $input['location'] ?? '',
-                $input['status'] ?? 'active',
-                $input['academicYear'] ?? ''
+                $input['date'] ?? null,
+                $input['startTime'] ?? null,
+                $input['endTime'] ?? null,
+                $input['type'] ?? 'event'
             ]);
             
             // Return the created event
             $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
             $stmt->execute([$id]);
             $event = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Convert date fields to proper format
-            $event['startDate'] = $event['startDate'] ? date('Y-m-d', strtotime($event['startDate'])) : null;
-            $event['endDate'] = $event['endDate'] ? date('Y-m-d', strtotime($event['endDate'])) : null;
             
             echo json_encode($event);
             break;
@@ -2183,16 +2170,14 @@ function handleEvents($method, $id, $input, $pdo) {
             }
             
             // Update event
-            $stmt = $pdo->prepare("UPDATE events SET title = ?, description = ?, startDate = ?, endDate = ?, eventType = ?, location = ?, status = ?, academicYear = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE events SET title = ?, description = ?, date = ?, startTime = ?, endTime = ?, type = ? WHERE id = ?");
             $stmt->execute([
                 $input['title'] ?? '',
                 $input['description'] ?? '',
-                $input['startDate'] ?? null,
-                $input['endDate'] ?? null,
-                $input['eventType'] ?? 'general',
-                $input['location'] ?? '',
-                $input['status'] ?? 'active',
-                $input['academicYear'] ?? '',
+                $input['date'] ?? null,
+                $input['startTime'] ?? null,
+                $input['endTime'] ?? null,
+                $input['type'] ?? 'event',
                 $id
             ]);
             
@@ -2200,10 +2185,6 @@ function handleEvents($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM events WHERE id = ?");
             $stmt->execute([$id]);
             $event = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Convert date fields to proper format
-            $event['startDate'] = $event['startDate'] ? date('Y-m-d', strtotime($event['startDate'])) : null;
-            $event['endDate'] = $event['endDate'] ? date('Y-m-d', strtotime($event['endDate'])) : null;
             
             echo json_encode($event);
             break;
@@ -2239,8 +2220,6 @@ function handlePromotions($method, $id, $input, $pdo) {
                 $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($promotion) {
-                    // Convert numeric fields to proper numbers
-                    $promotion = convertFieldsToNumbers($promotion, ['fromClass', 'toClass']);
                     echo json_encode($promotion);
                 } else {
                     http_response_code(404);
@@ -2250,10 +2229,6 @@ function handlePromotions($method, $id, $input, $pdo) {
                 // Get all promotions
                 $stmt = $pdo->query("SELECT * FROM promotions");
                 $promotions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // Convert numeric fields to proper numbers
-                foreach ($promotions as &$promotion) {
-                    $promotion = convertFieldsToNumbers($promotion, ['fromClass', 'toClass']);
-                }
                 echo json_encode($promotions);
             }
             break;
@@ -2261,24 +2236,21 @@ function handlePromotions($method, $id, $input, $pdo) {
         case 'POST':
             // Add new promotion
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO promotions (id, fromClass, toClass, academicYear, status, promotedStudents, totalStudents) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO promotions (id, studentId, fromClass, toClass, academicYear, promotionDate, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
-                $input['fromClass'] ?? 0,
-                $input['toClass'] ?? 0,
+                $input['studentId'] ?? '',
+                $input['fromClass'] ?? '',
+                $input['toClass'] ?? '',
                 $input['academicYear'] ?? '',
-                $input['status'] ?? 'pending',
-                $input['promotedStudents'] ?? 0,
-                $input['totalStudents'] ?? 0
+                $input['promotionDate'] ?? null,
+                $input['status'] ?? 'pending'
             ]);
             
             // Return the created promotion
             $stmt = $pdo->prepare("SELECT * FROM promotions WHERE id = ?");
             $stmt->execute([$id]);
             $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Convert numeric fields to proper numbers
-            $promotion = convertFieldsToNumbers($promotion, ['fromClass', 'toClass']);
             
             echo json_encode($promotion);
             break;
@@ -2291,14 +2263,14 @@ function handlePromotions($method, $id, $input, $pdo) {
             }
             
             // Update promotion
-            $stmt = $pdo->prepare("UPDATE promotions SET fromClass = ?, toClass = ?, academicYear = ?, status = ?, promotedStudents = ?, totalStudents = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE promotions SET studentId = ?, fromClass = ?, toClass = ?, academicYear = ?, promotionDate = ?, status = ? WHERE id = ?");
             $stmt->execute([
-                $input['fromClass'] ?? 0,
-                $input['toClass'] ?? 0,
+                $input['studentId'] ?? '',
+                $input['fromClass'] ?? '',
+                $input['toClass'] ?? '',
                 $input['academicYear'] ?? '',
+                $input['promotionDate'] ?? null,
                 $input['status'] ?? 'pending',
-                $input['promotedStudents'] ?? 0,
-                $input['totalStudents'] ?? 0,
                 $id
             ]);
             
@@ -2306,9 +2278,6 @@ function handlePromotions($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM promotions WHERE id = ?");
             $stmt->execute([$id]);
             $promotion = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Convert numeric fields to proper numbers
-            $promotion = convertFieldsToNumbers($promotion, ['fromClass', 'toClass']);
             
             echo json_encode($promotion);
             break;
@@ -2341,117 +2310,81 @@ function handleAlumni($method, $id, $input, $pdo) {
                 // Get specific alumni
                 $stmt = $pdo->prepare("SELECT * FROM alumni WHERE id = ?");
                 $stmt->execute([$id]);
-                $alumnus = $stmt->fetch(PDO::FETCH_ASSOC);
+                $alumni = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($alumnus) {
-                    // Convert numeric fields to proper numbers
-                    $alumnus = convertFieldsToNumbers($alumnus, ['graduationYear']);
-                    echo json_encode($alumnus);
+                if ($alumni) {
+                    echo json_encode($alumni);
                 } else {
                     http_response_code(404);
-                    echo json_encode(['error' => 'Alumnus not found']);
+                    echo json_encode(['error' => 'Alumni not found']);
                 }
             } else {
                 // Get all alumni
                 $stmt = $pdo->query("SELECT * FROM alumni");
                 $alumni = $stmt->fetchAll(PDO::FETCH_ASSOC);
-                // Convert numeric fields to proper numbers
-                foreach ($alumni as &$alumnus) {
-                    $alumnus = convertFieldsToNumbers($alumnus, ['graduationYear']);
-                }
                 echo json_encode($alumni);
             }
             break;
             
         case 'POST':
-            // Add new alumnus
+            // Add new alumni
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO alumni (id, firstName, lastName, fatherName, grNo, class, section, graduationYear, contactNumber, email, address, profession, companyName, achievements, linkedIn, facebook, status, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO alumni (id, studentId, graduationYear, currentOccupation, contactInfo, achievements) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
-                $input['firstName'] ?? '',
-                $input['lastName'] ?? '',
-                $input['fatherName'] ?? '',
-                $input['grNo'] ?? '',
-                $input['class'] ?? '',
-                $input['section'] ?? '',
+                $input['studentId'] ?? '',
                 $input['graduationYear'] ?? 0,
-                $input['contactNumber'] ?? '',
-                $input['email'] ?? '',
-                $input['address'] ?? '',
-                $input['profession'] ?? '',
-                $input['companyName'] ?? '',
-                $input['achievements'] ?? '',
-                $input['linkedIn'] ?? '',
-                $input['facebook'] ?? '',
-                $input['status'] ?? 'active',
-                $input['notes'] ?? ''
+                $input['currentOccupation'] ?? '',
+                $input['contactInfo'] ?? '',
+                $input['achievements'] ?? ''
             ]);
             
-            // Return the created alumnus
+            // Return the created alumni
             $stmt = $pdo->prepare("SELECT * FROM alumni WHERE id = ?");
             $stmt->execute([$id]);
-            $alumnus = $stmt->fetch(PDO::FETCH_ASSOC);
+            $alumni = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Convert numeric fields to proper numbers
-            $alumnus = convertFieldsToNumbers($alumnus, ['graduationYear']);
-            
-            echo json_encode($alumnus);
+            echo json_encode($alumni);
             break;
             
         case 'PUT':
             if (!$id) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Alumnus ID is required']);
+                echo json_encode(['error' => 'Alumni ID is required']);
                 return;
             }
             
-            // Update alumnus
-            $stmt = $pdo->prepare("UPDATE alumni SET firstName = ?, lastName = ?, fatherName = ?, grNo = ?, class = ?, section = ?, graduationYear = ?, contactNumber = ?, email = ?, address = ?, profession = ?, companyName = ?, achievements = ?, linkedIn = ?, facebook = ?, status = ?, notes = ? WHERE id = ?");
+            // Update alumni
+            $stmt = $pdo->prepare("UPDATE alumni SET studentId = ?, graduationYear = ?, currentOccupation = ?, contactInfo = ?, achievements = ? WHERE id = ?");
             $stmt->execute([
-                $input['firstName'] ?? '',
-                $input['lastName'] ?? '',
-                $input['fatherName'] ?? '',
-                $input['grNo'] ?? '',
-                $input['class'] ?? '',
-                $input['section'] ?? '',
+                $input['studentId'] ?? '',
                 $input['graduationYear'] ?? 0,
-                $input['contactNumber'] ?? '',
-                $input['email'] ?? '',
-                $input['address'] ?? '',
-                $input['profession'] ?? '',
-                $input['companyName'] ?? '',
+                $input['currentOccupation'] ?? '',
+                $input['contactInfo'] ?? '',
                 $input['achievements'] ?? '',
-                $input['linkedIn'] ?? '',
-                $input['facebook'] ?? '',
-                $input['status'] ?? 'active',
-                $input['notes'] ?? '',
                 $id
             ]);
             
-            // Return the updated alumnus
+            // Return the updated alumni
             $stmt = $pdo->prepare("SELECT * FROM alumni WHERE id = ?");
             $stmt->execute([$id]);
-            $alumnus = $stmt->fetch(PDO::FETCH_ASSOC);
+            $alumni = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Convert numeric fields to proper numbers
-            $alumnus = convertFieldsToNumbers($alumnus, ['graduationYear']);
-            
-            echo json_encode($alumnus);
+            echo json_encode($alumni);
             break;
             
         case 'DELETE':
             if (!$id) {
                 http_response_code(400);
-                echo json_encode(['error' => 'Alumnus ID is required']);
+                echo json_encode(['error' => 'Alumni ID is required']);
                 return;
             }
             
-            // Delete alumnus
+            // Delete alumni
             $stmt = $pdo->prepare("DELETE FROM alumni WHERE id = ?");
             $stmt->execute([$id]);
             
-            echo json_encode(['message' => 'Alumnus deleted successfully']);
+            echo json_encode(['message' => 'Alumni deleted successfully']);
             break;
             
         default:
@@ -2460,7 +2393,7 @@ function handleAlumni($method, $id, $input, $pdo) {
     }
 }
 
-// Photo Upload handler
+// Photo upload handler
 function handlePhotoUpload($method, $id, $input, $pdo) {
     switch ($method) {
         case 'POST':
@@ -2512,13 +2445,6 @@ function handlePhotoUpload($method, $id, $input, $pdo) {
                     'message' => 'Photo uploaded successfully'
                 ]);
             } else {
-                // Set CORS headers for error responses
-                header("Content-Type: application/json");
-                header("Access-Control-Allow-Origin: http://localhost:5173");
-                header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
-                header("Access-Control-Allow-Headers: Content-Type, Authorization");
-                header("Vary: Origin");
-                
                 http_response_code(500);
                 echo json_encode(['error' => 'Failed to move uploaded file']);
             }
