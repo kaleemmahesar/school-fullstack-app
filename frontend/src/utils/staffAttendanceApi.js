@@ -4,7 +4,7 @@ import { API_BASE_URL } from './apiConfig';
 // Fetch all staff attendance records
 export const fetchStaffAttendanceRecords = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance`);
     if (!response.ok) {
       throw new Error('Failed to fetch staff attendance records');
     }
@@ -19,7 +19,7 @@ export const fetchStaffAttendanceRecords = async () => {
 export const addStaffAttendanceRecord = async (attendanceData) => {
   try {
     // First, check if attendance record for this date already exists
-    const existingResponse = await fetch(`${API_BASE_URL}/staffAttendance?date=${attendanceData.date}`);
+    const existingResponse = await fetch(`${API_BASE_URL}staffAttendance?date=${attendanceData.date}`);
     let existingRecords = [];
     if (existingResponse.ok) {
       existingRecords = await existingResponse.json();
@@ -28,7 +28,7 @@ export const addStaffAttendanceRecord = async (attendanceData) => {
     if (existingRecords && existingRecords.length > 0) {
       // Update existing record
       const existingRecord = existingRecords[0];
-      const response = await fetch(`${API_BASE_URL}/staffAttendance/${existingRecord.id}`, {
+      const response = await fetch(`${API_BASE_URL}staffAttendance/${existingRecord.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export const addStaffAttendanceRecord = async (attendanceData) => {
       return await response.json();
     } else {
       // Create new record
-      const response = await fetch(`${API_BASE_URL}/staffAttendance`, {
+      const response = await fetch(`${API_BASE_URL}staffAttendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export const addStaffAttendanceRecord = async (attendanceData) => {
 // Update an existing staff attendance record
 export const updateStaffAttendanceRecord = async (attendanceData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance/${attendanceData.id}`, {
+    const response = await fetch(`${API_BASE_URL}staffAttendance/${attendanceData.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -88,7 +88,7 @@ export const updateStaffAttendanceRecord = async (attendanceData) => {
 // Get staff attendance records by date
 export const getStaffAttendanceByDate = async (date) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance?date=${date}`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance?date=${date}`);
     if (!response.ok) {
       throw new Error('Failed to fetch staff attendance by date');
     }
@@ -102,7 +102,7 @@ export const getStaffAttendanceByDate = async (date) => {
 // Get staff attendance records by staff member
 export const getStaffAttendanceByStaff = async (staffId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance`);
     if (!response.ok) {
       throw new Error('Failed to fetch staff attendance by staff');
     }
@@ -130,7 +130,7 @@ export const getStaffAttendanceByStaff = async (staffId) => {
 // Get staff attendance records by date range
 export const getStaffAttendanceByDateRange = async (staffId, startDate, endDate) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance`);
     if (!response.ok) {
       throw new Error('Failed to fetch staff attendance by date range');
     }
@@ -160,7 +160,7 @@ export const getStaffAttendanceByDateRange = async (staffId, startDate, endDate)
 // Generate staff attendance report
 export const generateStaffAttendanceReport = async (startDate, endDate, department) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance`);
     if (!response.ok) {
       throw new Error('Failed to generate staff attendance report');
     }

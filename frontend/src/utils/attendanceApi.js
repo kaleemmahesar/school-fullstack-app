@@ -5,7 +5,7 @@ import { API_BASE_URL } from "./apiConfig";
 // Fetch all attendance records
 export const fetchAttendanceRecords = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}?studentsAttendance`);
+    const response = await fetch(`${API_BASE_URL}studentsAttendance`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -31,7 +31,7 @@ export const addAttendanceRecord = async (attendanceData) => {
     }
     
     // First, check if a record already exists for this date and class
-    const existingResponse = await fetch(`${API_BASE_URL}/studentsAttendance?date=${attendanceData.date}&classId=${attendanceData.classId}`);
+    const existingResponse = await fetch(`${API_BASE_URL}studentsAttendance&date=${attendanceData.date}&classId=${attendanceData.classId}`);
     
     if (!existingResponse.ok) {
       throw new Error(`HTTP error! status: ${existingResponse.status}`);
@@ -74,7 +74,7 @@ export const addAttendanceRecord = async (attendanceData) => {
         ]
       };
       
-      const updateResponse = await fetch(`${API_BASE_URL}/studentsAttendance/${existingRecord.id}`, {
+      const updateResponse = await fetch(`${API_BASE_URL}studentsAttendance/${existingRecord.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -101,7 +101,7 @@ export const addAttendanceRecord = async (attendanceData) => {
       };
       
       // Add new record
-      const response = await fetch(`${API_BASE_URL}/studentsAttendance`, {
+      const response = await fetch(`${API_BASE_URL}studentsAttendance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export const addAttendanceRecord = async (attendanceData) => {
 // Update an existing attendance record
 export const updateAttendanceRecord = async (attendanceData) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/studentsAttendance/${attendanceData.id}`, {
+    const response = await fetch(`${API_BASE_URL}studentsAttendance/${attendanceData.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -149,7 +149,14 @@ export const updateAttendanceRecord = async (attendanceData) => {
 export const getAttendanceByDateAndClass = async (date, classId) => {
   try {
     console.log(`Fetching attendance for date=${date}, classId=${classId}`);
-    const response = await fetch(`${API_BASE_URL}/studentsAttendance?date=${date}&classId=${classId}`);
+    
+    // Construct URL with appropriate parameters
+    let url = `${API_BASE_URL}studentsAttendance&date=${date}`;
+    if (classId) {
+      url += `&classId=${classId}`;
+    }
+    
+    const response = await fetch(url);
     console.log('API Response status:', response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -166,7 +173,7 @@ export const getAttendanceByDateAndClass = async (date, classId) => {
 // Get attendance records by student
 export const getAttendanceByStudent = async (studentId) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/studentsAttendance`);
+    const response = await fetch(`${API_BASE_URL}studentsAttendance`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -187,7 +194,7 @@ export const getAttendanceByStudent = async (studentId) => {
 // Generate attendance report
 export const generateAttendanceReport = async (startDate, endDate, classId) => {
   try {
-    let url = `${API_BASE_URL}/studentsAttendance?`;
+    let url = `${API_BASE_URL}studentsAttendance?`;
     
     if (startDate && endDate) {
       // For simplicity, we'll fetch all records and filter on client side

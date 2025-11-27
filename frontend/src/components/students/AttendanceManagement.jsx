@@ -29,7 +29,7 @@ const AttendanceManagement = () => {
   const { attendanceRecords: storedAttendanceRecords, loading, error } = useSelector(state => state.attendance);
   const { schoolInfo } = useSelector(state => state.settings); // Get school info for holidays
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedClass, setSelectedClass] = useState('Class 10');
+  const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
@@ -64,7 +64,7 @@ const AttendanceManagement = () => {
   useEffect(() => {
     if (selectedDate) {
       // Fetch attendance for the selected date, with or without class filter
-      dispatch(fetchAttendanceByDateAndClass({ date: selectedDate, classId: selectedClass || '' }));
+      dispatch(fetchAttendanceByDateAndClass({ date: selectedDate, classId: selectedClass || null }));
     }
   }, [selectedClass, selectedDate, dispatch]);
 
