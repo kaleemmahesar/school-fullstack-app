@@ -351,7 +351,7 @@ const ChallanModals = ({
       {showBulkGenerateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Bulk Generate Challans</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">Bulk Generate Challanss</h3>
             <form onSubmit={submitBulkGenerateWithClassFees} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>

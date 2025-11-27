@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
-import { addStudent, updateStudent } from '../store/studentsSlice';
+import { addStudent, updateStudent, fetchStudents } from '../store/studentsSlice';
 import { fetchClasses } from '../store/classesSlice';
 import { FaUserGraduate, FaIdCard, FaPhone, FaEnvelope, FaCalendar, FaSchool, FaMoneyBillWave, FaCamera, FaArrowLeft, FaPrint, FaUser, FaHome, FaMapMarker, FaMoon, FaSun, FaInfoCircle } from 'react-icons/fa';
 import { API_BASE_URL, API_BASE_URL_PHOTO } from '../utils/apiConfig';
@@ -65,7 +65,36 @@ const AdmissionPage = () => {
 
   useEffect(() => {
     dispatch(fetchClasses());
+    dispatch(fetchStudents()); // Add this to fetch students data
   }, [dispatch]);
+
+  // Function to generate next GR number
+  const generateNextGRNumber = () => {
+    if (students && students.length > 0) {
+      // Find the highest numeric GR number and increment it
+      const grNumbers = students
+        .map(student => student.grNo)
+        .filter(grNo => grNo && /^\d+$/.test(grNo)) // Only consider purely numeric GR numbers
+        .map(grNo => parseInt(grNo, 10));
+      
+      if (grNumbers.length > 0) {
+        const maxGRNumber = Math.max(...grNumbers);
+        return (maxGRNumber + 1).toString();
+      }
+    }
+    // If no students or no valid GR numbers found, start with 1
+    return '1';
+  };
+
+  // Set initial GR number when component mounts or when students data changes
+  useEffect(() => {
+    if (!isEditMode && students && !formData.grNo) {
+      setFormData(prevFormData => ({
+        ...prevFormData,
+        grNo: generateNextGRNumber()
+      }));
+    }
+  }, [students, isEditMode]);
 
   useEffect(() => {
     if (studentData) {
@@ -94,10 +123,25 @@ const AdmissionPage = () => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
-    setFormData({
-      ...formData,
-      [name]: newValue,
-    });
+    // If class is being changed, automatically select section "A" if available
+    if (name === 'class') {
+      // Find sections for the selected class
+      const sections = classes.find(cls => cls.name === newValue)?.sections || [];
+      
+      // Check if section "A" exists in the sections
+      const sectionA = sections.find(section => section.name === 'A');
+      
+      setFormData({
+        ...formData,
+        class: newValue,
+        section: sectionA ? 'A' : '' // Auto-select section "A" if available
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: newValue,
+      });
+    }
 
     // Clear error for this field when user starts typing
     if (errors[name]) {
@@ -162,6 +206,13 @@ const AdmissionPage = () => {
   const validateFormFields = () => {
     // Create a copy of the validation rules
     const validationRules = { ...admissionFormValidationRules };
+    
+    // For new admissions, GR number is auto-generated, so we can make it optional
+    if (!isEditMode) {
+      validationRules.grNo = [
+        { type: 'length', minLength: 1, maxLength: 20 }
+      ];
+    }
     
     // Add validation rules for transfer student fields if the student is a transfer student
     if (formData.isTransferStudent) {
@@ -277,7 +328,7 @@ const AdmissionPage = () => {
       }
       
       // Navigate back to students page
-      navigate('/students');
+      navigate('/batches');
     } catch (error) {
       console.error('Form submission error:', error);
       alert('Failed to submit form. Please try again.');
@@ -454,14 +505,15 @@ const AdmissionPage = () => {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      GR Numbers
+                      GR Number
                     </label>
                     <input
                       type="text"
                       name="grNo"
                       value={formData.grNo}
                       onChange={handleInputChange}
-                      className={`block w-full px-4 py-2.5 border ${errors.grNo ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition`}
+                      readOnly={!isEditMode} // Make it read-only for new admissions
+                      className={`block w-full px-4 py-2.5 border ${errors.grNo ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition ${!isEditMode ? 'bg-gray-100' : ''}`}
                       placeholder="Enter GR Number"
                     />
                     {errors.grNo && (
@@ -876,7 +928,7 @@ const AdmissionPage = () => {
               <div className="flex justify-end space-x-4 pt-6">
                 <button
                   type="button"
-                  onClick={() => navigate('/students')}
+                  onClick={() => navigate('/batches')}
                   className="inline-flex items-center px-5 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition"
                 >
                   Cancel

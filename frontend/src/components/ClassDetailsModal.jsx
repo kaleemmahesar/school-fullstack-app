@@ -109,7 +109,7 @@ const ClassDetailsModal = ({
                   <div>
                     <p className="text-xs text-gray-600">Monthly Fees</p>
                     <p className="text-base font-bold text-gray-900">
-                      {classItem.monthlyFees?.toLocaleString() || 0} Rs
+                      Rs {Math.round(classItem.monthlyFees) || 0}
                     </p>
                   </div>
                 </div>

@@ -475,49 +475,49 @@ const FeesVoucherGenerator = () => {
                       <tbody>
                         <tr>
                           <td>Monthly Fee</td>
-                          <td>{voucher.fees.monthlyFee.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.monthlyFee)}</td>
                         </tr>
                         <tr>
                           <td>Exam Fee</td>
-                          <td>{voucher.fees.examFee.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.examFee)}</td>
                         </tr>
                         <tr>
                           <td>ID Card Fee</td>
-                          <td>{voucher.fees.idCardFee.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.idCardFee)}</td>
                         </tr>
                         <tr>
                           <td>Transport Fee</td>
-                          <td>{voucher.fees.transportFee.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.transportFee)}</td>
                         </tr>
                         <tr>
                           <td>Previous Dues</td>
-                          <td>{voucher.fees.previousDues.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.previousDues)}</td>
                         </tr>
                         <tr>
                           <td>Late Fee</td>
-                          <td>{voucher.fees.lateFee.toFixed(2)}</td>
+                          <td>{Math.round(voucher.fees.lateFee)}</td>
                         </tr>
                         {voucher.fees.admissionFee > 0 && (
                           <tr>
                             <td>Admission Fee</td>
-                            <td>{voucher.fees.admissionFee.toFixed(2)}</td>
+                            <td>{Math.round(voucher.fees.admissionFee)}</td>
                           </tr>
                         )}
                         {voucher.fees.oldBalance > 0 && (
                           <tr>
                             <td>Old Balance</td>
-                            <td>{voucher.fees.oldBalance.toFixed(2)}</td>
+                            <td>{Math.round(voucher.fees.oldBalance)}</td>
                           </tr>
                         )}
                         {voucher.fees.discount > 0 && (
                           <tr>
                             <td>Discount</td>
-                            <td>-{voucher.fees.discount.toFixed(2)}</td>
+                            <td>-{Math.round(voucher.fees.discount)}</td>
                           </tr>
                         )}
                         <tr className="total-row">
                           <td>Total Amount</td>
-                          <td>{voucher.totalAmount.toFixed(2)}</td>
+                          <td>{Math.round(voucher.totalAmount)}</td>
                         </tr>
                       </tbody>
                     </table>

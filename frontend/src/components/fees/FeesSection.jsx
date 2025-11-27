@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents, generateChallan, bulkGenerateChallans, bulkUpdateChallanStatuses, payFees } from '../../store/studentsSlice';
 import { fetchBatches } from '../../store/alumniSlice';
+import { fetchClasses } from '../../store/classesSlice'; // Add this import
 import { FaEye, FaReceipt, FaCheck, FaDollarSign, FaPrint, FaUser, FaUsers, FaInfoCircle, FaPlus, FaChartBar, FaExclamation } from 'react-icons/fa';
 import FeesHeader from './FeesHeader';
 import FeesStats from './FeesStats';
@@ -64,6 +65,7 @@ const FeesSection = () => {
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
   const [viewMode, setViewMode] = useState('student');
+  // Fix useState initialization
   const [selectedBatch, setSelectedBatch] = useState('');
   
   // Pagination state
@@ -73,7 +75,8 @@ const FeesSection = () => {
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchBatches());
-  }, [dispatch]);
+    dispatch(fetchClasses()); // Add this line to fetch classes data
+  }, [dispatch]); // Fix useState initialization for selectedBatch
 
   // Set current academic year as default batch
   useEffect(() => {
@@ -234,22 +237,22 @@ const FeesSection = () => {
   const studentStats = useMemo(() => generateStudentFeeStats(), [students]);
 
   const filteredStudents = useMemo(() => studentStats.filter(student => {
-  const matchesSearch = 
-    `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.section.toLowerCase().includes(searchTerm.toLowerCase());
-  
-  const matchesStatus = filterStatus === 'all' || 
-    (filterStatus === 'paid' && student.completionRate === 100 && student.admissionPaid) || 
-    (filterStatus === 'pending' && (student.completionRate < 100 || !student.admissionPaid));
+    const matchesSearch = 
+      `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.section.toLowerCase().includes(searchTerm.toLowerCase());
     
-  const matchesClass = !selectedClass || student.class === selectedClass;
-  const matchesSection = !selectedSection || student.section === selectedSection;
-  const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
-  
-  return matchesSearch && matchesStatus && matchesClass && matchesSection && matchesBatch;
-}), [studentStats, searchTerm, filterStatus, selectedClass, selectedSection, selectedBatch]);
-  
+    const matchesStatus = filterStatus === 'all' || 
+      (filterStatus === 'paid' && student.completionRate === 100 && student.admissionPaid) || 
+      (filterStatus === 'pending' && (student.completionRate < 100 || !student.admissionPaid));
+      
+    const matchesClass = !selectedClass || student.class === selectedClass;
+    const matchesSection = !selectedSection || student.section === selectedSection;
+    const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
+    
+    return matchesSearch && matchesStatus && matchesClass && matchesSection && matchesBatch;
+  }), [studentStats, searchTerm, filterStatus, selectedClass, selectedSection, selectedBatch]);
+
   // Pagination functions
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(filteredStudents.length / itemsPerPage)));
@@ -578,10 +581,12 @@ const FeesSection = () => {
       const generatedChallans = validStudentIds.map(studentId => {
         const student = students.find(s => s.id === studentId);
         if (student) {
+          const amount = getClassBasedFees(student.class) || 0;
+          
           return {
             id: `challan-${studentId}-${Date.now()}`,
             month: formattedMonth,
-            amount: getClassBasedFees(student.class) || 0,
+            amount: amount,
             dueDate: data.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             description: data.description || '',
             paid: false,

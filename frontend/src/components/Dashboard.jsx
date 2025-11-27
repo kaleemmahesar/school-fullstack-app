@@ -497,19 +497,15 @@ const Dashboard = () => {
     const { filteredExpenses, filteredStaff, filteredFees, filteredSubsidies } = filteredData;
     const activities = [];
     
-    // Add student admission activities
+    // Add student admission activities (without admission fees to avoid duplication)
     students.forEach(student => {
-      // For subsidy view, admission fees are 0
-      // For fees view, show the actual admission fees amount
-      const admissionFeeAmount = viewMode === 'subsidies' ? 0 : (parseFloat(student.admissionFees) || 0);
-      
       activities.push({
         id: `student-${student.id}`,
         type: 'Student Admission',
         description: `${student.firstName} admitted to ${student.class}`,
         date: student.admissionTimestamp || student.dateOfAdmission || new Date().toISOString(),
         category: 'Students',
-        amount: admissionFeeAmount
+        amount: 0  // Set to 0 to avoid duplication with fee collection
       });
     });
     
@@ -1033,7 +1029,6 @@ const Dashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
                       {activity.date ? (
-                        activity.date.includes('T') ? 
                         new Date(activity.date).toLocaleString('en-US', {
                           year: 'numeric',
                           month: '2-digit',
@@ -1042,11 +1037,6 @@ const Dashboard = () => {
                           minute: '2-digit',
                           second: '2-digit',
                           hour12: false
-                        }) : 
-                        new Date(activity.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: '2-digit',
-                          day: '2-digit'
                         })
                       ) : 'N/A'}
                     </td>

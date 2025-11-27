@@ -360,7 +360,6 @@ export const generateChallan = createAsyncThunkWithToast(
     
     // Create new challan
     const newChallan = {
-      id: `challan-${challanData.studentId}-${Date.now()}`,
       month: formattedMonth,
       amount: parseFloat(challanData.amount) || 0,
       dueDate: challanData.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -458,11 +457,29 @@ export const bulkGenerateChallans = createAsyncThunkWithToast(
         }
       }
       
+      // Get class-based fees instead of using student.monthlyFees
+      let classBasedFees = 0;
+      if (student.class) {
+        // Fetch class data to get the monthly fees
+        try {
+          // Construct the URL properly for query parameters
+          const classUrl = `${API_BASE_URL}classes&name=${encodeURIComponent(student.class)}`;
+          const classResponse = await fetch(classUrl);
+          if (classResponse.ok) {
+            const classData = await classResponse.json();
+            if (classData && classData.monthlyFees) {
+              classBasedFees = parseFloat(classData.monthlyFees) || 0;
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch class data for ${student.class}:`, error);
+        }
+      }
+      
       // Create new challan
       const newChallan = {
-        id: `challan-${studentId}-${Date.now()}`,
         month: formattedMonth,
-        amount: student.monthlyFees || 0,
+        amount: classBasedFees,
         dueDate: challanTemplate.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: challanTemplate.description || '',
         paid: false,

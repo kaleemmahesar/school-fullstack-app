@@ -9,6 +9,7 @@ import { fetchExpenses } from '../store/expensesSlice';
 import { fetchStaff } from '../store/staffSlice';
 import { fetchClasses } from '../store/classesSlice';
 import { fetchSubsidies } from '../store/subsidiesSlice';
+import { fetchSchoolInfo } from '../store/settingsSlice';
 import { useSchoolFunding } from '../hooks/useSchoolFunding';
 import { usePermissions } from '../hooks/usePermissions';
 import NotificationPanel from './NotificationPanel';
@@ -35,6 +36,7 @@ const Layout = ({ children }) => {
     dispatch(fetchStaff());
     dispatch(fetchClasses());
     dispatch(fetchSubsidies());
+    dispatch(fetchSchoolInfo());
   }, [dispatch]);
 
   // Check for user in localStorage on initial load

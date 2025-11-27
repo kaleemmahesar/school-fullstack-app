@@ -1,0 +1,227 @@
+<?php
+// Students handler
+// Debug payload logging removed
+function handleStudents($method, $id, $input, $pdo) {
+    switch ($method) {
+        case 'GET':
+            if ($id) {
+                // Get specific student
+                $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+                $stmt->execute([$id]);
+                $student = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($student) {
+                    // Get fees history for this student
+                    $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+                    $stmt->execute([$id]);
+                    $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $student['feesHistory'] = $feesHistory;
+                    
+                    // Format the student data to ensure proper data types
+                    $student = formatStudentData($student);
+                    
+                    echo json_encode($student);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['error' => 'Student not found']);
+                }
+            } else {
+                // Get all students
+                $stmt = $pdo->query("SELECT * FROM students");
+                $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Add fees history to each student
+                foreach ($students as &$student) {
+                    $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+                    $stmt->execute([$student['id']]);
+                    $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    $student['feesHistory'] = $feesHistory;
+                }
+                
+                // Format all students data to ensure proper data types
+                $students = formatStudentsData($students);
+                
+                echo json_encode($students);
+            }
+            break;
+            
+        case 'POST':
+            // Add new student
+            // Let the database generate the auto-incrementing ID
+            $stmt = $pdo->prepare("INSERT INTO students (photo, grNo, firstName, lastName, fatherName, religion, address, dateOfBirth, birthPlace, lastSchoolAttended, dateOfAdmission, class, section, monthlyFees, admissionFees, feesPaid, totalFees, familyId, relationship, parentId, status, academicYear, admissionTimestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            
+            $stmt->execute([
+                $input['photo'] ?? '',
+                $input['grNo'] ?? '',
+                $input['firstName'] ?? '',
+                $input['lastName'] ?? '',
+                $input['fatherName'] ?? '',
+                $input['religion'] ?? '',
+                $input['address'] ?? '',
+                $input['dateOfBirth'] ?? null,
+                $input['birthPlace'] ?? '',
+                $input['lastSchoolAttended'] ?? '',
+                $input['dateOfAdmission'] ?? null,
+                $input['class'] ?? '',
+                $input['section'] ?? '',
+                $input['monthlyFees'] ?? 0,
+                $input['admissionFees'] ?? 0,
+                $input['feesPaid'] ?? 0,
+                $input['totalFees'] ?? 0,
+                $input['familyId'] ?? '',
+                $input['relationship'] ?? '',
+                $input['parentId'] ?? null,
+                $input['status'] ?? 'studying',
+                $input['academicYear'] ?? '',
+                $input['admissionTimestamp'] ?? date('Y-m-d H:i:s')
+            ]);
+            
+            // Get the auto-generated ID
+            $id = $pdo->lastInsertId();
+            
+            // If fees history is provided, insert it
+            if (isset($input['feesHistory']) && is_array($input['feesHistory'])) {
+                foreach ($input['feesHistory'] as $fee) {
+                    $feeId = $fee['id'] ?? uniqid('challan-');
+                    $stmt = $pdo->prepare("INSERT INTO fees_history (id, student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([
+                        $feeId,
+                        $id,
+                        $fee['month'] ?? '',
+                        $fee['amount'] ?? 0,
+                        $fee['paid'] ?? false,
+                        $fee['date'] ?? null,
+                        $fee['dueDate'] ?? null,
+                        $fee['status'] ?? 'pending',
+                        $fee['type'] ?? '',
+                        $fee['academicYear'] ?? '',
+                        $fee['paymentTimestamp'] ?? null,
+                        $fee['generationTimestamp'] ?? null,
+                        $fee['paymentMethod'] ?? null,
+                        $fee['fineAmount'] ?? 0,
+                        $fee['description'] ?? ''
+                    ]);
+                }
+            }
+            
+            // Return the created student
+            $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+            $stmt->execute([$id]);
+            $student = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Get fees history for this student
+            $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$id]);
+            $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $student['feesHistory'] = $feesHistory;
+            
+            // Format the student data to ensure proper data types
+            $student = formatStudentData($student);
+            
+            echo json_encode($student);
+            break;
+            
+        case 'PUT':
+            if (!$id) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Student ID is required']);
+                return;
+            }
+            
+            // Update student
+            $stmt = $pdo->prepare("UPDATE students SET photo = ?, grNo = ?, firstName = ?, lastName = ?, fatherName = ?, religion = ?, address = ?, dateOfBirth = ?, birthPlace = ?, lastSchoolAttended = ?, dateOfAdmission = ?, class = ?, section = ?, dateOfLeaving = ?, classInWhichLeft = ?, reasonOfLeaving = ?, remarks = ?, monthlyFees = ?, admissionFees = ?, feesPaid = ?, totalFees = ?, familyId = ?, relationship = ?, parentId = ?, status = ?, academicYear = ? WHERE id = ?");
+            
+            $stmt->execute([
+                $input['photo'] ?? '',
+                $input['grNo'] ?? '',
+                $input['firstName'] ?? '',
+                $input['lastName'] ?? '',
+                $input['fatherName'] ?? '',
+                $input['religion'] ?? '',
+                $input['address'] ?? '',
+                $input['dateOfBirth'] ?? null,
+                $input['birthPlace'] ?? '',
+                $input['lastSchoolAttended'] ?? '',
+                $input['dateOfAdmission'] ?? null,
+                $input['class'] ?? '',
+                $input['section'] ?? '',
+                $input['dateOfLeaving'] ?? null,
+                $input['classInWhichLeft'] ?? '',
+                $input['reasonOfLeaving'] ?? '',
+                $input['remarks'] ?? '',
+                $input['monthlyFees'] ?? 0,
+                $input['admissionFees'] ?? 0,
+                $input['feesPaid'] ?? 0,
+                $input['totalFees'] ?? 0,
+                $input['familyId'] ?? '',
+                $input['relationship'] ?? '',
+                $input['parentId'] ?? null,
+                $input['status'] ?? 'studying',
+                $input['academicYear'] ?? '',
+                $id
+            ]);
+            
+            // If fees history is provided, update it
+            if (isset($input['feesHistory']) && is_array($input['feesHistory'])) {
+                // First delete existing fees history for this student
+                $stmt = $pdo->prepare("DELETE FROM fees_history WHERE student_id = ?");
+                $stmt->execute([$id]);
+                
+                // Then insert new fees history
+                foreach ($input['feesHistory'] as $fee) {
+                    $stmt = $pdo->prepare("INSERT INTO fees_history (student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([
+                        $id,
+                        $fee['month'] ?? '',
+                        $fee['amount'] ?? 0,
+                        $fee['paid'] ?? false,
+                        $fee['date'] ?? null,
+                        $fee['dueDate'] ?? null,
+                        $fee['status'] ?? 'pending',
+                        $fee['type'] ?? '',
+                        $fee['academicYear'] ?? '',
+                        $fee['paymentTimestamp'] ?? null,
+                        $fee['generationTimestamp'] ?? null,
+                        $fee['paymentMethod'] ?? null,
+                        $fee['fineAmount'] ?? 0,
+                        $fee['description'] ?? ''
+                    ]);
+                }
+            }
+            
+            // Return the updated student
+            $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+            $stmt->execute([$id]);
+            $student = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Get fees history for this student
+            $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+            $stmt->execute([$id]);
+            $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $student['feesHistory'] = $feesHistory;
+            
+            // Format the student data to ensure proper data types
+            $student = formatStudentData($student);
+            
+            echo json_encode($student);
+            break;
+            
+        case 'DELETE':
+            if (!$id) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Student ID is required']);
+                return;
+            }
+            
+            // Delete student (cascades to fees_history)
+            $stmt = $pdo->prepare("DELETE FROM students WHERE id = ?");
+            $stmt->execute([$id]);
+            
+            echo json_encode(['message' => 'Student deleted successfully']);
+            break;
+            
+        default:
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+    }
+}

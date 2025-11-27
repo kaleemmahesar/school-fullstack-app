@@ -21,6 +21,11 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
   
   // Define class range based on school level
   const getClassRange = () => {
+    // If schoolInfo is not loaded yet, return a default range
+    if (!schoolInfo) {
+      return { min: 1, max: 10 }; // Default to a wide range while loading
+    }
+    
     switch (schoolLevel) {
       case 'primary': return { min: 1, max: 5 };
       case 'middle': return { min: 1, max: 8 };
@@ -37,7 +42,7 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
     if (classData) {
       setFormData({
         name: classData.name,
-        monthlyFees: classData.monthlyFees || '',
+        monthlyFees: classData.monthlyFees ? Math.round(classData.monthlyFees) : '',
         sections: classData.sections && classData.sections.length > 0 
           ? classData.sections.map((section, index) => ({ 
               id: section.id || `${classData.id || Date.now()}-${index}`, 
@@ -224,11 +229,17 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
                 </div>
               )}
               <div className="mt-1 text-xs text-gray-500">
-                {`For a ${schoolLevel} school, valid classes are: `}
-                {hasPG && 'PG, '}
-                {hasNursery && 'Nursery, '}
-                {hasKG && 'KG, '}
-                {`Class ${classRange.min}-${classRange.max}`}
+                {schoolInfo ? (
+                  <>
+                    {`For a ${schoolLevel} school, valid classes are: `}
+                    {hasPG && 'PG, '}
+                    {hasNursery && 'Nursery, '}
+                    {hasKG && 'KG, '}
+                    {`Class ${classRange.min}-${classRange.max}`}
+                  </>
+                ) : (
+                  "Loading school configuration..."
+                )}
               </div>
             </div>
 

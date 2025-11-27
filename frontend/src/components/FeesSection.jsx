@@ -170,7 +170,7 @@ const FeesSection = () => {
         paidAmount,
         pendingAmount,
         admissionPaid,
-        completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : 0
+        completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : (admissionPaid ? 100 : 0)
       };
     });
   };
@@ -252,9 +252,14 @@ const FeesSection = () => {
     
     // Calculate completion rate for each family
     Object.values(familyMap).forEach(family => {
+      // Check if all family challans are paid
+      const allChallansPaid = family.totalChallans > 0 && family.paidChallans === family.totalChallans;
+      // Check if all family admission fees are paid
+      const allAdmissionPaid = family.students.every(student => student.admissionPaid);
+      
       family.completionRate = family.totalChallans > 0 
         ? Math.round((family.paidChallans / family.totalChallans) * 100) 
-        : 0;
+        : (allAdmissionPaid ? 100 : 0);
     });
     
     return Object.values(familyMap);
@@ -353,30 +358,9 @@ const FeesSection = () => {
   };
 
   // Submit payment function
-  const submitPayment = (data) => {
+  const processPayment = (data) => {
     dispatch(payFees(data));
     setShowPaymentModal(false);
-  };
-              paymentMethod: data.paymentMethod,
-              paymentDate: data.paymentDate || new Date().toISOString().split('T')[0] // Today's date if not provided
-            };
-          }
-        }
-      }
-      return null;
-    }).filter(update => update !== null);
-    
-    if (challanUpdates.length > 0) {
-      dispatch(bulkUpdateChallanStatuses({ challanUpdates }));
-      
-      // Show success message
-      setTimeout(() => {
-        alert(`Successfully updated ${challanUpdates.length} challan(s)!`);
-      }, 100);
-    }
-    
-    setShowBulkUpdateModal(false);
-    setBulkSelectedChallans([]);
   };
 
   const handleGenerateChallan = () => {
@@ -702,7 +686,7 @@ const FeesSection = () => {
     setShowPaymentModal(true);
   };
 
-  const submitPayment = (e) => {
+  const handlePaymentSubmit = (e) => {
     e.preventDefault();
     if (detailViewStudent && paymentData.challanId) {
       const challan = detailViewStudent.feesHistory.find(c => c.id === paymentData.challanId);
@@ -784,7 +768,7 @@ const FeesSection = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Process Payment</h3>
-            <form onSubmit={submitPayment} className="space-y-4">
+            <form onSubmit={handlePaymentSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
                 <select
