@@ -20,7 +20,7 @@ const ClassesSection = () => {
   const [selectedClass, setSelectedClass] = useState(null);
   const [currentClass, setCurrentClass] = useState(null);
   const [feesAmount, setFeesAmount] = useState('');
-  const [subjectData, setSubjectData] = useState({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
+  const [subjectData, setSubjectData] = useState({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
   const [editingSubject, setEditingSubject] = useState(null);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const ClassesSection = () => {
   const handleManageSubjects = (classItem) => {
     setSelectedClass(classItem);
     // Reset the subject form when opening the modal
-    setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
+    setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
     setShowSubjectModal(true);
   };
 
@@ -122,7 +122,7 @@ const ClassesSection = () => {
       name: subject.name,
       code: subject.code,
       teacherId: subject.teacher_id || '',
-      teacherName: subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : '',
+      teacherName: subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : 'No teacher assigned',
       maxMarks: subject.maxMarks || 100
     });
   };
@@ -333,7 +333,7 @@ const ClassesSection = () => {
                     <div className="flex flex-wrap gap-1">
                       {classItem.subjects && classItem.subjects.map((subject) => (
                         <span key={subject.id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                          <FaGraduationCap className="mr-1" /> {subject.name} ({subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : 'No teacher'})
+                          <FaGraduationCap className="mr-1" /> {subject.name} ({subject.teacherFirstName ? `${subject.teacherFirstName} ${subject.teacherLastName}` : 'No teacher assigned'})
                         </span>
                       ))}
                       {(!classItem.subjects || classItem.subjects.length === 0) && (
@@ -508,17 +508,6 @@ const ClassesSection = () => {
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Subject Code</label>
-                      <input
-                        type="text"
-                        value={subjectData.code}
-                        onChange={(e) => setSubjectData({...subjectData, code: e.target.value})}
-                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="MATH"
-                      />
-                    </div>
-                    
-                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
                       <select
                         value={subjectData.teacherId || ''}
@@ -566,7 +555,7 @@ const ClassesSection = () => {
                           type="button"
                           onClick={() => {
                             setEditingSubject(null);
-                            setSubjectData({ name: '', code: '', teacherId: '', teacherName: '', maxMarks: 100 });
+                            setSubjectData({ name: '', teacherId: '', teacherName: '', maxMarks: 100 });
                           }}
                           className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         >
@@ -595,11 +584,6 @@ const ClassesSection = () => {
                               <div className="text-xs text-gray-500">
                                 Max Marks: {subject.maxMarks || 100}
                               </div>
-                              {subject.code && (
-                                <div className="text-xs text-gray-500">
-                                  Code: {subject.code}
-                                </div>
-                              )}
                             </div>
                             <div className="ml-2 flex space-x-1">
                               <button

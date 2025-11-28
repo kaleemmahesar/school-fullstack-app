@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateSchoolInfo, fetchSchoolInfo, setHolidays } from '../store/settingsSlice';
-import { FaSchool, FaGraduationCap, FaToggleOn, FaToggleOff, FaSave, FaUndo, FaCalendarAlt, FaPlus, FaTrash, FaSun, FaSnowflake } from 'react-icons/fa';
+import { FaSchool, FaGraduationCap, FaToggleOn, FaToggleOff, FaSave, FaUndo, FaCalendarAlt, FaPlus, FaTrash, FaSun, FaSnowflake, FaBook, FaQuestionCircle } from 'react-icons/fa';
 import { SCHOOL_CONFIG } from '../config/schoolConfig';
+import AppGuideModal from './settings/AppGuideModal';
 
 const SettingsPage = () => {
   const dispatch = useDispatch();
@@ -23,6 +24,9 @@ const SettingsPage = () => {
   
   // Add state for weekend configuration
   const [weekendDays, setWeekendDays] = useState([0]); // Default to Sunday (0)
+  
+  // State for AppGuideModal
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   // Initialize form with school info
   useEffect(() => {
@@ -226,6 +230,17 @@ const SettingsPage = () => {
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">School Settings</h1>
         <p className="text-gray-600 mt-1">Configure your school's basic information</p>
+      </div>
+
+      {/* Help Button */}
+      <div className="mb-4">
+        <button
+          onClick={() => setIsGuideOpen(true)}
+          className="inline-flex items-center px-4 py-2 border border-blue-300 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <FaQuestionCircle className="mr-2" />
+          How to Use This Page - Complete Guide
+        </button>
       </div>
 
       {error && (
@@ -546,6 +561,9 @@ const SettingsPage = () => {
           </div>
         </form>
       </div>
+
+      {/* App Guide Modal */}
+      <AppGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </div>
   );
 };

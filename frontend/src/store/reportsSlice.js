@@ -107,6 +107,7 @@ export const generateStudentReport = createAsyncThunk(
         id: Date.now().toString(),
         studentId: studentId,
         studentName: student ? `${student.firstName} ${student.lastName}` : 'Class Report',
+        grNo: student ? student.grNo : '', // Add GR No to the report
         class: student ? student.class : className,
         section: student ? student.section : '',
         academicYear: academicYear || 'All Years', // Include academic year

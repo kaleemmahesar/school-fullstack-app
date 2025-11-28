@@ -45,6 +45,7 @@ const AppGuideModal = ({ isOpen, onClose }) => {
                 <li><a href="#financial" className="hover:underline">Financial Reporting</a></li>
                 <li><a href="#settings" className="hover:underline">Settings & Configuration</a></li>
                 <li><a href="#printing" className="hover:underline">Printing & Export Features</a></li>
+                <li><a href="#workflow" className="hover:underline">Step-by-Step Workflow Guide</a></li>
               </ul>
             </div>
 
@@ -441,10 +442,222 @@ const AppGuideModal = ({ isOpen, onClose }) => {
             </section>
 
             {/* Conclusion */}
+            <section id="workflow" className="mb-6">
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Getting Started - Complete Workflow Guide</h3>
+              <p className="mb-4 text-gray-700">
+                Follow this step-by-step guide to set up and use the School Management System effectively. 
+                This workflow ensures all components are properly configured for optimal system performance.
+              </p>
+              
+              {/* Step 1: Initial Setup */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-blue-700 mb-3 flex items-center">
+                  <span className="bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">1</span>
+                  Initial Setup & Configuration
+                </h4>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-blue-600 font-bold mr-2">•</span>
+                      <span><strong>Access Settings:</strong> Navigate to Settings section (Administrator access required)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-blue-600 font-bold mr-2">•</span>
+                      <span><strong>Configure School Information:</strong> Enter school name, address, contact details, and upload logo</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-blue-600 font-bold mr-2">•</span>
+                      <span><strong>Select Funding Model:</strong> Choose between Traditional (fee-collecting) or NGO-funded model</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-blue-600 font-bold mr-2">•</span>
+                      <span><strong>Set Academic Preferences:</strong> Configure weekends, vacation periods, and academic year</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 2: Academic Structure */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-green-700 mb-3 flex items-center">
+                  <span className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">2</span>
+                  Create Academic Structure
+                </h4>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-green-600 font-bold mr-2">•</span>
+                      <span><strong>Create Batches:</strong> Set up academic batches/years with start and end dates</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-green-600 font-bold mr-2">•</span>
+                      <span><strong>Define Classes:</strong> Add classes (e.g., Class 1, Class 2) with fee structures (Traditional schools)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-green-600 font-bold mr-2">•</span>
+                      <span><strong>Set Up Sections:</strong> Create sections within classes (e.g., Section A, Section B)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-green-600 font-bold mr-2">•</span>
+                      <span><strong>Add Subjects:</strong> Define subjects taught in each class</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 3: Staff Management */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-purple-700 mb-3 flex items-center">
+                  <span className="bg-purple-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">3</span>
+                  Register Staff Members
+                </h4>
+                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      <span><strong>Add Teachers:</strong> Register teaching staff with personal details and qualifications</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      <span><strong>Assign Roles:</strong> Link teachers to specific subjects and classes</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      <span><strong>Configure Salaries:</strong> Set base salaries and allowances for staff members</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-purple-600 font-bold mr-2">•</span>
+                      <span><strong>Non-Teaching Staff:</strong> Add administrative and support staff</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 4: Student Enrollment */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-yellow-700 mb-3 flex items-center">
+                  <span className="bg-yellow-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">4</span>
+                  Enroll Students
+                </h4>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-yellow-600 font-bold mr-2">•</span>
+                      <span><strong>Student Admission:</strong> Add new students with complete personal and family information</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-600 font-bold mr-2">•</span>
+                      <span><strong>Family Linking:</strong> Connect siblings or family members for consolidated billing</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-600 font-bold mr-2">•</span>
+                      <span><strong>Class Assignment:</strong> Assign students to appropriate classes and sections</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-yellow-600 font-bold mr-2">•</span>
+                      <span><strong>Photo Upload:</strong> Add student photographs for identification purposes</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 5: Daily Operations */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-red-700 mb-3 flex items-center">
+                  <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">5</span>
+                  Daily Operations Management
+                </h4>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-red-600 font-bold mr-2">•</span>
+                      <span><strong>Attendance Tracking:</strong> Record daily attendance for students and staff</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-red-600 font-bold mr-2">•</span>
+                      <span><strong>Fee Management:</strong> Generate challans and process payments (Traditional schools)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-red-600 font-bold mr-2">•</span>
+                      <span><strong>Subsidy Tracking:</strong> Monitor NGO subsidies and funding (NGO schools)</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-red-600 font-bold mr-2">•</span>
+                      <span><strong>Expense Recording:</strong> Log all school expenditures with categories</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 6: Academic Activities */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-indigo-700 mb-3 flex items-center">
+                  <span className="bg-indigo-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">6</span>
+                  Academic Activities & Assessments
+                </h4>
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-indigo-600 font-bold mr-2">•</span>
+                      <span><strong>Exam Scheduling:</strong> Plan examinations with dates, subjects, and classes</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-indigo-600 font-bold mr-2">•</span>
+                      <span><strong>Marks Entry:</strong> Record student performance and grades</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-indigo-600 font-bold mr-2">•</span>
+                      <span><strong>Report Generation:</strong> Create progress reports and mark sheets</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-indigo-600 font-bold mr-2">•</span>
+                      <span><strong>Certificate Issuance:</strong> Generate completion and achievement certificates</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              {/* Step 7: Financial Monitoring */}
+              <div className="mb-6">
+                <h4 className="font-bold text-lg text-teal-700 mb-3 flex items-center">
+                  <span className="bg-teal-600 text-white rounded-full w-6 h-6 flex items-center justify-center mr-2 text-sm">7</span>
+                  Financial Monitoring & Reporting
+                </h4>
+                <div className="bg-teal-50 border border-teal-200 rounded-lg p-4 ml-8">
+                  <ul className="space-y-2">
+                    <li className="flex items-start">
+                      <span className="text-teal-600 font-bold mr-2">•</span>
+                      <span><strong>Financial Dashboard:</strong> Monitor income vs. expenses in real-time</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-teal-600 font-bold mr-2">•</span>
+                      <span><strong>Transaction History:</strong> Review all financial transactions with filters</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-teal-600 font-bold mr-2">•</span>
+                      <span><strong>Export Reports:</strong> Generate CSV/PDF reports for auditing and analysis</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-teal-600 font-bold mr-2">•</span>
+                      <span><strong>Staff Payroll:</strong> Process monthly salaries and advances</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                <p className="text-green-800">
+                  <strong>Pro Tip:</strong> Complete steps 1-4 in order before moving to daily operations. 
+                  This ensures all data dependencies are properly established for seamless system functionality.
+                </p>
+              </div>
+            </section>
+            
+            {/* Original Getting Started (Simplified) */}
             <section className="mb-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3">Getting Started</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-3">Quick Start Guide</h3>
               <p className="mb-3">
-                To begin using the School Management System:
+                For a quick overview of getting started with the School Management System, follow these essential steps:
               </p>
               <ol className="list-decimal pl-5 space-y-2 mb-4">
                 <li>Configure school settings in the Settings section (Administrator access required)</li>
@@ -457,7 +670,13 @@ const AppGuideModal = ({ isOpen, onClose }) => {
                 <li>Record expenses in the Expenses section</li>
                 <li>Monitor financial health through the Financial Reporting dashboard</li>
               </ol>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-blue-800">
+                  <strong>For Detailed Instructions:</strong> Refer to the complete Step-by-Step Workflow Guide above for comprehensive 
+                  instructions on setting up and using all system features.
+                </p>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-3">
                 <p className="text-green-800">
                   <strong>Tip:</strong> Use the search functionality in the header to quickly find students, 
                   staff, or any record across the entire system.

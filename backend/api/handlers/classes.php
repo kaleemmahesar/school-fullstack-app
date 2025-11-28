@@ -13,8 +13,8 @@ function handleClasses($method, $id, $input, $pdo) {
                 $class = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($class) {
-                    // Get subjects for this class
-                    $stmt = $pdo->prepare("SELECT * FROM subjects WHERE class_id = ?");
+                    // Get subjects for this class with teacher info
+                    $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.class_id = ?");
                     $stmt->execute([$id]);
                     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $class['subjects'] = $subjects;
@@ -37,8 +37,8 @@ function handleClasses($method, $id, $input, $pdo) {
                 $class = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($class) {
-                    // Get subjects for this class
-                    $stmt = $pdo->prepare("SELECT * FROM subjects WHERE class_id = ?");
+                    // Get subjects for this class with teacher info
+                    $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.class_id = ?");
                     $stmt->execute([$class['id']]);
                     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $class['subjects'] = $subjects;
@@ -61,8 +61,8 @@ function handleClasses($method, $id, $input, $pdo) {
                 
                 // Add subjects and sections to each class
                 foreach ($classes as &$class) {
-                    // Get subjects for this class
-                    $stmt = $pdo->prepare("SELECT * FROM subjects WHERE class_id = ?");
+                    // Get subjects for this class with teacher info
+                    $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.class_id = ?");
                     $stmt->execute([$class['id']]);
                     $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $class['subjects'] = $subjects;
@@ -156,8 +156,8 @@ function handleClasses($method, $id, $input, $pdo) {
             $stmt->execute([$id]);
             $class = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Get subjects for this class
-            $stmt = $pdo->prepare("SELECT * FROM subjects WHERE class_id = ?");
+            // Get subjects for this class with teacher info
+            $stmt = $pdo->prepare("SELECT s.*, st.firstName as teacherFirstName, st.lastName as teacherLastName FROM subjects s LEFT JOIN staff st ON s.teacher_id = st.id WHERE s.class_id = ?");
             $stmt->execute([$id]);
             $subjects = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $class['subjects'] = $subjects;

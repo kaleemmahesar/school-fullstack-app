@@ -706,7 +706,7 @@ const StudentReportGenerator = () => {
                   <p className="text-gray-600">Generated on: {currentReport.generatedDate}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-gray-600">GR No: {currentReport.studentId}</p>
+                  <p className="text-gray-600">GR No: {currentReport.grNo}</p>
                 </div>
               </div>
             </div>
