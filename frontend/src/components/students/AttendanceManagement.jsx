@@ -85,7 +85,9 @@ const AttendanceManagement = () => {
         const classMatches = selectedClass ? record.classId === selectedClass : true;
         
         if (dateMatches && classMatches) {
-          record.records.forEach(studentRecord => {
+          // Ensure record.records is an array before trying to iterate
+          const recordsArray = Array.isArray(record.records) ? record.records : [];
+          recordsArray.forEach(studentRecord => {
             initialAttendance[studentRecord.studentId] = studentRecord.status;
           });
         }

@@ -210,6 +210,8 @@ CREATE TABLE IF NOT EXISTS attendance (
     id VARCHAR(50) PRIMARY KEY,
     date DATE,
     classId VARCHAR(50),
+    section VARCHAR(10) DEFAULT NULL,
+    subject VARCHAR(100) DEFAULT NULL,
     academicYear VARCHAR(20),
     records JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

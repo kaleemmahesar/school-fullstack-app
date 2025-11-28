@@ -65,7 +65,9 @@ const StaffAttendance = () => {
     if (storedAttendanceRecords && storedAttendanceRecords.length > 0) {
       storedAttendanceRecords.forEach(record => {
         if (record.date === attendanceDate) {
-          record.records.forEach(staffRecord => {
+          // Ensure record.records is an array before trying to iterate
+          const recordsArray = Array.isArray(record.records) ? record.records : [];
+          recordsArray.forEach(staffRecord => {
             initialAttendance[staffRecord.staffId] = staffRecord.status;
           });
         }

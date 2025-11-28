@@ -61,11 +61,28 @@ export const addStudent = createAddThunk(
     // Create fees history with admission fees
     const feesHistory = [];
     
-    // Determine academic year based on admission date
-    const admissionDate = new Date(studentData.dateOfAdmission || new Date());
-    const admissionYear = admissionDate.getFullYear();
-    const nextYear = admissionYear + 1;
-    const academicYear = `${admissionYear}-${nextYear}`;
+    // Determine academic year based on the currently active batch, not admission date
+    // First, fetch batches to find the active one
+    const batchesResponse = await fetch(getApiUrl('batches'));
+    if (!batchesResponse.ok) {
+      throw new Error('Failed to fetch batches for student creation');
+    }
+    
+    const batches = await batchesResponse.json();
+    const activeBatch = batches.find(batch => batch.status === 'active');
+    
+    // If there's an active batch, use its name as the academic year
+    // Otherwise, fall back to the admission date calculation
+    let academicYear;
+    if (activeBatch) {
+      academicYear = activeBatch.name;
+    } else {
+      // Fallback to admission date calculation if no active batch
+      const admissionDate = new Date(studentData.dateOfAdmission || new Date());
+      const admissionYear = admissionDate.getFullYear();
+      const nextYear = admissionYear + 1;
+      academicYear = `${admissionYear}-${nextYear}`;
+    }
     
     // Validate roll number uniqueness within class and academic year
     const studentsResponse = await fetch(getApiUrl('students'));

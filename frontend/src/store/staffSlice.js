@@ -21,7 +21,7 @@ export const fetchStaff = createAsyncThunk('staff/fetchStaff', async () => {
 // Fetch staff attendance by date - UPDATED TO USE REAL API
 export const fetchStaffAttendanceByDate = createAsyncThunk('staff/fetchStaffAttendanceByDate', async (date) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/staffAttendance?date=${date}`);
+    const response = await fetch(`${API_BASE_URL}staffAttendance&date=${date}`);
     if (!response.ok) {
       throw new Error('Failed to fetch staff attendance');
     }
@@ -210,10 +210,17 @@ export const payStaffSalary = createAsyncThunk('staff/payStaffSalary', async ({ 
 export const addStaffAttendance = createAsyncThunk('staff/addStaffAttendance', async ({ date, records }) => {
   try {
     // First, check if attendance record for this date already exists
-    const existingResponse = await fetch(`${API_BASE_URL}/staffAttendance?date=${date}`);
+    const existingResponse = await fetch(`${API_BASE_URL}staffAttendance&date=${date}`);
     let existingRecords = [];
     if (existingResponse.ok) {
-      existingRecords = await existingResponse.json();
+      const responseData = await existingResponse.json();
+      // Ensure responseData is an array and each record has a records property that is an array
+      if (Array.isArray(responseData)) {
+        existingRecords = responseData.map(record => ({
+          ...record,
+          records: Array.isArray(record.records) ? record.records : []
+        }));
+      }
     }
     
     const attendanceData = { date, records };
@@ -233,7 +240,12 @@ export const addStaffAttendance = createAsyncThunk('staff/addStaffAttendance', a
         throw new Error('Failed to update staff attendance');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Ensure the returned records is an array
+      return {
+        ...result,
+        records: Array.isArray(result.records) ? result.records : []
+      };
     } else {
       // Create new record
       const response = await fetch(`${API_BASE_URL}/staffAttendance`, {
@@ -248,7 +260,12 @@ export const addStaffAttendance = createAsyncThunk('staff/addStaffAttendance', a
         throw new Error('Failed to add staff attendance');
       }
       
-      return await response.json();
+      const result = await response.json();
+      // Ensure the returned records is an array
+      return {
+        ...result,
+        records: Array.isArray(result.records) ? result.records : []
+      };
     }
   } catch (error) {
     // Fallback to mock API if real API fails
@@ -272,7 +289,11 @@ const staffSlice = createSlice({
       })
       .addCase(fetchStaff.fulfilled, (state, action) => {
         state.loading = false;
-        state.staff = action.payload;
+        // Initialize attendance array for each staff member if it doesn't exist
+        state.staff = action.payload.map(staff => ({
+          ...staff,
+          attendance: Array.isArray(staff.attendance) ? staff.attendance : []
+        }));
       })
       .addCase(fetchStaff.rejected, (state, action) => {
         state.loading = false;
@@ -283,12 +304,20 @@ const staffSlice = createSlice({
       })
       .addCase(addStaff.fulfilled, (state, action) => {
         // Add new staff at the beginning of the array so they appear first
-        state.staff.unshift(action.payload);
+        // Initialize attendance array for the new staff member
+        state.staff.unshift({
+          ...action.payload,
+          attendance: []
+        });
       })
       .addCase(updateStaff.fulfilled, (state, action) => {
         const index = state.staff.findIndex(staff => staff.id === action.payload.id);
         if (index !== -1) {
-          state.staff[index] = action.payload;
+          // Initialize attendance array if it doesn't exist
+          state.staff[index] = {
+            ...action.payload,
+            attendance: Array.isArray(action.payload.attendance) ? action.payload.attendance : []
+          };
         }
       })
       .addCase(deleteStaff.fulfilled, (state, action) => {
@@ -299,7 +328,11 @@ const staffSlice = createSlice({
         const updatedStaff = action.payload;
         const index = state.staff.findIndex(staff => staff.id === updatedStaff.id);
         if (index !== -1) {
-          state.staff[index] = updatedStaff;
+          // Initialize attendance array if it doesn't exist
+          state.staff[index] = {
+            ...updatedStaff,
+            attendance: Array.isArray(updatedStaff.attendance) ? updatedStaff.attendance : []
+          };
         }
       })
       .addCase(payStaffSalary.fulfilled, (state, action) => {
@@ -307,41 +340,53 @@ const staffSlice = createSlice({
         const updatedStaff = action.payload;
         const index = state.staff.findIndex(staff => staff.id === updatedStaff.id);
         if (index !== -1) {
-          state.staff[index] = updatedStaff;
+          // Initialize attendance array if it doesn't exist
+          state.staff[index] = {
+            ...updatedStaff,
+            attendance: Array.isArray(updatedStaff.attendance) ? updatedStaff.attendance : []
+          };
         }
       })
       .addCase(addStaffAttendance.fulfilled, (state, action) => {
         const { date, records } = action.payload;
         
-        // Update attendance for each staff member
-        records.forEach(record => {
-          const staffMember = state.staff.find(staff => staff.id === record.staffId);
-          if (staffMember) {
-            // Check if attendance record for this date already exists
-            const existingIndex = staffMember.attendance.findIndex(att => att.date === date);
-            
-            if (existingIndex !== -1) {
-              // Update existing attendance record
-              staffMember.attendance[existingIndex] = {
-                ...staffMember.attendance[existingIndex],
-                status: record.status
-              };
-            } else {
-              // Add new attendance record
-              staffMember.attendance.push({
-                date,
-                status: record.status
-              });
+        // Ensure records is an array before trying to iterate
+        if (Array.isArray(records)) {
+          // Update attendance for each staff member
+          records.forEach(record => {
+            const staffMember = state.staff.find(staff => staff.id === record.staffId);
+            if (staffMember) {
+              // Initialize attendance array if it doesn't exist
+              if (!Array.isArray(staffMember.attendance)) {
+                staffMember.attendance = [];
+              }
+              
+              // Check if attendance record for this date already exists
+              const existingIndex = staffMember.attendance.findIndex(att => att.date === date);
+              
+              if (existingIndex !== -1) {
+                // Update existing attendance record
+                staffMember.attendance[existingIndex] = {
+                  ...staffMember.attendance[existingIndex],
+                  status: record.status
+                };
+              } else {
+                // Add new attendance record
+                staffMember.attendance.push({
+                  date,
+                  status: record.status
+                });
+              }
             }
-          }
-        });
+          });
+        }
         
         // Also update the attendanceRecords in state
         const existingRecordIndex = state.attendanceRecords.findIndex(record => record.date === date);
         if (existingRecordIndex !== -1) {
-          state.attendanceRecords[existingRecordIndex] = { date, records };
+          state.attendanceRecords[existingRecordIndex] = { date, records: Array.isArray(records) ? records : [] };
         } else {
-          state.attendanceRecords.push({ date, records });
+          state.attendanceRecords.push({ date, records: Array.isArray(records) ? records : [] });
         }
       });
   },

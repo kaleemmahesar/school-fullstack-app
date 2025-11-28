@@ -3,6 +3,11 @@
 
 USE school_management_system;
 
+-- Add missing columns to attendance table
+ALTER TABLE attendance 
+ADD COLUMN IF NOT EXISTS section VARCHAR(10) DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS subject VARCHAR(100) DEFAULT NULL;
+
 -- Subsidies table
 CREATE TABLE IF NOT EXISTS subsidies (
     id VARCHAR(50) PRIMARY KEY,

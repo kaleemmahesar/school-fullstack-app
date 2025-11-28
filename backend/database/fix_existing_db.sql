@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS subsidies;
 DROP TABLE IF EXISTS batches;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS attendance;
 
 -- Re-enable foreign key checks
 SET FOREIGN_KEY_CHECKS = 1;
@@ -79,6 +80,19 @@ CREATE TABLE IF NOT EXISTS settings (
     weekendDays JSON,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Attendance table with missing columns
+CREATE TABLE IF NOT EXISTS attendance (
+    id VARCHAR(50) PRIMARY KEY,
+    date DATE,
+    classId VARCHAR(50),
+    section VARCHAR(10) DEFAULT NULL,
+    subject VARCHAR(100) DEFAULT NULL,
+    academicYear VARCHAR(20),
+    records JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Sample data for subsidies

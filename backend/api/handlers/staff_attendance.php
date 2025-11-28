@@ -13,6 +13,8 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
                 $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($attendance) {
+                    // Decode the records JSON
+                    $attendance['records'] = json_decode($attendance['records'], true);
                     echo json_encode($attendance);
                 } else {
                     http_response_code(404);
@@ -23,11 +25,19 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
                 $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE date = ?");
                 $stmt->execute([$date]);
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                // Decode the records JSON for each record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true);
+                }
                 echo json_encode($attendance);
             } else {
                 // Get all staff attendance records
                 $stmt = $pdo->query("SELECT * FROM staff_attendance");
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                // Decode the records JSON for each record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true);
+                }
                 echo json_encode($attendance);
             }
             break;
@@ -46,6 +56,8 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Decode the records JSON
+            $attendance['records'] = json_decode($attendance['records'], true);
             
             echo json_encode($attendance);
             break;
@@ -69,6 +81,8 @@ function handleStaffAttendance($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM staff_attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Decode the records JSON
+            $attendance['records'] = json_decode($attendance['records'], true);
             
             echo json_encode($attendance);
             break;

@@ -15,6 +15,8 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
                 $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
                 
                 if ($attendance) {
+                    // Decode JSON records
+                    $attendance['records'] = json_decode($attendance['records'], true) ?: [];
                     echo json_encode($attendance);
                 } else {
                     http_response_code(404);
@@ -25,23 +27,47 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
                 $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ? AND classId = ? AND section = ?");
                 $stmt->execute([$date, $classId, $section]);
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each attendance record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             } else if ($date && $classId) {
                 // Get students attendance for specific date and class
                 $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ? AND classId = ?");
                 $stmt->execute([$date, $classId]);
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each attendance record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             } else if ($date) {
                 // Get students attendance for specific date
                 $stmt = $pdo->prepare("SELECT * FROM attendance WHERE date = ?");
                 $stmt->execute([$date]);
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each attendance record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             } else {
                 // Get all students attendance records
                 $stmt = $pdo->query("SELECT * FROM attendance");
                 $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                
+                // Decode JSON records for each attendance record
+                foreach ($attendance as &$record) {
+                    $record['records'] = json_decode($record['records'], true) ?: [];
+                }
+                
                 echo json_encode($attendance);
             }
             break;
@@ -49,21 +75,24 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
         case 'POST':
             // Add new students attendance record
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO attendance (id, date, classId, section, subject, records, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO attendance (id, date, classId, section, subject, academicYear, records) VALUES (?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['date'] ?? null,
                 $input['classId'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
-                $input['academicYear'] ?? ''
+                $input['section'] ?? null,
+                $input['subject'] ?? null,
+                $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? [])
             ]);
             
             // Return the created students attendance record
             $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Decode JSON records
+            $attendance['records'] = json_decode($attendance['records'], true) ?: [];
             
             echo json_encode($attendance);
             break;
@@ -76,14 +105,14 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
             }
             
             // Update students attendance record
-            $stmt = $pdo->prepare("UPDATE attendance SET date = ?, classId = ?, section = ?, subject = ?, records = ?, academicYear = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE attendance SET date = ?, classId = ?, section = ?, subject = ?, academicYear = ?, records = ? WHERE id = ?");
             $stmt->execute([
                 $input['date'] ?? null,
                 $input['classId'] ?? '',
-                $input['section'] ?? '',
-                $input['subject'] ?? '',
-                json_encode($input['records'] ?? []),
+                $input['section'] ?? null,
+                $input['subject'] ?? null,
                 $input['academicYear'] ?? '',
+                json_encode($input['records'] ?? []),
                 $id
             ]);
             
@@ -91,6 +120,9 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
             $stmt = $pdo->prepare("SELECT * FROM attendance WHERE id = ?");
             $stmt->execute([$id]);
             $attendance = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Decode JSON records
+            $attendance['records'] = json_decode($attendance['records'], true) ?: [];
             
             echo json_encode($attendance);
             break;
@@ -114,3 +146,4 @@ function handleStudentsAttendance($method, $id, $input, $pdo) {
             echo json_encode(['error' => 'Method not allowed']);
     }
 }
+?>
