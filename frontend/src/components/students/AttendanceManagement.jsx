@@ -689,14 +689,8 @@ const AttendanceManagement = () => {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-gradient-to-r from-green-400 to-blue-500 flex items-center justify-center text-white font-bold">
-                          {student.firstName.charAt(0)}{student.lastName.charAt(0)}
-                        </div>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{student.firstName} {student.lastName}</div>
-                        <div className="text-sm text-gray-500">{student.email}</div>
+                      <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10 flex items-center justify-center">
+                        <img src={student.photo} alt={student.firstName} className="w-10 h-10 rounded-xl" />
                       </div>
                     </div>
                   </td>

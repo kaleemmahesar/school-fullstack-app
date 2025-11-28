@@ -1,5 +1,8 @@
 RewriteEngine On
 
+# Allow direct access to uploads directory
+RewriteRule ^uploads/(.*)$ uploads/$1 [L]
+
 # Handle preflight requests first - let PHP handle OPTIONS requests
 RewriteCond %{REQUEST_METHOD} OPTIONS
 RewriteRule ^(.*)$ api.php [L]
