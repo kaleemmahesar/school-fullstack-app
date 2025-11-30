@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { FaUserCheck, FaUserTimes, FaSearch, FaFilter, FaEdit, FaDownload, FaPrint } from 'react-icons/fa';
 import Pagination from '../common/Pagination';
-import { markStudentAsLeft } from '../../store/studentsSlice';
+import { markStudentAsLeft, fetchStudents } from '../../store/studentsSlice'; // Add fetchStudents import
+import { getApiUrl } from '../../utils/apiConfig';
 import * as XLSX from 'xlsx-js-style';
 
 const StudentAvailabilityLists = ({ activeTab: propActiveTab, 
@@ -26,6 +27,9 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
   const [selectedSection, setSelectedSection] = useState(parentSelectedSection || '');
   const [localActiveTab, setLocalActiveTab] = useState('available'); // 'available', 'unavailable', or 'left'
   const [currentPage, setCurrentPage] = useState(1);
+  const [isImporting, setIsImporting] = useState(false); // Add this state
+  const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false); // Add this state
+  const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false); // Add this state
   const itemsPerPage = 20;
 
   // Use prop activeTab if provided, otherwise use local state
@@ -245,6 +249,222 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
     window.print();
   };
 
+  // Download sample Excel template
+  const downloadSampleTemplate = () => {
+    // Create worksheet data with sample headers
+    const headers = [
+      'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 
+      'Date of Birth', 'Place of Birth', 'Last School Attended', 
+      'Date of Admission', 'Class', 'Section', 'GR No', 
+      'Monthly Fees', 'Admission Fees'
+    ];
+    
+    // Sample data rows
+    const sampleData = [
+      headers,
+      ['Ahmed', 'Khan', 'Muhammad Khan', 'Islam', '123 Main Street', '2005-05-15', 'Aga Khan Hospital', 'Karachi Grammar School', '2023-09-01', 'Class 5', 'A', 'GR001', 3000, 4000],
+      ['Fatima', 'Ahmed', 'Ali Ahmed', 'Islam', '456 Oak Avenue', '2006-08-22', 'Shalamar Hospital', 'Lahore Grammar School', '2023-09-01', 'Class 4', 'B', 'GR002', 2800, 3500]
+    ];
+    
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(sampleData);
+    
+    // Style the header row
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    
+    // Apply styling to header cells
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const headerCellRef = XLSX.utils.encode_cell({ r: 0, c: C });
+      if (ws[headerCellRef]) {
+        ws[headerCellRef].s = {
+          font: { bold: true, sz: 12, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "3b82f6" } },
+          alignment: { horizontal: "center", vertical: "center" },
+          border: {
+            top: { style: "thin", color: { rgb: "000000" } },
+            bottom: { style: "thin", color: { rgb: "000000" } },
+            left: { style: "thin", color: { rgb: "000000" } },
+            right: { style: "thin", color: { rgb: "000000" } }
+          }
+        };
+      }
+    }
+    
+    // Set column widths
+    ws["!cols"] = [
+      { wch: 15 },  // First Name
+      { wch: 15 },  // Last Name
+      { wch: 20 },  // Father Name
+      { wch: 12 },  // Religion
+      { wch: 30 },  // Address
+      { wch: 15 },  // Date of Birth
+      { wch: 20 },  // Place of Birth
+      { wch: 25 },  // Last School Attended
+      { wch: 18 },  // Date of Admission
+      { wch: 10 },  // Class
+      { wch: 10 },  // Section
+      { wch: 10 },  // GR No
+      { wch: 15 },  // Monthly Fees
+      { wch: 15 }   // Admission Fees
+    ];
+    
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Student_Template');
+    
+    // Export the workbook
+    XLSX.writeFile(wb, 'student_import_template.xlsx');
+  };
+
+  // Handle Excel import
+  const handleImportExcel = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check if file is Excel format
+    if (!file.name.match(/\.(xlsx|xls)$/)) {
+      alert('Please select a valid Excel file (.xlsx or .xls)');
+      event.target.value = ''; // Reset file input
+      return;
+    }
+
+    // Show confirmation dialog
+    if (!window.confirm('This will import student data from the Excel file. Do you want to continue?')) {
+      event.target.value = ''; // Reset file input
+      return;
+    }
+
+    try {
+      // Set importing state
+      setIsImporting(true);
+      
+      // Read Excel file
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          
+          // Get first worksheet
+          const worksheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[worksheetName];
+          
+          // Convert to JSON
+          const jsonData = XLSX.utils.sheet_to_json(worksheet);
+          
+          // Process and validate data
+          let importedCount = 0;
+          let errorCount = 0;
+          const errors = [];
+          
+          // First, fetch batches to find the active one (similar to addStudent thunk)
+          const batchesResponse = await fetch(getApiUrl('batches'));
+          let activeBatch = null;
+          if (batchesResponse.ok) {
+            const batches = await batchesResponse.json();
+            activeBatch = batches.find(batch => batch.status === 'active');
+          }
+          
+          // Determine academic year based on the currently active batch
+          let academicYear;
+          if (activeBatch) {
+            academicYear = activeBatch.name;
+          } else {
+            // Fallback to current year calculation if no active batch
+            const currentYear = new Date().getFullYear();
+            const nextYear = currentYear + 1;
+            academicYear = `${currentYear}-${nextYear}`;
+          }
+          
+          for (const row of jsonData) {
+            try {
+              // Map Excel columns to student fields
+              const studentData = {
+                firstName: row['First Name'] || row['firstName'] || row['FirstName'] || '',
+                lastName: row['Last Name'] || row['lastName'] || row['LastName'] || '',
+                fatherName: row['Father Name'] || row['fatherName'] || row['FatherName'] || '',
+                religion: row['Religion'] || row['religion'] || '',
+                address: row['Address'] || row['address'] || '',
+                dateOfBirth: row['Date of Birth'] || row['dateOfBirth'] || row['DateOfBirth'] || '',
+                birthPlace: row['Place of Birth'] || row['birthPlace'] || row['BirthPlace'] || '',
+                lastSchoolAttended: row['Last School Attended'] || row['lastSchoolAttended'] || row['LastSchoolAttended'] || '',
+                dateOfAdmission: row['Date of Admission'] || row['dateOfAdmission'] || row['DateOfAdmission'] || new Date().toISOString().split('T')[0],
+                class: row['Class'] || row['class'] || '',
+                section: row['Section'] || row['section'] || 'A',
+                grNo: row['GR No'] || row['grNo'] || row['GRNo'] || '',
+                monthlyFees: parseFloat(row['Monthly Fees'] || row['monthlyFees'] || row['MonthlyFees'] || 0),
+                admissionFees: parseFloat(row['Admission Fees'] || row['admissionFees'] || row['AdmissionFees'] || 0),
+                status: 'studying',
+                // Default values for required fields
+                totalFees: parseFloat(row['Monthly Fees'] || row['monthlyFees'] || row['MonthlyFees'] || 0) + parseFloat(row['Admission Fees'] || row['admissionFees'] || row['AdmissionFees'] || 0),
+                feesPaid: 0,
+                familyId: `family-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                relationship: 'self',
+                academicYear: academicYear // Add academic year field
+              };
+              
+              // Validate required fields
+              if (!studentData.firstName || !studentData.lastName || !studentData.class) {
+                errors.push(`Row missing required fields (First Name, Last Name, Class): ${JSON.stringify(row)}`);
+                errorCount++;
+                continue;
+              }
+              
+              // Send to backend API using proper API configuration
+              const response = await fetch(getApiUrl('students'), {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(studentData),
+              });
+              
+              if (response.ok) {
+                importedCount++;
+              } else {
+                const errorData = await response.json();
+                errors.push(`Failed to import student ${studentData.firstName} ${studentData.lastName}: ${errorData.error || 'Unknown error'}`);
+                errorCount++;
+              }
+            } catch (rowError) {
+              errors.push(`Error processing row: ${rowError.message}`);
+              errorCount++;
+            }
+          }
+          
+          // Show results
+          let message = `Import completed!\n\nSuccessfully imported: ${importedCount} students`;
+          if (errorCount > 0) {
+            message += `\nErrors: ${errorCount}\n\nCheck console for details.`;
+            console.error('Import errors:', errors);
+          }
+          
+          alert(message);
+          
+          // Refresh student data if import was successful
+          if (importedCount > 0) {
+            dispatch(fetchStudents());
+          }
+        } catch (parseError) {
+          console.error('Error parsing Excel file:', parseError);
+          alert('Error parsing Excel file. Please check the file format and try again.');
+        } finally {
+          // Reset importing state
+          setIsImporting(false);
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error('Error importing Excel file:', error);
+      alert('Error importing file. Please try again.');
+      setIsImporting(false); // Reset importing state on error
+    }
+    
+    // Reset file input
+    event.target.value = '';
+  };
+
   // Notify parent of filter changes
   const notifyParentOfFilterChange = () => {
     if (onFilterChange) {
@@ -349,29 +569,77 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
               </div>
               
               <div className="flex items-center space-x-2">
-                <div className="relative group">
+                <div className="relative">
                   <button
                     className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    onMouseEnter={() => setIsExportDropdownOpen(true)}
+                    onMouseLeave={() => setIsExportDropdownOpen(false)}
                   >
                     <FaDownload className="mr-1" /> Export
                   </button>
-                  <div className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 hidden group-hover:block z-10">
-                    <div className="py-1">
-                      <button
-                        onClick={exportToCSV}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Export as CSV
-                      </button>
-                      <button
-                        onClick={exportToXLSX}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                      >
-                        Export as Excel
-                      </button>
+                  {isExportDropdownOpen && (
+                    <div 
+                      className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                      onMouseEnter={() => setIsExportDropdownOpen(true)}
+                      onMouseLeave={() => setIsExportDropdownOpen(false)}
+                    >
+                      <div className="py-1">
+                        <button
+                          onClick={exportToCSV}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Export as CSV
+                        </button>
+                        <button
+                          onClick={exportToXLSX}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Export as Excel
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
+                <div className="relative">
+                  <button
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                    onMouseEnter={() => setIsImportDropdownOpen(true)}
+                    onMouseLeave={() => setIsImportDropdownOpen(false)}
+                    disabled={isImporting}
+                  >
+                    <FaDownload className="mr-1" /> {isImporting ? 'Importing...' : 'Import'}
+                  </button>
+                  {isImportDropdownOpen && (
+                    <div 
+                      className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                      onMouseEnter={() => setIsImportDropdownOpen(true)}
+                      onMouseLeave={() => setIsImportDropdownOpen(false)}
+                    >
+                      <div className="py-1">
+                        <button
+                          onClick={() => document.getElementById('import-excel-file').click()}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          disabled={isImporting}
+                        >
+                          Import from Excel
+                        </button>
+                        <button
+                          onClick={downloadSampleTemplate}
+                          className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Download Sample Template
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <input 
+                  id="import-excel-file" 
+                  type="file" 
+                  accept=".xlsx, .xls" 
+                  className="hidden" 
+                  onChange={handleImportExcel}
+                />
                 <button
                   onClick={printReport}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"

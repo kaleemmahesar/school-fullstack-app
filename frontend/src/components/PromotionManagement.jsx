@@ -4,7 +4,7 @@ import { updateStudent } from '../store/studentsSlice';
 import { FaUserCheck, FaUserTimes, FaSearch, FaFilter, FaEdit, FaGraduationCap } from 'react-icons/fa';
 import Pagination from './common/Pagination';
 
-const PromotionManagement = ({ batches }) => { // Receive batches as prop
+const PromotionManagement = ({ batches }) => {
   const dispatch = useDispatch();
   const { students } = useSelector(state => state.students);
   
@@ -142,14 +142,21 @@ const PromotionManagement = ({ batches }) => { // Receive batches as prop
           academicYear: targetAcademicYear
         }));
       } else {
-        // Graduate to alumni
+        // Graduate to alumni - move to graduate batch based on current academic year
+        // Extract current year from academicYear (e.g., "2025-2026" -> "2025")
+        let graduateBatchName = 'Graduated';
+        if (student.academicYear) {
+          const currentYear = student.academicYear.split('-')[0];
+          graduateBatchName = `${currentYear} Graduates`;
+        }
+        
         dispatch(updateStudent({
           ...student,
           status: 'passed_out',
           classInWhichLeft: student.class,
           dateOfLeaving: new Date().toISOString().split('T')[0],
           reasonOfLeaving: 'Graduated',
-          academicYear: targetAcademicYear
+          academicYear: graduateBatchName // Move to graduate batch
         }));
       }
     });

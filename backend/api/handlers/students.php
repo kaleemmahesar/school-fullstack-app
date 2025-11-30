@@ -1,6 +1,7 @@
 <?php
 // Students handler
 // Debug payload logging removed
+
 function handleStudents($method, $id, $input, $pdo) {
     switch ($method) {
         case 'GET':
@@ -126,6 +127,44 @@ function handleStudents($method, $id, $input, $pdo) {
                 http_response_code(400);
                 echo json_encode(['error' => 'Student ID is required']);
                 return;
+            }
+            
+            // Check if student is being graduated (status changing to passed_out and moving to graduate batch)
+            $stmt = $pdo->prepare("SELECT * FROM students WHERE id = ?");
+            $stmt->execute([$id]);
+            $oldStudent = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            $isBeingGraduated = ($oldStudent['status'] !== 'passed_out' && $input['status'] === 'passed_out');
+            $isMovingToGraduateBatch = (strpos($input['academicYear'] ?? '', 'Graduates') !== false);
+            
+            // If student is being graduated and moved to a graduate batch, create the graduate batch if needed
+            if ($isBeingGraduated && $isMovingToGraduateBatch) {
+                $graduateBatchName = $input['academicYear'];
+                
+                // Check if graduate batch already exists
+                $stmt = $pdo->prepare("SELECT * FROM batches WHERE name = ?");
+                $stmt->execute([$graduateBatchName]);
+                $existingBatch = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                // If graduate batch doesn't exist, create it
+                if (!$existingBatch) {
+                    // Extract year from graduate batch name (e.g., "2025 Graduates" -> "2025")
+                    $year = explode(' ', $graduateBatchName)[0];
+                    $batchId = uniqid('batch-');
+                    $startDate = "{$year}-09-01";
+                    $endDate = ($year + 1) . "-06-30";
+                    
+                    $stmt = $pdo->prepare("INSERT INTO batches (id, name, startDate, endDate, status, classes, sections) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                    $stmt->execute([
+                        $batchId,
+                        $graduateBatchName,
+                        $startDate,
+                        $endDate,
+                        'completed', // Mark as completed since these are graduates
+                        json_encode([]), // Empty classes for graduate batches
+                        json_encode([])  // Empty sections for graduate batches
+                    ]);
+                }
             }
             
             // Update student
