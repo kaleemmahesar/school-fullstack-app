@@ -25,7 +25,7 @@ const BatchManagementPage = () => {
   const [showBatchesModal, setShowBatchesModal] = useState(false);
   const [activeTab, setActiveTab] = useState('students'); // 'students' or 'promotion'
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(30);
   const [newBatchData, setNewBatchData] = useState({
     name: '',
     startDate: '',

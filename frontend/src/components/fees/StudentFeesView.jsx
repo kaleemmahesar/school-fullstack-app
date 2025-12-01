@@ -54,12 +54,14 @@ const StudentFeesView = ({ filteredStudents, onViewDetails }) => {
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div className="flex items-center justify-end space-x-2">
-              {student.completionRate < 100 || !student.admissionPaid ? (
+              {student.completionRate < 100 || !student.admissionPaid && student.totalAmount > 0 ? (
                 <FaExclamationCircle className="text-red-500" />
               ) : (
                 <FaCheckCircle className="text-green-500" />
               )}
-              <WhatsAppFeeReminder student={student} />
+              {student.completionRate < 100 || (!student.admissionPaid && student.totalAmount > 0) ? (
+                <WhatsAppFeeReminder student={student} />
+              ) : null}
               <button
                 onClick={() => onViewDetails(student)}
                 className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"

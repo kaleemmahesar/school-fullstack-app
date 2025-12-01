@@ -70,7 +70,7 @@ const FeesSection = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(30);
 
   useEffect(() => {
     dispatch(fetchStudents());
@@ -229,7 +229,7 @@ const FeesSection = () => {
         paidAmount,
         pendingAmount,
         admissionPaid,
-        completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : (admissionPaid ? 100 : 0)
+        completionRate: totalChallans > 0 ? Math.round((paidChallans / totalChallans) * 100) : (admissionPaid || totalAmount === 0 ? 100 : 0)
       };
     });
   };
@@ -448,9 +448,12 @@ const FeesSection = () => {
       const [year, monthIndex] = challanData.month.split('-');
       const monthName = monthNames[parseInt(monthIndex) - 1] || 'Unknown';
       const formattedMonth = `${monthName} ${year}`;
+      // Calculate next challan number
+      const existingChallans = updatedStudent.feesHistory || [];
+      const nextChallanNumber = (existingChallans.length + 1).toString().padStart(2, '0');
       
       const newChallan = {
-        id: `challan-${challanData.studentId}-${Date.now()}`,
+        id: `challan-${updatedStudent.grNo}-${nextChallanNumber}`,
         month: formattedMonth,
         amount: parseFloat(challanData.amount) || 0,
         dueDate: challanData.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -582,9 +585,12 @@ const FeesSection = () => {
         const student = students.find(s => s.id === studentId);
         if (student) {
           const amount = getClassBasedFees(student.class) || 0;
-          
+          // Calculate next challan number
+          const existingChallans = student.feesHistory || [];
+          const nextChallanNumber = (existingChallans.length + 1).toString().padStart(2, '0');
+
           return {
-            id: `challan-${studentId}-${Date.now()}`,
+            id: `challan-${student.grNo}-${nextChallanNumber}`,
             month: formattedMonth,
             amount: amount,
             dueDate: data.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

@@ -451,9 +451,12 @@ const FeesSection = () => {
       const [year, monthIndex] = challanData.month.split('-');
       const monthName = monthNames[parseInt(monthIndex) - 1];
       const formattedMonth = `${monthName} ${year}`;
-      
+      // Calculate next challan number
+      const existingChallans = student.feesHistory || [];
+      const nextChallanNumber = (existingChallans.length + 1).toString().padStart(2, '0');
+
       const tempChallan = {
-        id: `challan-${challanData.studentId}-${Date.now()}`,
+        id: `challan-${student.grNo}-${nextChallanNumber}`,
         month: formattedMonth,
         amount: challanData.amount,
         dueDate: challanData.dueDate,

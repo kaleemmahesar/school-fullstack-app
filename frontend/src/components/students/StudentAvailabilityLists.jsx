@@ -30,7 +30,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
   const [isImporting, setIsImporting] = useState(false); // Add this state
   const [isImportDropdownOpen, setIsImportDropdownOpen] = useState(false); // Add this state
   const [isExportDropdownOpen, setIsExportDropdownOpen] = useState(false); // Add this state
-  const itemsPerPage = 20;
+  const itemsPerPage = 30;
 
   // Use prop activeTab if provided, otherwise use local state
   const activeTab = propActiveTab !== undefined && propActiveTab !== null ? propActiveTab : localActiveTab;
