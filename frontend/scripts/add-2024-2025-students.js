@@ -61,7 +61,7 @@ const generateStudent = (grNo, className, section, academicYear) => {
     "photo": `https://i.pravatar.cc/300?img=${grNo % 60 || 1}`,
     "feesHistory": [
       {
-        "id": `challan-student-1763972279657-${grNo}-0`,
+        "id": `challan-student-1763972279657-${grNo}-01`,
         "month": "Admission Fees",
         "amount": admissionFees,
         "paid": true,

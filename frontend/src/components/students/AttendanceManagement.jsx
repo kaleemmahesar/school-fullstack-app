@@ -418,7 +418,14 @@ const AttendanceManagement = () => {
               </div>
               <DatePicker
                 key={schoolInfo ? `loaded-${JSON.stringify(schoolInfo.holidays || [])}` : "loading"}
-                selected={selectedDate ? new Date(selectedDate) : new Date()}
+                selected={selectedDate ? (() => {
+                  try {
+                    const date = new Date(selectedDate);
+                    return isNaN(date.getTime()) ? new Date() : date;
+                  } catch (error) {
+                    return new Date();
+                  }
+                })() : new Date()}
                 onChange={(date) => {
                   // Check if selected date is a weekend day
                   if (weekendDays.includes(date.getDay())) return;

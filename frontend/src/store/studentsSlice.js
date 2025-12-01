@@ -107,7 +107,7 @@ export const addStudent = createAddThunk(
     // Add admission fees record if admission fees are specified
     if (admissionFees > 0) {
       feesHistory.push({
-        id: `challan-${Date.now()}-0`,
+        id: `challan-${Date.now()}-01`,
         month: 'Admission Fees',
         amount: admissionFees,
         paid: true,

@@ -386,7 +386,14 @@ const StaffAttendance = () => {
               </div>
               <DatePicker
                 key={schoolInfo ? `loaded-${JSON.stringify(schoolInfo.holidays || [])}` : "loading"}
-                selected={attendanceDate ? new Date(attendanceDate) : new Date()}
+                selected={attendanceDate ? (() => {
+                  try {
+                    const date = new Date(attendanceDate);
+                    return isNaN(date.getTime()) ? new Date() : date;
+                  } catch (error) {
+                    return new Date();
+                  }
+                })() : new Date()}
                 onChange={(date) => {
                   if (date.getDay() === 0) return;
                   const dateString = date.toISOString().split('T')[0];

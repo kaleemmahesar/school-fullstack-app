@@ -86,12 +86,14 @@ const AdmissionPage = () => {
     return '1';
   };
 
-  // Set initial GR number when component mounts or when students data changes
+  // GR Number should never be auto-filled, always start empty
+  // Admins can manually enter it when needed
   useEffect(() => {
     if (!isEditMode && students && !formData.grNo) {
+      // Keep GR number empty by default - admins will fill it manually if needed
       setFormData(prevFormData => ({
         ...prevFormData,
-        grNo: generateNextGRNumber()
+        grNo: ''
       }));
     }
   }, [students, isEditMode]);
@@ -101,11 +103,40 @@ const AdmissionPage = () => {
       // Determine if this is a transfer student based on whether transfer fields have values
       const isTransferStudent = !!(studentData.dateOfLeaving || studentData.classInWhichLeft || studentData.reasonOfLeaving);
       
+      // Helper function to safely parse dates
+      const safeParseDate = (dateValue) => {
+        if (!dateValue) return null;
+        
+        try {
+          // If it's already a Date object, return it
+          if (dateValue instanceof Date) {
+            return isNaN(dateValue.getTime()) ? null : dateValue;
+          }
+          
+          // If it's a string, try to parse it
+          if (typeof dateValue === 'string') {
+            // Handle empty strings
+            if (dateValue.trim() === '') return null;
+            
+            // Try to create a Date object
+            const date = new Date(dateValue);
+            return isNaN(date.getTime()) ? null : date;
+          }
+          
+          // For any other type, try to convert to string first then parse
+          const date = new Date(dateValue);
+          return isNaN(date.getTime()) ? null : date;
+        } catch (error) {
+          // If any error occurs, return null
+          return null;
+        }
+      };
+      
       setFormData({
         ...studentData,
-        dateOfBirth: studentData.dateOfBirth ? new Date(studentData.dateOfBirth) : null,
-        dateOfAdmission: studentData.dateOfAdmission ? new Date(studentData.dateOfAdmission) : new Date(),
-        dateOfLeaving: studentData.dateOfLeaving ? new Date(studentData.dateOfLeaving) : null,
+        dateOfBirth: safeParseDate(studentData.dateOfBirth),
+        dateOfAdmission: safeParseDate(studentData.dateOfAdmission) || new Date(),
+        dateOfLeaving: safeParseDate(studentData.dateOfLeaving),
         isTransferStudent,
         // Set default religion if not present in studentData
         religion: studentData.religion || 'Islam',
@@ -298,12 +329,37 @@ const AdmissionPage = () => {
         console.log('No photo provided, clearing photo field');
       }
 
+      // Helper function to safely format dates for submission
+      const formatDateForSubmission = (dateValue) => {
+        if (!dateValue) return '';
+        
+        try {
+          // If it's already a Date object, format it
+          if (dateValue instanceof Date) {
+            return isNaN(dateValue.getTime()) ? '' : dateValue.toISOString().split('T')[0];
+          }
+          
+          // If it's a string, try to parse it first
+          if (typeof dateValue === 'string') {
+            if (dateValue.trim() === '') return '';
+            const date = new Date(dateValue);
+            return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+          }
+          
+          // For any other type, try to convert to Date first
+          const date = new Date(dateValue);
+          return isNaN(date.getTime()) ? '' : date.toISOString().split('T')[0];
+        } catch (error) {
+          return '';
+        }
+      };
+      
       // Create form data to send to the backend
       const submissionData = { 
         ...formData,
-        dateOfBirth: formData.dateOfBirth ? formData.dateOfBirth.toISOString().split('T')[0] : '',
-        dateOfAdmission: formData.dateOfAdmission ? formData.dateOfAdmission.toISOString().split('T')[0] : '',
-        dateOfLeaving: formData.dateOfLeaving ? formData.dateOfLeaving.toISOString().split('T')[0] : '',
+        dateOfBirth: formatDateForSubmission(formData.dateOfBirth),
+        dateOfAdmission: formatDateForSubmission(formData.dateOfAdmission),
+        dateOfLeaving: formatDateForSubmission(formData.dateOfLeaving),
         photo: photoUrl
       };
       
@@ -512,9 +568,8 @@ const AdmissionPage = () => {
                       name="grNo"
                       value={formData.grNo}
                       onChange={handleInputChange}
-                      readOnly={!isEditMode} // Make it read-only for new admissions
-                      className={`block w-full px-4 py-2.5 border ${errors.grNo ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition ${!isEditMode ? 'bg-gray-100' : ''}`}
-                      placeholder="Enter GR Number"
+                      className={`block w-full px-4 py-2.5 border ${errors.grNo ? 'border-red-300' : 'border-gray-300'} rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition`}
+                      placeholder="Enter GR Number (optional)"
                     />
                     {errors.grNo && (
                       <p className="mt-1 text-sm text-red-600">{errors.grNo}</p>

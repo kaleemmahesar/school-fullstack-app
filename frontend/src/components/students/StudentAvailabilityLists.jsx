@@ -128,7 +128,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
   // Export to CSV function
   const exportToCSV = () => {
     const csvContent = [
-      ['GR No', 'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 'Date of Birth', 'Place of Birth', 'Last School Attended', 'Date of Admission', 'Class', 'Section', 'Status', 'Date of Leaving', 'Class in Which Left', 'Reason of Leaving', 'Remarks'],
+      ['GR No', 'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 'Date of Birth', 'Place of Birth', 'Parent Contact', 'Date of Admission', 'Class', 'Section', 'Last School Attended', 'Date of Leaving', 'Class in Which Left', 'Reason of Leaving', 'Remarks', 'Status'],
       ...currentFilteredList.map(student => [
         student.grNo || '',
         student.firstName || '',
@@ -138,16 +138,17 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
         student.address || '',
         student.dateOfBirth || '',
         student.birthPlace || '',
-        student.lastSchoolAttended || '',
+        student.parentContact || '',
         student.dateOfAdmission || '',
         student.class || '',
         student.section || '',
-        // Excluding monthly fees, admission fees, total fees, fees paid
-        student.status && student.status !== 'studying' ? student.status : '', // Only show status if not 'studying'
+        student.lastSchoolAttended || '',
         student.dateOfLeaving || '',
         student.classInWhichLeft || '',
         student.reasonOfLeaving || '',
-        student.remarks || ''
+        student.remarks || '',
+        // Excluding monthly fees, admission fees, total fees, fees paid
+        student.status && student.status !== 'studying' ? student.status : '' // Only show status if not 'studying'
       ])
     ].map(row => row.join(',')).join('\n');
     
@@ -165,7 +166,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
   // Export to XLSX function
   const exportToXLSX = () => {
     // Create worksheet data - excluding specified columns
-    const headers = ['GR No', 'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 'Date of Birth', 'Place of Birth', 'Last School Attended', 'Date of Admission', 'Class', 'Section', 'Status', 'Last School Leaving Date', 'Last School Class', 'Reason for Leaving Last School', 'Last School Remarks'];
+    const headers = ['GR No', 'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 'Date of Birth', 'Place of Birth', 'Parent Contact', 'Date of Admission', 'Class', 'Section', 'Last School Attended', 'Last School Leaving Date', 'Last School Class', 'Reason for Leaving Last School', 'Last School Remarks', 'Status'];
     
     const wsData = [
       headers,
@@ -178,16 +179,17 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
         student.address || '',
         student.dateOfBirth || '',
         student.birthPlace || '',
-        student.lastSchoolAttended || '',
+        student.parentContact || '',
         student.dateOfAdmission || '',
         student.class || '',
         student.section || '',
-        // Excluding monthly fees, admission fees, total fees, fees paid
-        student.status && student.status !== 'studying' ? student.status : '', // Only show status if not 'studying'
+        student.lastSchoolAttended || '',
         student.dateOfLeaving || '',
         student.classInWhichLeft || '',
         student.reasonOfLeaving || '',
-        student.remarks || ''
+        student.remarks || '',
+        // Excluding monthly fees, admission fees, total fees, fees paid
+        student.status && student.status !== 'studying' ? student.status : '' // Only show status if not 'studying'
       ])
     ];
     
@@ -226,15 +228,16 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
       { wch: 40 },  // Address (increased width)
       { wch: 15 },  // Date of Birth
       { wch: 20 },  // Place of Birth
-      { wch: 35 },  // Last School Attended (increased width)
+      { wch: 15 },  // Parent Contact
       { wch: 18 },  // Date of Admission
       { wch: 10 },  // Class
       { wch: 10 },  // Section
-      { wch: 12 },  // Status (excluding 'studying')
+      { wch: 35 },  // Last School Attended (increased width)
       { wch: 25 },  // Date of Leaving
       { wch: 20 },  // Class in Which Left
       { wch: 30 },  // Reason of Leaving
-      { wch: 30 }   // Remarks
+      { wch: 30 },  // Remarks
+      { wch: 12 }   // Status (excluding 'studying')
     ];
     
     // Add worksheet to workbook
@@ -254,7 +257,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
     // Create worksheet data with sample headers
     const headers = [
       'First Name', 'Last Name', 'Father Name', 'Religion', 'Address', 
-      'Date of Birth', 'Place of Birth', 'Last School Attended', 
+      'Date of Birth', 'Place of Birth', 'Parent Contact', 'Last School Attended', 
       'Date of Admission', 'Class', 'Section', 'GR No', 
       'Monthly Fees', 'Admission Fees'
     ];
@@ -262,8 +265,8 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
     // Sample data rows
     const sampleData = [
       headers,
-      ['Ahmed', 'Khan', 'Muhammad Khan', 'Islam', '123 Main Street', '2005-05-15', 'Aga Khan Hospital', 'Karachi Grammar School', '2023-09-01', 'Class 5', 'A', 'GR001', 3000, 4000],
-      ['Fatima', 'Ahmed', 'Ali Ahmed', 'Islam', '456 Oak Avenue', '2006-08-22', 'Shalamar Hospital', 'Lahore Grammar School', '2023-09-01', 'Class 4', 'B', 'GR002', 2800, 3500]
+      ['Ahmed', 'Khan', 'Muhammad Khan', 'Islam', '123 Main Street', '2005-05-15', 'Aga Khan Hospital', '03001234567', 'Karachi Grammar School', '2023-09-01', 'Class 5', 'A', 'GR001', 3000, 4000],
+      ['Fatima', 'Ahmed', 'Ali Ahmed', 'Islam', '456 Oak Avenue', '2006-08-22', 'Shalamar Hospital', '03007654321', 'Lahore Grammar School', '2023-09-01', 'Class 4', 'B', 'GR002', 2800, 3500]
     ];
     
     // Create workbook and worksheet
@@ -300,6 +303,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
       { wch: 30 },  // Address
       { wch: 15 },  // Date of Birth
       { wch: 20 },  // Place of Birth
+      { wch: 15 },  // Parent Contact
       { wch: 25 },  // Last School Attended
       { wch: 18 },  // Date of Admission
       { wch: 10 },  // Class
@@ -378,6 +382,50 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
           
           for (const row of jsonData) {
             try {
+              // Helper function to parse date values from Excel
+              const parseExcelDate = (dateValue) => {
+                if (!dateValue) return '';
+                
+                // If it's already a string in YYYY-MM-DD format, return as is
+                if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+                  return dateValue;
+                }
+                
+                // If it's a string in MM/DD/YYYY format, convert it
+                if (typeof dateValue === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateValue)) {
+                  const parts = dateValue.split('/');
+                  const month = parts[0].padStart(2, '0');
+                  const day = parts[1].padStart(2, '0');
+                  const year = parts[2];
+                  return `${year}-${month}-${day}`;
+                }
+                
+                // If it's a Date object, convert to string
+                if (dateValue instanceof Date && !isNaN(dateValue)) {
+                  return dateValue.toISOString().split('T')[0];
+                }
+                
+                // If it's a number (Excel serial date), convert it
+                if (typeof dateValue === 'number') {
+                  // Excel serial date conversion (days since 1900)
+                  const excelEpoch = new Date(1900, 0, 1);
+                  const jsDate = new Date(excelEpoch.getTime() + (dateValue - 2) * 24 * 60 * 60 * 1000);
+                  return jsDate.toISOString().split('T')[0];
+                }
+                
+                // For any other format, try to parse it
+                try {
+                  const parsedDate = new Date(dateValue);
+                  if (parsedDate instanceof Date && !isNaN(parsedDate)) {
+                    return parsedDate.toISOString().split('T')[0];
+                  }
+                } catch (e) {
+                  // If parsing fails, return empty string
+                }
+                
+                return '';
+              };
+              
               // Map Excel columns to student fields
               const studentData = {
                 firstName: row['First Name'] || row['firstName'] || row['FirstName'] || '',
@@ -385,10 +433,11 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
                 fatherName: row['Father Name'] || row['fatherName'] || row['FatherName'] || '',
                 religion: row['Religion'] || row['religion'] || '',
                 address: row['Address'] || row['address'] || '',
-                dateOfBirth: row['Date of Birth'] || row['dateOfBirth'] || row['DateOfBirth'] || '',
+                dateOfBirth: parseExcelDate(row['Date of Birth'] || row['dateOfBirth'] || row['DateOfBirth']),
                 birthPlace: row['Place of Birth'] || row['birthPlace'] || row['BirthPlace'] || '',
+                parentContact: row['Parent Contact'] || row['parentContact'] || row['ParentContact'] || '',
                 lastSchoolAttended: row['Last School Attended'] || row['lastSchoolAttended'] || row['LastSchoolAttended'] || '',
-                dateOfAdmission: row['Date of Admission'] || row['dateOfAdmission'] || row['DateOfAdmission'] || new Date().toISOString().split('T')[0],
+                dateOfAdmission: parseExcelDate(row['Date of Admission'] || row['dateOfAdmission'] || row['DateOfAdmission']) || new Date().toISOString().split('T')[0],
                 class: row['Class'] || row['class'] || '',
                 section: row['Section'] || row['section'] || 'A',
                 grNo: row['GR No'] || row['grNo'] || row['GRNo'] || '',
@@ -408,6 +457,15 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
                 errors.push(`Row missing required fields (First Name, Last Name, Class): ${JSON.stringify(row)}`);
                 errorCount++;
                 continue;
+              }
+              
+              // Ensure dates are valid or empty
+              if (studentData.dateOfBirth && isNaN(Date.parse(studentData.dateOfBirth))) {
+                studentData.dateOfBirth = '';
+              }
+              
+              if (studentData.dateOfAdmission && isNaN(Date.parse(studentData.dateOfAdmission))) {
+                studentData.dateOfAdmission = new Date().toISOString().split('T')[0];
               }
               
               // Send to backend API using proper API configuration
@@ -579,7 +637,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
                   </button>
                   {isExportDropdownOpen && (
                     <div 
-                      className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                      className="absolute right-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
                       onMouseEnter={() => setIsExportDropdownOpen(true)}
                       onMouseLeave={() => setIsExportDropdownOpen(false)}
                     >
@@ -611,7 +669,7 @@ const StudentAvailabilityLists = ({ activeTab: propActiveTab,
                   </button>
                   {isImportDropdownOpen && (
                     <div 
-                      className="absolute right-0 mt-1 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
+                      className="absolute right-0 mt-0 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10"
                       onMouseEnter={() => setIsImportDropdownOpen(true)}
                       onMouseLeave={() => setIsImportDropdownOpen(false)}
                     >

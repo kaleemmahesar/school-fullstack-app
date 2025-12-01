@@ -266,37 +266,31 @@ export const validateForm = (formData, validationRules) => {
 // Validation rules for admission form
 export const admissionFormValidationRules = {
   grNo: [
-    { type: 'required' },
-    { type: 'length', minLength: 1, maxLength: 20 }
+    { type: 'length', minLength: 0, maxLength: 20 }
   ],
   firstName: [
     { type: 'required' },
-    { type: 'length', minLength: 2, maxLength: 50 }
+    { type: 'length', minLength: 1, maxLength: 50 }
+  ],
+  lastName: [
+    { type: 'length', minLength: 1, maxLength: 50 }
   ],
   fatherName: [
     { type: 'required' },
-    { type: 'length', minLength: 2, maxLength: 50 }
+    { type: 'length', minLength: 1, maxLength: 50 }
   ],
-  religion: [
-    { type: 'required' }
-  ],
+  religion: [],
   address: [
-    { type: 'required' },
-    { type: 'length', minLength: 5, maxLength: 200 }
+    { type: 'length', minLength: 1, maxLength: 200 }
   ],
   dateOfBirth: [
-    { type: 'required' },
-    { type: 'date' },
-    { type: 'dateNotInFuture' }
+    { type: 'date' }
   ],
   birthPlace: [
-    { type: 'required' },
-    { type: 'length', minLength: 2, maxLength: 50 }
+    { type: 'length', minLength: 1, maxLength: 50 }
   ],
   dateOfAdmission: [
-    { type: 'required' },
-    { type: 'date' },
-    { type: 'dateNotInFuture' }
+    { type: 'date' }
   ],
   class: [
     { type: 'required' }

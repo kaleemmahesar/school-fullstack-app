@@ -14,6 +14,7 @@ const ClassesSection = () => {
   const { staff } = useSelector(state => state.staff);
   const { schoolInfo } = useSelector(state => state.settings); // Add this line to access school settings
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc'); // 'asc' for low to high, 'desc' for high to low
   const [showClassModal, setShowClassModal] = useState(false);
   const [showFeesModal, setShowFeesModal] = useState(false);
   const [showSubjectModal, setShowSubjectModal] = useState(false);
@@ -186,9 +187,24 @@ const ClassesSection = () => {
     }
   };
 
-  const filteredClasses = classesWithStudentCounts.filter(cls =>
-    cls.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClasses = classesWithStudentCounts
+    .filter(cls => cls.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      // Extract numeric part from class name for proper sorting
+      const extractNumber = (className) => {
+        const match = className.match(/\d+/);
+        return match ? parseInt(match[0]) : 0;
+      };
+      
+      const numA = extractNumber(a.name);
+      const numB = extractNumber(b.name);
+      
+      if (sortOrder === 'asc') {
+        return numA - numB;
+      } else {
+        return numB - numA;
+      }
+    });
 
   // Calculate total students across all classes
   const totalStudents = classesWithStudentCounts.reduce((sum, cls) => sum + cls.totalStudents, 0);
@@ -294,6 +310,20 @@ const ClassesSection = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
               />
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setSortOrder('asc')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortOrder === 'asc' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                Low to High
+              </button>
+              <button
+                onClick={() => setSortOrder('desc')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${sortOrder === 'desc' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              >
+                High to Low
+              </button>
             </div>
           </div>
         </div>
