@@ -23,13 +23,16 @@ const ExaminationSection = () => {
   const [view, setView] = useState('list'); // 'list', 'detail', 'slips', 'results', or 'class-results'
   const [selectedExam, setSelectedExam] = useState(null);
   
+  // Set default dates to today
+  const today = new Date().toISOString().split('T')[0];
+  
   const [formData, setFormData] = useState({
     name: '',
     classes: [], // Changed from single class to array of classes
     section: '',
     examType: '',
-    startDate: '',
-    endDate: '',
+    startDate: today, // Set default to today
+    endDate: today,   // Set default to today
     subjects: [],
     maxMarks: 100
   });
@@ -80,7 +83,11 @@ const ExaminationSection = () => {
           student.status !== 'left'
         );
         
-        if (isClassEligible) {
+        // Also check if class simply exists in our class data
+        const classExists = classes.some(c => c.name === className);
+        
+        // Create exam if class is eligible OR if we simply have the class data (less restrictive)
+        if (isClassEligible || classExists) {
           // Get subjects for this class from the class data and apply schedule
           const classSubjects = classes.find(c => c.name === className)?.subjects || [];
           const scheduledSubjectsForClass = examData.scheduledSubjects?.find(sc => sc.className === className)?.subjects || [];
@@ -120,8 +127,8 @@ const ExaminationSection = () => {
       classes: [],
       section: '',
       examType: '',
-      startDate: '',
-      endDate: '',
+      startDate: today, // Set default to today
+      endDate: today,   // Set default to today
       subjects: [],
       maxMarks: 100
     });
@@ -150,6 +157,9 @@ const ExaminationSection = () => {
       student.status !== 'left'
     );
   });
+  
+  // Use all classes if no eligible classes found, otherwise use eligible classes
+  const availableClasses = eligibleClasses.length > 0 ? eligibleClasses : classes;
   
   // Filter exams based on search term and current academic year
   const filteredExams = exams.filter(exam => 
@@ -250,7 +260,7 @@ const ExaminationSection = () => {
               setFormData={setFormData}
               onSubmit={handleSave}
               onCancel={resetForm}
-              classes={eligibleClasses} // Use eligibleClasses instead of all classes
+              classes={availableClasses} // Use availableClasses instead of all classes
             />
           )}
 
@@ -393,6 +403,9 @@ const ExaminationSection = () => {
 
 // Exam Form Component
 const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
+  // Set default dates to today
+  const today = new Date().toISOString().split('T')[0];
+  
   const [subjectSchedule, setSubjectSchedule] = useState({});
 
   // Initialize subject schedule when form data changes
@@ -405,8 +418,8 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
       formData.subjects.forEach(subject => {
         const subjectKey = subject.id || subject.name;
         initialSchedule[subjectKey] = {
-          date: subject.date || '',
-          time: subject.time || '',
+          date: subject.date || today, // Set default to today
+          time: subject.time || '10:00', // Set default to 10:00 AM
           duration: subject.duration || 180
         };
       });
@@ -419,8 +432,8 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
             const subjectKey = subject.id || subject.name;
             if (!initialSchedule[subjectKey]) {
               initialSchedule[subjectKey] = {
-                date: subject.date || '',
-                time: subject.time || '',
+                date: subject.date || today, // Set default to today
+                time: subject.time || '10:00', // Set default to 10:00 AM
                 duration: subject.duration || 180
               };
             }
@@ -482,8 +495,8 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
         const schedule = subjectSchedule[subject.id] || subjectSchedule[subject.name] || {};
         return {
           ...subject,
-          date: schedule.date || '',
-          time: schedule.time || '',
+          date: schedule.date || today, // Use today as default
+          time: schedule.time || '10:00', // Use 10:00 AM as default
           duration: schedule.duration || 180
         };
       });
@@ -733,8 +746,11 @@ const ExamDetail = ({ exam, classes }) => {
   const [editedSubjects, setEditedSubjects] = useState([]);
 
   useEffect(() => {
-    if (exam.subjects) {
+    // Initialize editedSubjects with exam subjects or empty array
+    if (exam && exam.subjects && Array.isArray(exam.subjects)) {
       setEditedSubjects([...exam.subjects]);
+    } else {
+      setEditedSubjects([]);
     }
   }, [exam]);
 
@@ -761,7 +777,11 @@ const ExamDetail = ({ exam, classes }) => {
 
   const handleCancelEdit = () => {
     // Reset to original subjects
-    setEditedSubjects(exam.subjects ? [...exam.subjects] : []);
+    if (exam && exam.subjects && Array.isArray(exam.subjects)) {
+      setEditedSubjects([...exam.subjects]);
+    } else {
+      setEditedSubjects([]);
+    }
     setIsEditing(false);
   };
 

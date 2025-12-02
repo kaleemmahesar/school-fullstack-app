@@ -970,10 +970,11 @@ function handleExams($method, $id, $input, $pdo) {
         case 'POST':
             // Add new exam
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO exams (id, name, class, subject, date, totalMarks, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO exams (id, name, examType, class, subject, date, totalMarks, academicYear) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['name'] ?? '',
+                $input['examType'] ?? '',
                 $input['class'] ?? '',
                 $input['subject'] ?? '',
                 $input['date'] ?? null,
@@ -1000,9 +1001,10 @@ function handleExams($method, $id, $input, $pdo) {
             }
             
             // Update exam
-            $stmt = $pdo->prepare("UPDATE exams SET name = ?, class = ?, subject = ?, date = ?, totalMarks = ?, academicYear = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE exams SET name = ?, examType = ?, class = ?, subject = ?, date = ?, totalMarks = ?, academicYear = ? WHERE id = ?");
             $stmt->execute([
                 $input['name'] ?? '',
+                $input['examType'] ?? '',
                 $input['class'] ?? '',
                 $input['subject'] ?? '',
                 $input['date'] ?? null,

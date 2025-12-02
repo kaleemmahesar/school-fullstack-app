@@ -8,6 +8,7 @@ const ExamSlipGenerator = () => {
   const dispatch = useDispatch();
   const { exams } = useSelector(state => state.exams);
   const { students } = useSelector(state => state.students);
+  const schoolInfo = useSelector(state => state.settings.schoolInfo);
   
   const [selectedExam, setSelectedExam] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
@@ -19,6 +20,12 @@ const ExamSlipGenerator = () => {
   
   // Get unique classes from exams
   const examClasses = [...new Set(exams.map(exam => exam.class))];
+  
+  // Get all unique classes from students if no exam classes available
+  const allStudentClasses = [...new Set(students.map(student => student.class))];
+  
+  // Use exam classes if available, otherwise use all student classes
+  const availableClasses = examClasses.length > 0 ? examClasses : allStudentClasses;
   
   // Get sections for selected class
   const getSectionsForClass = (className) => {
@@ -114,7 +121,7 @@ const ExamSlipGenerator = () => {
               exam={previewSlip.exam}
               onPrint={() => window.print()}
               onDownload={() => alert('PDF download functionality would be implemented here')}
-              schoolInfo={useSelector(state => state.settings.schoolInfo)}
+              schoolInfo={schoolInfo}
             />
           </div>
         </div>
@@ -148,7 +155,7 @@ const ExamSlipGenerator = () => {
               examSlips={generatedSlips}
               students={students}
               exams={exams}
-              schoolInfo={useSelector(state => state.settings.schoolInfo)}
+              schoolInfo={schoolInfo}
             />
           </div>
         </div>
@@ -193,7 +200,7 @@ const ExamSlipGenerator = () => {
             className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
           >
             <option value="">Select Class</option>
-            {examClasses.map((cls, index) => (
+            {availableClasses.map((cls, index) => (
               <option key={index} value={cls}>{cls}</option>
             ))}
           </select>
