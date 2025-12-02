@@ -114,6 +114,7 @@ const ExamSlipGenerator = () => {
               exam={previewSlip.exam}
               onPrint={() => window.print()}
               onDownload={() => alert('PDF download functionality would be implemented here')}
+              schoolInfo={useSelector(state => state.settings.schoolInfo)}
             />
           </div>
         </div>
@@ -147,6 +148,7 @@ const ExamSlipGenerator = () => {
               examSlips={generatedSlips}
               students={students}
               exams={exams}
+              schoolInfo={useSelector(state => state.settings.schoolInfo)}
             />
           </div>
         </div>

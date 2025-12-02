@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global font size scaling */
+:root {
+  font-size: 16px; /* Base font size */
+}
+
+/* Increase font sizes globally by 10-15% */
+body {
+  font-size: 1.1rem; /* Slightly larger base font */
+}
+
+/* Scale heading sizes proportionally */
+h1 { font-size: 2.75rem; }
+h2 { font-size: 2.25rem; }
+h3 { font-size: 1.875rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1.1rem; }
+
+/* Scale paragraph and text elements */
+p { font-size: 1.1rem; }
+small { font-size: 0.9rem; }
+
+/* Scale form elements */
+input, select, textarea, button {
+  font-size: 1.05rem;
+}
+
+/* Improve content width utilization */
+.container {
+  max-width: 100%;
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    max-width: 100%;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 100%;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container {
+    max-width: 100%;
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
 /* Print Styles */
 @media print {
   body {
@@ -9,7 +72,16 @@
     padding: 0;
     background: white;
     font-family: Arial, sans-serif;
+    font-size: 1rem; /* Reset font size for printing */
   }
+  
+  /* Reset heading sizes for printing */
+  h1 { font-size: 2.5rem; }
+  h2 { font-size: 2rem; }
+  h3 { font-size: 1.75rem; }
+  h4 { font-size: 1.5rem; }
+  h5 { font-size: 1.25rem; }
+  h6 { font-size: 1rem; }
   
   .no-print {
     display: none !important;

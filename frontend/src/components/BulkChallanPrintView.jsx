@@ -11,10 +11,11 @@ const BulkChallanPrintView = ({ challans, students, schoolInfo }) => {
     day: 'numeric'
   });
 
-  const safeSchoolInfo = schoolInfo || {
-    name: "School Management System",
-    address: "123 Education Street, Learning City",
-    phone: "+1 (555) 123-4567"
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    name: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    address: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    phone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
   };
 
   const formatDate = (dateString) => {

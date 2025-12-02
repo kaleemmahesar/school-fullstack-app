@@ -271,13 +271,13 @@ const Layout = ({ children }) => {
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <header className="bg-white shadow-sm">
-          <div className="max-w-8xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="max-w-8xl mx-auto px-4 py-4 sm:px-6 lg:px-12">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <div className="rounded-xl">
                   <img src={Logo} alt="Logo" className="h-14 w-auto" />
                 </div>
-                <h1 className="ml-3 text-2xl font-bold text-gray-900">ABC High School</h1>
+                <h1 className="ml-3 text-2xl font-bold text-gray-900">{useSelector(state => state.settings.schoolInfo)?.schoolName || 'School Management System'}</h1>
               </div>
               <div className="flex items-center space-x-4">
                 <NotificationPanel />
@@ -324,7 +324,7 @@ const Layout = ({ children }) => {
 
         {/* Navigation */}
         <nav className="bg-white shadow-sm border-t border-gray-200 sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-12">
             <div className="flex py-3 space-x-6">
               
               {navItems.map((item, index) => (
@@ -384,7 +384,7 @@ const Layout = ({ children }) => {
         </nav>
 
         {/* Main Content */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <main className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6">
           {children}
         </main>
       </div>

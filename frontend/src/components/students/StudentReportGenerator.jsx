@@ -533,7 +533,7 @@ const StudentReportGenerator = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto">
       <PageHeader 
         title="Student Report Generator" 
         subtitle="Generate comprehensive reports for students and parents with weekly, monthly, and yearly tracking"

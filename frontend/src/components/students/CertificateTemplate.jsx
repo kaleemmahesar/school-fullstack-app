@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaSchool, FaUser, FaClipboardList } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const CertificateTemplate = ({ 
   student, 
@@ -8,11 +9,24 @@ const CertificateTemplate = ({
   reason = '', 
   characterDetails = '',
   leavingCertificateData = null,
-  schoolName = 'School Management System',
-  schoolAddress = '123 Education Street, Learning City',
+  schoolInfo,
+  schoolName,
+  schoolAddress,
   principalName = 'Principal',
-  phoneNumber = '+1 (555) 123-4567'
+  phoneNumber
 }) => {
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
+  
+  // Use provided values or fall back to schoolInfo
+  const finalSchoolName = schoolName || safeSchoolInfo.schoolName || "School Management System";
+  const finalSchoolAddress = schoolAddress || safeSchoolInfo.schoolAddress || "123 Education Street, Learning City";
+  const finalPhoneNumber = phoneNumber || safeSchoolInfo.schoolPhone || "+1 (555) 123-4567";
+
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString(undefined, options);
@@ -27,10 +41,10 @@ const CertificateTemplate = ({
           <div className="text-center border-b border-gray-300 pb-3 mb-4 print:hidden">
             <div className="flex items-center justify-center mb-2">
               <FaSchool className="text-blue-600 text-xl mr-3" />
-              <h1 className="text-xl font-bold text-gray-800">{schoolName}</h1>
+              <h1 className="text-xl font-bold text-gray-800">{finalSchoolName}</h1>
             </div>
-            <p className="text-gray-600 text-sm mb-1">{schoolAddress}</p>
-            <p className="text-gray-600 text-sm">Phone: {phoneNumber}</p>
+            <p className="text-gray-600 text-sm mb-1">{finalSchoolAddress}</p>
+            <p className="text-gray-600 text-sm">Phone: {finalPhoneNumber}</p>
           </div>
 
           {/* Certificate Title */}
@@ -256,9 +270,9 @@ const CertificateTemplate = ({
             <FaSchool className="text-4xl text-blue-800" />
           </div>
           <h1 className="text-3xl font-bold text-blue-800 uppercase tracking-wider">
-            {schoolName}
+            {finalSchoolName}
           </h1>
-          <p className="text-gray-600 mt-2">{schoolAddress}</p>
+          <p className="text-gray-600 mt-2">{finalSchoolAddress}</p>
           <div className="border-b-2 border-blue-800 mt-4 mx-auto w-32"></div>
         </div>
 

@@ -29,6 +29,7 @@ const FeesSection = () => {
   const { classes } = useSelector(state => state.classes);
   const { parents } = useSelector(state => state.parents);
   const { isNGOSchool } = useSchoolFunding();
+  const schoolInfoFromStore = useSelector(state => state.settings.schoolInfo);
   const [searchTerm, setSearchTerm] = useState('');
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
@@ -982,12 +983,7 @@ const FeesSection = () => {
         <SingleChallanPrintView
           challan={printChallan}
           student={printStudent}
-          schoolInfo={{
-            name: "School Management System",
-            address: "123 Education Street, Learning City",
-            phone: "+1 (555) 123-4567",
-            bankAccount: "0123456789"
-          }}
+          schoolInfo={schoolInfoFromStore}
           onPrint={handlePrintAction}
           onBack={handleClosePrintView}
         />
@@ -1016,11 +1012,7 @@ const FeesSection = () => {
             <BulkChallanPrintView
               challans={bulkPrintChallans}
               students={students}
-              schoolInfo={{
-                name: "School Management System",
-                address: "123 Education Street, Learning City",
-                phone: "+1 (555) 123-4567"
-              }}
+              schoolInfo={schoolInfoFromStore}
             />
           </div>
         </div>
@@ -1030,12 +1022,7 @@ const FeesSection = () => {
         <BulkGeneratedChallansPrintView
           challans={generatedChallans}
           students={students}
-          schoolInfo={{
-            name: "School Management System",
-            address: "123 Education Street, Learning City",
-            phone: "+1 (555) 123-4567",
-            bankAccount: "0123456789"
-          }}
+          schoolInfo={schoolInfoFromStore}
           onPrint={() => window.print()}
           onBack={() => {
             setShowGeneratedChallansView(false);

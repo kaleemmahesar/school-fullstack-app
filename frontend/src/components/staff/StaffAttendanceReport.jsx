@@ -378,7 +378,7 @@ const StaffAttendanceReport = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="mx-auto">
       <PageHeader 
         title="Staff Attendance Report" 
         subtitle="Generate comprehensive attendance reports for staff members"

@@ -1,14 +1,17 @@
 import React from 'react';
 import { FaSchool, FaCalendar, FaDollarSign, FaUser, FaIdCard, FaPrint, FaDownload } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const ChallanPrintView = ({ challan, student, schoolInfo, onPrint, onDownload }) => {
   // Add default values for safety
   const safeChallan = challan || {};
   const safeStudent = student || {};
-  const safeSchoolInfo = schoolInfo || {
-    name: "School Management System",
-    address: "123 Education Street, Learning City",
-    phone: "+1 (555) 123-4567"
+  
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
   };
 
   const formatDate = (dateString) => {
@@ -48,10 +51,10 @@ const ChallanPrintView = ({ challan, student, schoolInfo, onPrint, onDownload })
       <div className="text-center border-b border-gray-300 pb-2 mb-3 print:hidden">
         <div className="flex items-center justify-center mb-1">
           <FaSchool className="text-blue-600 text-lg mr-2" />
-          <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.name}</h1>
+          <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.schoolName || "School Management System"}</h1>
         </div>
-        <p className="text-gray-600 text-xs mb-1">{safeSchoolInfo.address}</p>
-        <p className="text-gray-600 text-xs">Phone: {safeSchoolInfo.phone}</p>
+        <p className="text-gray-600 text-xs mb-1">{safeSchoolInfo.schoolAddress || "123 Education Street, Learning City"}</p>
+        <p className="text-gray-600 text-xs">Phone: {safeSchoolInfo.schoolPhone || "+1 (555) 123-4567"}</p>
       </div>
 
       {/* Challan Header */}

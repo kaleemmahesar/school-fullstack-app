@@ -3,12 +3,13 @@ import { FaPrint } from 'react-icons/fa';
 import Logo from '../../img/logo.png';
 
 const PaidChallanView = ({ challan, student, schoolInfo, onPrint, onBack }) => {
-  const safeSchoolInfo = schoolInfo || {
-    name: "School Management System",
-    address: "123 Education Street, Learning City",
-    phone: "+1 (555) 123-4567",
-    bankAccount: "0123456789",
-    logo: null
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    name: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    address: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    phone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567",
+    bankAccount: schoolInfo?.bankAccount || "0123456789",
+    logo: schoolInfo?.logo || null
   };
 
   const formatDate = (dateString) => {
@@ -77,7 +78,7 @@ const PaidChallanView = ({ challan, student, schoolInfo, onPrint, onBack }) => {
         <div className="text-center mb-3">
           <img src={Logo} alt="School Logo" className="mx-auto mb-2" style={{ maxWidth: '100px', maxHeight: '50px', objectFit: 'contain' }} />
           <div className="text-center">
-            <div className="font-bold text-md">ABC High School</div>
+            <div className="font-bold text-md">{safeSchoolInfo.name || 'School Management System'}</div>
           </div>
         </div>
         

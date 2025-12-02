@@ -6,8 +6,16 @@ import jsPDF from 'jspdf';
  * @param {Object} challan - The challan data
  * @param {Object} student - The student data
  * @param {string} filename - The filename for the PDF
+ * @param {Object} schoolInfo - The school information
  */
-export const printChallanAsPDF = async (challan, student, filename) => {
+export const printChallanAsPDF = async (challan, student, filename, schoolInfo) => {
+  // Fallback values if schoolInfo is not provided
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
+  
   try {
     // Create a temporary DOM element with the print content
     const printElement = document.createElement('div');
@@ -15,9 +23,9 @@ export const printChallanAsPDF = async (challan, student, filename) => {
       <div style="width: 80mm; font-family: Arial, Helvetica, sans-serif; font-size: 12px; padding: 10px;">
         <!-- School Header -->
         <div style="text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
-          <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">School Management System</h1>
-          <p style="font-size: 10px; margin: 0 0 2px 0;">123 Education Street, Learning City</p>
-          <p style="font-size: 10px; margin: 0;">Phone: +1 (555) 123-4567</p>
+          <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">${safeSchoolInfo.schoolName}</h1>
+          <p style="font-size: 10px; margin: 0 0 2px 0;">${safeSchoolInfo.schoolAddress}</p>
+          <p style="font-size: 10px; margin: 0;">Phone: ${safeSchoolInfo.schoolPhone}</p>
         </div>
 
         <!-- Challan Header -->
@@ -173,17 +181,25 @@ export const printChallanAsPDF = async (challan, student, filename) => {
  * Print challan directly using browser print
  * @param {Object} challan - The challan data
  * @param {Object} student - The student data
+ * @param {Object} schoolInfo - The school information
  */
-export const printChallanDirect = (challan, student) => {
+export const printChallanDirect = (challan, student, schoolInfo) => {
+  // Fallback values if schoolInfo is not provided
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
+  
   try {
     // Create the print content
     const printContent = `
       <div style="width: 80mm; font-family: Arial, Helvetica, sans-serif; font-size: 12px; padding: 10px;">
         <!-- School Header -->
         <div style="text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
-          <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">School Management System</h1>
-          <p style="font-size: 10px; margin: 0 0 2px 0;">123 Education Street, Learning City</p>
-          <p style="font-size: 10px; margin: 0;">Phone: +1 (555) 123-4567</p>
+          <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">${safeSchoolInfo.schoolName}</h1>
+          <p style="font-size: 10px; margin: 0 0 2px 0;">${safeSchoolInfo.schoolAddress}</p>
+          <p style="font-size: 10px; margin: 0;">Phone: ${safeSchoolInfo.schoolPhone}</p>
         </div>
 
         <!-- Challan Header -->

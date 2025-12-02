@@ -10,6 +10,11 @@ const SettingsPage = () => {
   const { schoolInfo, loading, error } = useSelector(state => state.settings);
   
   const [formData, setFormData] = useState({
+    schoolName: '',
+    schoolAddress: '',
+    schoolPhone: '',
+    schoolEmail: '',
+    schoolWebsite: '',
     level: SCHOOL_CONFIG.level,
     hasPG: SCHOOL_CONFIG.hasPG,
     hasNursery: SCHOOL_CONFIG.hasNursery,
@@ -36,6 +41,11 @@ const SettingsPage = () => {
   useEffect(() => {
     if (schoolInfo) {
       setFormData({
+        schoolName: schoolInfo.schoolName || '',
+        schoolAddress: schoolInfo.schoolAddress || '',
+        schoolPhone: schoolInfo.schoolPhone || '',
+        schoolEmail: schoolInfo.schoolEmail || '',
+        schoolWebsite: schoolInfo.schoolWebsite || '',
         level: schoolInfo.level || SCHOOL_CONFIG.level,
         hasPG: schoolInfo.hasPG !== undefined ? schoolInfo.hasPG : SCHOOL_CONFIG.hasPG,
         hasNursery: schoolInfo.hasNursery !== undefined ? schoolInfo.hasNursery : SCHOOL_CONFIG.hasNursery,
@@ -178,6 +188,11 @@ const SettingsPage = () => {
 
   const handleReset = () => {
     setFormData({
+      schoolName: '',
+      schoolAddress: '',
+      schoolPhone: '',
+      schoolEmail: '',
+      schoolWebsite: '',
       level: SCHOOL_CONFIG.level,
       hasPG: SCHOOL_CONFIG.hasPG,
       hasNursery: SCHOOL_CONFIG.hasNursery,
@@ -226,7 +241,7 @@ const SettingsPage = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">School Settings</h1>
         <p className="text-gray-600 mt-1">Configure your school's basic information</p>
@@ -269,6 +284,90 @@ const SettingsPage = () => {
         <form onSubmit={handleSubmit}>
           <div className="px-6 py-4">
             <div className="space-y-8">
+              {/* School Information Section */}
+              <div>
+                <h3 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                  <FaSchool className="mr-2 text-blue-500" />
+                  School Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="schoolName" className="block text-sm font-medium text-gray-700 mb-1">
+                      School Name
+                    </label>
+                    <input
+                      type="text"
+                      id="schoolName"
+                      name="schoolName"
+                      value={formData.schoolName}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter school name"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="schoolAddress" className="block text-sm font-medium text-gray-700 mb-1">
+                      School Address
+                    </label>
+                    <input
+                      type="text"
+                      id="schoolAddress"
+                      name="schoolAddress"
+                      value={formData.schoolAddress}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter school address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="schoolPhone" className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number
+                    </label>
+                    <input
+                      type="text"
+                      id="schoolPhone"
+                      name="schoolPhone"
+                      value={formData.schoolPhone}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="schoolEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      id="schoolEmail"
+                      name="schoolEmail"
+                      value={formData.schoolEmail}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="schoolWebsite" className="block text-sm font-medium text-gray-700 mb-1">
+                      Website
+                    </label>
+                    <input
+                      type="text"
+                      id="schoolWebsite"
+                      name="schoolWebsite"
+                      value={formData.schoolWebsite}
+                      onChange={handleInputChange}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter website URL"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* School Level Section */}
               <div>
                 <h3 className="text-md font-medium text-gray-900 mb-4 flex items-center">

@@ -4,12 +4,13 @@ import { FaPrint } from 'react-icons/fa';
 const BulkGeneratedChallansPrintView = ({ challans, students, schoolInfo, onPrint, onBack }) => {
   if (!challans || challans.length === 0) return null;
 
-  const safeSchoolInfo = schoolInfo || {
-    name: "School Management System",
-    address: "123 Education Street, Learning City",
-    phone: "+1 (555) 123-4567",
-    bankAccount: "0123456789",
-    logo: null
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    name: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    address: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    phone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567",
+    bankAccount: schoolInfo?.bankAccount || "0123456789",
+    logo: schoolInfo?.logo || null
   };
 
   const formatDate = (dateString) => {

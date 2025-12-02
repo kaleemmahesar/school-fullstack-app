@@ -8,6 +8,11 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error } = useSelector(state => state.users);
+  const schoolInfo = useSelector(state => state.settings.schoolInfo);
+  
+  // Use school name from Redux store with fallback
+  const schoolName = schoolInfo?.schoolName || schoolInfo?.name || "School Management System";
+  
   const [formData, setFormData] = useState({
     username: '',
     password: '',
@@ -90,7 +95,7 @@ const LoginPage = () => {
               <FaSchool className="text-blue-600 text-3xl" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white">School Management System</h1>
+          <h1 className="text-2xl font-bold text-white">{schoolName}</h1>
           <p className="text-blue-100 mt-2">Sign in to your account</p>
         </div>
         

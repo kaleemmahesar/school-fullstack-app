@@ -9,6 +9,7 @@ import { printChallanAsPDF } from '../utils/challanPrinter';
 const FeesSection = () => {
   const dispatch = useDispatch();
   const { students, loading, error } = useSelector(state => state.students);
+  const schoolInfoFromStore = useSelector(state => state.settings.schoolInfo);
   const [searchTerm, setSearchTerm] = useState('');
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showStudentDetails, setShowStudentDetails] = useState(false);
@@ -504,14 +505,21 @@ const FeesSection = () => {
   const handlePrintAction = async () => {
     if (printChallan && printStudent) {
       try {
+        // Create safe school info with fallback values
+        const safeSchoolInfo = {
+          schoolName: schoolInfoFromStore?.schoolName || schoolInfoFromStore?.name || "School Management System",
+          schoolAddress: schoolInfoFromStore?.schoolAddress || schoolInfoFromStore?.address || "123 Education Street, Learning City",
+          schoolPhone: schoolInfoFromStore?.schoolPhone || schoolInfoFromStore?.phone || "+1 (555) 123-4567"
+        };
+        
         // Create a simplified, print-optimized HTML version
         const printContent = `
           <div style="width: 80mm; font-family: Arial, Helvetica, sans-serif; font-size: 12px; padding: 10px;">
             <!-- School Header -->
             <div style="text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-bottom: 10px;">
-              <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">School Management System</h1>
-              <p style="font-size: 10px; margin: 0 0 2px 0;">123 Education Street, Learning City</p>
-              <p style="font-size: 10px; margin: 0;">Phone: +1 (555) 123-4567</p>
+              <h1 style="font-size: 16px; font-weight: bold; margin: 0 0 5px 0;">${safeSchoolInfo.schoolName}</h1>
+              <p style="font-size: 10px; margin: 0 0 2px 0;">${safeSchoolInfo.schoolAddress}</p>
+              <p style="font-size: 10px; margin: 0;">Phone: ${safeSchoolInfo.schoolPhone}</p>
             </div>
 
             <!-- Challan Header -->
@@ -668,7 +676,7 @@ const FeesSection = () => {
     if (printChallan && printStudent) {
       try {
         const filename = `challan_${printStudent.firstName}_${printStudent.lastName}_${printChallan.month.replace(/\s+/g, '_')}.pdf`;
-        const success = await printChallanAsPDF(printChallan, printStudent, filename);
+        const success = await printChallanAsPDF(printChallan, printStudent, filename, schoolInfoFromStore);
         if (success) {
           console.log('Challan downloaded successfully');
         } else {
@@ -750,12 +758,7 @@ const FeesSection = () => {
                 <ChallanPrintView 
                   challan={printChallan} 
                   student={printStudent} 
-                  schoolInfo={{
-                    name: "School Management System",
-                    address: "123 Education Street, Learning City",
-                    phone: "+1 (555) 123-4567",
-                    email: "info@schoolmanagement.com"
-                  }} 
+                  schoolInfo={schoolInfoFromStore}
                   onPrint={handlePrintAction}
                   onDownload={handleDownloadAction}
                 />

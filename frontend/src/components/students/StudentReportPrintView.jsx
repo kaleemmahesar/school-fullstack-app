@@ -1,17 +1,21 @@
 import React from 'react';
 import { FaChartBar, FaUser, FaCalendarAlt, FaBook } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const StudentReportPrintView = ({ report }) => {
   if (!report) return null;
 
   const generatedDate = new Date().toISOString().split('T')[0];
 
-  // Get school info from settings (mock data for now)
+  // Get school info from Redux store with fallback values
+  const schoolInfoFromStore = useSelector(state => state.settings.schoolInfo);
+  
+  // Fallback values if schoolInfo is not available
   const schoolInfo = {
-    name: "SEF High School Larkana",
-    address: "123 Education Street, Larkana, Sindh",
-    phone: "+92 (021) 123-4567",
-    email: "info@asadhighschool.edu.pk"
+    name: schoolInfoFromStore?.schoolName || schoolInfoFromStore?.name || "School Management System",
+    address: schoolInfoFromStore?.schoolAddress || schoolInfoFromStore?.address || "123 Education Street, Learning City",
+    phone: schoolInfoFromStore?.schoolPhone || schoolInfoFromStore?.phone || "+1 (555) 123-4567",
+    email: schoolInfoFromStore?.schoolEmail || schoolInfoFromStore?.email || "info@school.edu"
   };
 
   return (

@@ -1,12 +1,14 @@
 import React from 'react';
 import { FaSchool, FaUser, FaClipboardList, FaPrint, FaDownload } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const MarksheetPrintView = ({ 
   marksheetData, 
   studentData, 
   classData,
   onPrint,
-  onDownload
+  onDownload,
+  schoolInfo
 }) => {
   if (!marksheetData) return null;
 
@@ -26,6 +28,13 @@ const MarksheetPrintView = ({
 
   const className = marksheetData.class || 'N/A';
   const section = marksheetData.section || 'N/A';
+  
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
 
   // Format date
   const generatedDate = new Date().toLocaleDateString('en-US', {
@@ -40,10 +49,10 @@ const MarksheetPrintView = ({
       <div className="text-center border-b border-gray-300 pb-2 mb-3 print:hidden">
         <div className="flex items-center justify-center mb-1">
           <FaSchool className="text-blue-600 text-lg mr-2" />
-          <h1 className="text-lg font-bold text-gray-800">School Management System</h1>
+          <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.schoolName || "School Management System"}</h1>
         </div>
-        <p className="text-gray-600 text-xs mb-1">123 Education Street, Learning City</p>
-        <p className="text-gray-600 text-xs">Phone: +1 (555) 123-4567</p>
+        <p className="text-gray-600 text-xs mb-1">{safeSchoolInfo.schoolAddress || "123 Education Street, Learning City"}</p>
+        <p className="text-gray-600 text-xs">Phone: {safeSchoolInfo.schoolPhone || "+1 (555) 123-4567"}</p>
       </div>
 
       {/* Marksheet Header */}

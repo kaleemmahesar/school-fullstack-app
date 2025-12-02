@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import CertificateTemplate from './CertificateTemplate';
+import { useSelector } from 'react-redux';
 
 const PrintableCertificate = ({ 
   student, 
@@ -11,6 +12,14 @@ const PrintableCertificate = ({
   onClose 
 }) => {
   const printRef = useRef();
+  const schoolInfo = useSelector(state => state.settings.schoolInfo);
+  
+  // Fallback values if schoolInfo is not available
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
 
   const handlePrint = () => {
     // Create a simplified, print-optimized HTML version
@@ -28,9 +37,9 @@ const PrintableCertificate = ({
         <div style="max-width: 800px; margin: 0 auto; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px;">
           <!-- Certificate Header -->
           <div style="text-align: center; border-bottom: 1px solid #d1d5db; padding-bottom: 15px; margin-bottom: 20px;">
-            <h1 style="font-size: 24px; font-weight: bold; color: #1e40af; margin: 0 0 10px 0;">School Management System</h1>
-            <p style="font-size: 14px; color: #4b5563; margin: 0 0 5px 0;">123 Education Street, Learning City</p>
-            <p style="font-size: 14px; color: #4b5563; margin: 0;">Phone: +1 (555) 123-4567</p>
+            <h1 style="font-size: 24px; font-weight: bold; color: #1e40af; margin: 0 0 10px 0;">${safeSchoolInfo.schoolName}</h1>
+            <p style="font-size: 14px; color: #4b5563; margin: 0 0 5px 0;">${safeSchoolInfo.schoolAddress}</p>
+            <p style="font-size: 14px; color: #4b5563; margin: 0;">Phone: ${safeSchoolInfo.schoolPhone}</p>
           </div>
 
           <!-- Certificate Title -->
