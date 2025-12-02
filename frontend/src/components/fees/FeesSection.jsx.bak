@@ -266,8 +266,8 @@ const FeesSection = () => {
       student.section.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = filterStatus === 'all' || 
-      (filterStatus === 'paid' && student.completionRate === 100) || 
-      (filterStatus === 'pending' && student.completionRate < 100);
+      (filterStatus === 'paid' && student.completionRate === 100 && student.admissionPaid) || 
+      (filterStatus === 'pending' && (student.completionRate < 100 || !student.admissionPaid));
       
     const matchesClass = !selectedClass || student.class === selectedClass;
     const matchesSection = !selectedSection || student.section === selectedSection;

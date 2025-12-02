@@ -1506,7 +1506,7 @@ const FeesSection = () => {
                   </div>
                   <div className="bg-red-50 rounded-lg p-4">
                     <p className="text-sm text-red-800">Pending Amount</p>
-                    <p className="text-2xl font-bold text-red-900">Rs {Math.round(detailViewStudent.pendingAmount) || 0}</p>
+                    <p className="text-2xl font-bold text-red-900">Rs {isNaN(detailViewStudent.pendingAmount) ? '0' : Math.round(detailViewStudent.pendingAmount || 0).toLocaleString()}</p>
                   </div>
                 </div>
 

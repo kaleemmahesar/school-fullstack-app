@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaPrint } from 'react-icons/fa';
-import Logo from '../../img/logo.png';
+import Logo from '../../img/d-logo.jpeg';
 
 const PaidChallanView = ({ challan, student, schoolInfo, onPrint, onBack }) => {
   // Use school info from props with fallback defaults

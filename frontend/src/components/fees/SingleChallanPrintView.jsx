@@ -1,13 +1,14 @@
 import React from 'react';
 import { FaPrint } from 'react-icons/fa';
-import Logo from '../../img/logo.png';
+import Logo from '../../img/d-logo.jpeg';
 import PaidChallanView from './PaidChallanView';
+import ParentReceiptView from './ParentReceiptView';
 
 const SingleChallanPrintView = ({ challan, student, schoolInfo, onPrint, onBack }) => {
-  // If challan is paid, render the paid challan view
+  // If challan is paid, render the parent receipt view
   if (challan.status === 'paid') {
     return (
-      <PaidChallanView
+      <ParentReceiptView
         challan={challan}
         student={student}
         schoolInfo={schoolInfo}

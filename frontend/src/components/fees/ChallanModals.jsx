@@ -165,15 +165,26 @@ const ChallanModals = ({
       {/* Payment Modal */}
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md" style={{ minWidth: '500px' }}>
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Process Payment</h3>
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.target);
+              const discountAmount = parseFloat(formData.get('discountAmount')) || 0;
+              const discountReason = formData.get('discountReason') || '';
+              
+              // Get the original challan amount
+              const targetChallan = detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId);
+              const originalAmount = parseFloat(targetChallan?.amount) || 0;
+              const actualAmountPaid = originalAmount - discountAmount;
+              
               const data = {
                 challanId: paymentData.challanId,
                 paymentMethod: formData.get('paymentMethod'),
-                paymentDate: formData.get('paymentDate')
+                paymentDate: formData.get('paymentDate'),
+                discountAmount: discountAmount,
+                discountReason: discountReason,
+                actualAmountPaid: actualAmountPaid
               };
               submitPayment(data);
             }} className="space-y-4">
@@ -201,6 +212,77 @@ const ChallanModals = ({
                   className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
+              </div>
+              
+              {/* Discount Fields */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Discount Amount</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaDollarSign className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="number"
+                        name="discountAmount"
+                        min="0"
+                        step="0.01"
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter discount amount"
+                        onChange={(e) => {
+                          // Update discount display
+                          const discountDisplay = document.getElementById('discountDisplay');
+                          const amountToPayDisplay = document.getElementById('amountToPayDisplay');
+                          
+                          if (discountDisplay && amountToPayDisplay) {
+                            const discountAmount = parseFloat(e.target.value) || 0;
+                            const originalAmount = parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0;
+                            const amountToPay = originalAmount - discountAmount;
+                            
+                            discountDisplay.textContent = `Rs ${discountAmount.toFixed(2)}`;
+                            amountToPayDisplay.textContent = `Rs ${amountToPay.toFixed(2)}`;
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Discount</label>
+                    <input
+                      type="text"
+                      name="discountReason"
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter reason (optional)"
+                    />
+                  </div>
+                </div>
+                
+                {/* Display calculated amounts */}
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <p className="font-medium text-gray-700 text-sm mb-1">Original Amount:</p>
+                      <p className="text-gray-900">
+                        Rs {(parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0).toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700 text-sm mb-1">Discount:</p>
+                      <p className="text-red-600" id="discountDisplay">
+                        Rs 0.00
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-700 text-sm mb-1">Amount to Pay:</p>
+                      <p className="font-bold text-green-600" id="amountToPayDisplay">
+                        Rs {(parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
               
               <div className="flex justify-end space-x-3 pt-4">

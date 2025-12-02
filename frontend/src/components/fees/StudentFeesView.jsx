@@ -9,7 +9,7 @@ const StudentFeesView = ({ filteredStudents, onViewDetails }) => {
         <tr 
           key={student.id} 
           className={`hover:bg-gray-50 border-l-4 ${
-            student.completionRate < 100 || !student.admissionPaid 
+            student.completionRate < 100 
               ? 'border-l-red-500' 
               : 'border-l-green-500'
           }`}
@@ -30,36 +30,36 @@ const StudentFeesView = ({ filteredStudents, onViewDetails }) => {
             <div className="text-sm font-medium text-gray-900">{student.firstName} {student.lastName}</div>
           </td>
           <td className="px-4 py-3 whitespace-nowrap">
-            <div className="text-sm text-gray-900">{student.class} - {student.section}</div>
+            <div className="text-sm text-gray-900">{student.class} {student.section}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-4 py-3 whitespace-nowrap">
             <div className="text-sm text-gray-900">{student.paidChallans}/{student.totalChallans}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-4 py-3 whitespace-nowrap">
             <div className="text-sm text-gray-900">Rs {Math.round(student.paidAmount)}/{Math.round(student.totalAmount)}</div>
           </td>
-          <td className="px-6 py-4 whitespace-nowrap">
+          <td className="px-4 py-3 whitespace-nowrap">
             <div className="flex items-center">
-              <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
+              <div className="w-full bg-gray-200 rounded-full h-2 mr-2">
                 <div 
                   className={`h-2 rounded-full ${
-                    student.completionRate === 100 ? 'bg-green-500' : 
+                    student.completionRate >= 75 ? 'bg-green-500' : 
                     student.completionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                  }`} 
+                  }`}
                   style={{ width: `${student.completionRate}%` }}
                 ></div>
               </div>
-              <span className="text-sm font-medium text-gray-700">{student.completionRate}%</span>
+              <span className="text-sm font-medium text-gray-900">{student.completionRate}%</span>
             </div>
           </td>
           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
             <div className="flex items-center justify-end space-x-2">
-              {student.completionRate < 100 || !student.admissionPaid && student.totalAmount > 0 ? (
+              {student.completionRate < 100 ? (
                 <FaExclamationCircle className="text-red-500" />
               ) : (
                 <FaCheckCircle className="text-green-500" />
               )}
-              {student.completionRate < 100 || (!student.admissionPaid && student.totalAmount > 0) ? (
+              {student.completionRate < 100 ? (
                 <WhatsAppFeeReminder student={student} />
               ) : null}
               <button

@@ -13,7 +13,7 @@ function handleStudents($method, $id, $input, $pdo) {
                 
                 if ($student) {
                     // Get fees history for this student
-                    $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+                    $stmt = $pdo->prepare("SELECT id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description, created_at FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
                     $stmt->execute([$id]);
                     $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $student['feesHistory'] = $feesHistory;
@@ -33,7 +33,7 @@ function handleStudents($method, $id, $input, $pdo) {
                 
                 // Add fees history to each student
                 foreach ($students as &$student) {
-                    $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+                    $stmt = $pdo->prepare("SELECT id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description, created_at FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
                     $stmt->execute([$student['id']]);
                     $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     $student['feesHistory'] = $feesHistory;
@@ -84,12 +84,15 @@ function handleStudents($method, $id, $input, $pdo) {
             if (isset($input['feesHistory']) && is_array($input['feesHistory'])) {
                 foreach ($input['feesHistory'] as $fee) {
                     $feeId = $fee['id'] ?? uniqid('challan-');
-                    $stmt = $pdo->prepare("INSERT INTO fees_history (id, student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO fees_history (id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([
                         $feeId,
                         $id,
                         $fee['month'] ?? '',
                         $fee['amount'] ?? 0,
+                        $fee['discountAmount'] ?? 0,
+                        $fee['discountReason'] ?? '',
+                        $fee['discountedAmount'] ?? 0,
                         $fee['paid'] ?? false,
                         $fee['date'] ?? null,
                         $fee['dueDate'] ?? null,
@@ -111,7 +114,7 @@ function handleStudents($method, $id, $input, $pdo) {
             $student = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Get fees history for this student
-            $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+            $stmt = $pdo->prepare("SELECT id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description, created_at FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
             $stmt->execute([$id]);
             $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $student['feesHistory'] = $feesHistory;
@@ -208,11 +211,15 @@ function handleStudents($method, $id, $input, $pdo) {
                 
                 // Then insert new fees history
                 foreach ($input['feesHistory'] as $fee) {
-                    $stmt = $pdo->prepare("INSERT INTO fees_history (student_id, month, amount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO fees_history (id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
                     $stmt->execute([
+                        $fee['id'] ?? uniqid('challan-'), // Use existing ID or generate new one
                         $id,
                         $fee['month'] ?? '',
                         $fee['amount'] ?? 0,
+                        $fee['discountAmount'] ?? 0,
+                        $fee['discountReason'] ?? '',
+                        $fee['discountedAmount'] ?? 0,
                         $fee['paid'] ?? false,
                         $fee['date'] ?? null,
                         $fee['dueDate'] ?? null,
@@ -234,7 +241,7 @@ function handleStudents($method, $id, $input, $pdo) {
             $student = $stmt->fetch(PDO::FETCH_ASSOC);
             
             // Get fees history for this student
-            $stmt = $pdo->prepare("SELECT * FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
+            $stmt = $pdo->prepare("SELECT id, student_id, month, amount, discountAmount, discountReason, discountedAmount, paid, date, dueDate, status, type, academicYear, paymentTimestamp, generationTimestamp, paymentMethod, fineAmount, description, created_at FROM fees_history WHERE student_id = ? ORDER BY created_at DESC");
             $stmt->execute([$id]);
             $feesHistory = $stmt->fetchAll(PDO::FETCH_ASSOC);
             $student['feesHistory'] = $feesHistory;

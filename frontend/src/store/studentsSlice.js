@@ -244,7 +244,7 @@ export const deleteStudent = createDeleteThunk(
  */
 export const payFees = createAsyncThunkWithToast(
   'students/payFees',
-  async ({ challanId, paymentMethod, paymentDate }) => {
+  async ({ challanId, paymentMethod, paymentDate, discountAmount, discountReason, actualAmountPaid }) => {
     // Find the student who has this challan
     // First, we need to get all students to find the one with this challan
     const studentsResponse = await fetch(getApiUrl('students'));
@@ -300,9 +300,16 @@ export const payFees = createAsyncThunkWithToast(
     targetChallan.paymentTimestamp = new Date().toISOString();
     // Store the calculated fine amount
     targetChallan.fineAmount = fineAmount;
+    // Store discount information
+    targetChallan.discountAmount = discountAmount || 0;
+    targetChallan.discountReason = discountReason || '';
+    // Calculate the discounted amount (original amount - discount)
+    targetChallan.discountedAmount = (parseFloat(targetChallan.amount) || 0) - (discountAmount || 0);
     
-    // Update total fees paid (including fine)
-    targetStudent.feesPaid = (parseFloat(targetStudent.feesPaid) || 0) + parseFloat(targetChallan.amount || 0) + fineAmount;
+    // Update total fees paid (including fine but minus discount)
+    const calculatedAmount = (parseFloat(targetChallan.amount) || 0) - (discountAmount || 0) + fineAmount;
+    const finalAmountPaid = actualAmountPaid !== undefined ? actualAmountPaid : calculatedAmount;
+    targetStudent.feesPaid = (parseFloat(targetStudent.feesPaid) || 0) + finalAmountPaid;
     
     // Update student in database
     const response = await fetch(getApiUrl(`students/${targetStudent.id}`), {

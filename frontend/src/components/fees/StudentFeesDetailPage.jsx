@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaEye, FaChartBar, FaDollarSign, FaCheck, FaExclamation, FaReceipt, FaUser, FaPlus, FaPrint } from 'react-icons/fa';
+import { FaEye, FaChartBar, FaDollarSign, FaCheck, FaExclamation, FaReceipt, FaUser, FaPlus, FaPrint, FaTag } from 'react-icons/fa';
 
 const StudentFeesDetailPage = ({
   detailViewStudent,
@@ -56,15 +56,34 @@ const StudentFeesDetailPage = ({
     const totalAdmissionAmount = admissionChallans.reduce((sum, challan) => sum + (challan.amount || 0), 0);
     const totalAmount = totalMonthlyAmount + totalAdmissionAmount;
     
+    // Calculate total discounts for the student
+    const totalDiscounts = (monthlyChallans.reduce((sum, challan) => sum + (parseFloat(challan.discountAmount) || 0), 0) +
+                          admissionChallans.reduce((sum, challan) => sum + (parseFloat(challan.discountAmount) || 0), 0));
+    
+    // Adjusted total amount after discounts
+    const adjustedTotalAmount = totalAmount - totalDiscounts;
+    
     const paidMonthlyAmount = monthlyChallans
       .filter(challan => challan.status === 'paid')
-      .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      .reduce((sum, challan) => {
+        // If discount information exists, use the discounted amount
+        if (challan.discountAmount > 0) {
+          return sum + ((challan.amount - challan.discountAmount) || challan.discountedAmount || 0);
+        }
+        return sum + (challan.amount || 0);
+      }, 0);
     const paidAdmissionAmount = admissionChallans
       .filter(challan => challan.status === 'paid')
-      .reduce((sum, challan) => sum + (challan.amount || 0), 0);
+      .reduce((sum, challan) => {
+        // If discount information exists, use the discounted amount
+        if (challan.discountAmount > 0) {
+          return sum + ((challan.amount - challan.discountAmount) || challan.discountedAmount || 0);
+        }
+        return sum + (challan.amount || 0);
+      }, 0);
     const paidAmount = paidMonthlyAmount + paidAdmissionAmount;
     
-    const pendingAmount = totalAmount - paidAmount;
+    const pendingAmount = Math.max(0, adjustedTotalAmount - paidAmount);
     
     const admissionPaid = admissionChallans.length > 0 && admissionChallans.every(challan => challan.status === 'paid');
     
@@ -75,10 +94,12 @@ const StudentFeesDetailPage = ({
       totalChallans,
       paidChallans,
       totalAmount,
+      adjustedTotalAmount,
       paidAmount,
       pendingAmount,
       admissionPaid,
-      completionRate
+      completionRate,
+      totalDiscounts
     };
   };
 
@@ -113,7 +134,7 @@ const StudentFeesDetailPage = ({
             <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
               <FaChartBar className="mr-2 text-blue-500" /> Financial Overview
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               {/* Total Amount */}
               <div className="bg-white rounded-xl shadow p-4 border border-gray-200">
                 <div className="flex items-center">
@@ -122,7 +143,7 @@ const StudentFeesDetailPage = ({
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs font-medium">Total Amount</p>
-                    <p className="text-xl font-bold text-gray-900">Rs {Math.round(updatedStudentStats.totalAmount || 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold text-gray-900">Rs {isNaN(updatedStudentStats.adjustedTotalAmount) ? '0' : Math.round(updatedStudentStats.adjustedTotalAmount || 0).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -148,7 +169,7 @@ const StudentFeesDetailPage = ({
                   </div>
                   <div>
                     <p className="text-gray-500 text-xs font-medium">Pending</p>
-                    <p className="text-xl font-bold text-gray-900">Rs {Math.round(updatedStudentStats.pendingAmount || 0).toLocaleString()}</p>
+                    <p className="text-xl font-bold text-gray-900">Rs {isNaN(updatedStudentStats.pendingAmount) ? '0' : Math.round(updatedStudentStats.pendingAmount || 0).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -162,6 +183,19 @@ const StudentFeesDetailPage = ({
                   <div>
                     <p className="text-gray-500 text-xs font-medium">Completion</p>
                     <p className="text-xl font-bold text-gray-900">{updatedStudentStats.completionRate || 0}%</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Discounts Given */}
+              <div className="bg-white rounded-xl shadow p-4 border border-gray-200">
+                <div className="flex items-center">
+                  <div className="p-3 bg-pink-100 rounded-full mr-3">
+                    <FaTag className="text-pink-600" />
+                  </div>
+                  <div>
+                    <p className="text-gray-500 text-xs font-medium">Discounts</p>
+                    <p className="text-xl font-bold text-gray-900">Rs {isNaN(updatedStudentStats.totalDiscounts) ? '0' : Math.round(updatedStudentStats.totalDiscounts || 0).toLocaleString()}</p>
                   </div>
                 </div>
               </div>
@@ -267,7 +301,19 @@ const StudentFeesDetailPage = ({
                                 {challan.month}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                Rs {Math.round(challan.amount).toLocaleString()}
+                                <div>
+                                  <div>Rs {isNaN(challan.amount) ? '0' : Math.round(challan.amount).toLocaleString()}</div>
+                                  {challan.discountAmount > 0 && (
+                                    <div className="text-xs text-red-600">
+                                      Discount: Rs {isNaN(challan.discountAmount) ? '0' : Math.round(challan.discountAmount).toLocaleString()}
+                                    </div>
+                                  )}
+                                  {challan.discountAmount > 0 && (
+                                    <div className="text-xs font-medium text-green-600">
+                                      Paid: Rs {isNaN(challan.amount - challan.discountAmount) ? (isNaN(challan.discountedAmount) ? '0' : Math.round(challan.discountedAmount).toLocaleString()) : Math.round((challan.amount - challan.discountAmount) || challan.discountedAmount).toLocaleString()}
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {new Date(challan.dueDate).toLocaleDateString()}
