@@ -7,12 +7,62 @@ import { fetchClasses } from '../store/classesSlice';
 import { FaUserGraduate, FaIdCard, FaPhone, FaEnvelope, FaCalendar, FaSchool, FaMoneyBillWave, FaCamera, FaArrowLeft, FaPrint, FaUser, FaHome, FaMapMarker, FaMoon, FaSun, FaInfoCircle } from 'react-icons/fa';
 import { API_BASE_URL, API_BASE_URL_PHOTO } from '../utils/apiConfig';
 import { validateForm } from '../utils/validation';
-import { admissionFormValidationRules } from '../utils/validation';
 import PrintableAdmissionForm from './PrintableAdmissionForm';
 import PageHeader from './common/PageHeader';
 import { useSchoolFunding } from '../hooks/useSchoolFunding';
 import FundingConditional from './common/FundingConditional';
 import 'react-datepicker/dist/react-datepicker.css';
+
+export const admissionFormValidationRules = {
+  grNo: [
+    { type: 'length', minLength: 0, maxLength: 20 }
+  ],
+  firstName: [
+    { type: 'required' },
+    { type: 'length', minLength: 1, maxLength: 50 }
+  ],
+  lastName: [
+    { type: 'length', minLength: 1, maxLength: 50 }
+  ],
+  fatherName: [
+    { type: 'required' },
+    { type: 'length', minLength: 1, maxLength: 50 }
+  ],
+  religion: [],
+  address: [
+    { type: 'length', minLength: 1, maxLength: 200 }
+  ],
+  dateOfBirth: [
+    { type: 'date' }
+  ],
+  birthPlace: [
+    { type: 'length', minLength: 1, maxLength: 50 }
+  ],
+  dateOfAdmission: [
+    { type: 'date' }
+  ],
+  class: [
+    { type: 'required' }
+  ],
+  section: [],
+  // Fee fields for traditional schools (validation will be conditional in the component)
+  admissionFees: [
+    { type: 'number', min: 0 }
+  ],
+  monthlyFees: [
+    { type: 'number', min: 0 }
+  ],
+  feesPaid: [
+    { type: 'number', min: 0 }
+  ],
+  totalFees: [
+    { type: 'number', min: 0 }
+  ],
+  // Fix parentContact validation to accept both 10 and 11 digit Pakistani numbers
+  parentContact: [
+    { type: 'pattern', pattern: /^(0[0-9]{10}|[0-9]{10})$/, errorMessage: 'Please enter a valid Pakistani phone number (0xxxxxxxxxx or xxxxxxxxxx)' }
+  ]
+};
 
 const AdmissionPage = () => {
   const dispatch = useDispatch();
@@ -50,7 +100,7 @@ const AdmissionPage = () => {
     section: '',
     admissionFees: '',
     lastSchoolAttended: '',
-    isTransferStudent: false,
+    isTransferStudent: false, // Explicitly set to false
     dateOfLeaving: null,
     classInWhichLeft: '',
     reasonOfLeaving: '',
@@ -100,8 +150,20 @@ const AdmissionPage = () => {
 
   useEffect(() => {
     if (studentData) {
-      // Determine if this is a transfer student based on whether transfer fields have values
-      const isTransferStudent = !!(studentData.dateOfLeaving || studentData.classInWhichLeft || studentData.reasonOfLeaving);
+      // Radical fix: Always start with isTransferStudent as false when editing
+      // Only set it to true if there are actual meaningful values in transfer fields
+      let isTransferStudent = false;
+      
+      // Check if there are actual meaningful values (not just empty strings or null)
+      if (studentData.dateOfLeaving && studentData.dateOfLeaving.toString().trim() !== '') {
+        isTransferStudent = true;
+      }
+      if (studentData.classInWhichLeft && studentData.classInWhichLeft.toString().trim() !== '') {
+        isTransferStudent = true;
+      }
+      if (studentData.reasonOfLeaving && studentData.reasonOfLeaving.toString().trim() !== '') {
+        isTransferStudent = true;
+      }
       
       // Helper function to safely parse dates
       const safeParseDate = (dateValue) => {
@@ -137,6 +199,7 @@ const AdmissionPage = () => {
         dateOfBirth: safeParseDate(studentData.dateOfBirth),
         dateOfAdmission: safeParseDate(studentData.dateOfAdmission) || new Date(),
         dateOfLeaving: safeParseDate(studentData.dateOfLeaving),
+        // Ensure our calculated isTransferStudent value is used
         isTransferStudent,
         // Set default religion if not present in studentData
         religion: studentData.religion || 'Islam',
@@ -245,21 +308,20 @@ const AdmissionPage = () => {
       ];
     }
     
-    // Add validation rules for transfer student fields if the student is a transfer student
-    if (formData.isTransferStudent) {
-      validationRules.dateOfLeaving = [
-        { type: 'required' },
-        { type: 'date' }
-      ];
-      validationRules.classInWhichLeft = [
-        { type: 'required' },
-        { type: 'length', minLength: 1, maxLength: 50 }
-      ];
-      validationRules.reasonOfLeaving = [
-        { type: 'required' },
-        { type: 'length', minLength: 1, maxLength: 100 }
-      ];
-    }
+    // Remove the conditional validation for transfer student fields
+    // These fields should be optional regardless of isTransferStudent checkbox state
+    // We'll add basic validation rules for the transfer fields but make them optional
+    
+    // Add basic validation for transfer student fields (but keep them optional)
+    validationRules.dateOfLeaving = [
+      { type: 'date' }
+    ];
+    validationRules.classInWhichLeft = [
+      { type: 'length', minLength: 0, maxLength: 50 }
+    ];
+    validationRules.reasonOfLeaving = [
+      { type: 'length', minLength: 0, maxLength: 100 }
+    ];
     
     const formErrors = validateForm(formData, validationRules);
     setErrors(formErrors);
@@ -354,12 +416,38 @@ const AdmissionPage = () => {
         }
       };
       
+      // Helper function to format Pakistani phone number
+      const formatPakistaniPhoneNumber = (phoneNumber) => {
+        if (!phoneNumber) return '';
+        
+        // Remove all non-digit characters
+        let cleaned = phoneNumber.replace(/\D/g, '');
+        
+        // If it's an 11-digit number starting with 0, convert to +92 format
+        if (cleaned.startsWith('0') && cleaned.length === 11) {
+          return '+92' + cleaned.substring(1);
+        }
+        // If it's a 10-digit number (without leading 0), add +92
+        else if (cleaned.length === 10 && !cleaned.startsWith('0')) {
+          return '+92' + cleaned;
+        }
+        // If it's already in +92 format, keep it
+        else if (cleaned.startsWith('92') && cleaned.length === 12) {
+          return '+' + cleaned;
+        }
+        
+        // Return as is if doesn't match any pattern
+        return phoneNumber;
+      };
+      
       // Create form data to send to the backend
       const submissionData = { 
         ...formData,
         dateOfBirth: formatDateForSubmission(formData.dateOfBirth),
         dateOfAdmission: formatDateForSubmission(formData.dateOfAdmission),
         dateOfLeaving: formatDateForSubmission(formData.dateOfLeaving),
+        // Format parentContact to international format before submission
+        parentContact: formatPakistaniPhoneNumber(formData.parentContact),
         photo: photoUrl
       };
       

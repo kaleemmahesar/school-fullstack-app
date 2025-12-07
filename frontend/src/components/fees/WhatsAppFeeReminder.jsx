@@ -8,12 +8,29 @@ const WhatsAppFeeReminder = ({ student, onSendReminder }) => {
     }
     
     // Format the phone number for WhatsApp
-    let phoneNumber = student.parentContact.replace(/\D/g, '');
+    console.log('Original phone number:', student.parentContact);
     
-    // Convert Pakistani format (03XXXXXXXXX) to international format (92XXXXXXXXXX) without +
-    if (phoneNumber.startsWith('0') && phoneNumber.length === 11) {
+    // Simple and direct phone number conversion
+    let phoneNumber = student.parentContact;
+    
+    if (phoneNumber.startsWith('0')) {
+      // Convert 0303372178 to 92303372178
       phoneNumber = '92' + phoneNumber.substring(1);
+    } else if (phoneNumber.startsWith('+92')) {
+      // Convert +92303372178 to 92303372178
+      phoneNumber = phoneNumber.substring(1);
     }
+    // For numbers already starting with 92, keep as is
+    // For other formats, ensure it's properly formatted
+    
+    // Remove any non-digit characters
+    phoneNumber = phoneNumber.replace(/\D/g, '');
+    
+    console.log('Final phone number:', phoneNumber);
+    
+    // For api.whatsapp.com, we need to use the full international format without +
+    // So if we have 92303372178, we should pass it as is
+    let whatsappNumber = phoneNumber;
     
     // Create a reminder message
     const message = `Dear Parent,
@@ -30,13 +47,14 @@ Please pay the pending amount at your earliest convenience.
 Thank you,
 School Management`;
     
-    // Open WhatsApp with the pre-filled message
-    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
     
-    // If there's a callback function, call it
-    if (onSendReminder) {
-      onSendReminder(student);
-    }
+    // Open WhatsApp with the number and message
+    // Note: For WhatsApp app, file attachment is not directly possible
+    // User will need to download the PDF separately and attach it manually
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   return (

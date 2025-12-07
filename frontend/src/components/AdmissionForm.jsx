@@ -30,6 +30,10 @@ const admissionFormValidationSchema = Yup.object().shape({
     .matches(/^(\+92|0)?[0-9]{10,11}$/, 'Invalid Pakistani phone number format')
     .nullable()
     .transform((value) => value === '' ? undefined : value),
+  parentContact: Yup.string()
+    .matches(/^(\+92|0)?[0-9]{10,11}$/, 'Invalid Pakistani phone number format')
+    .nullable()
+    .transform((value) => value === '' ? undefined : value),
   dateOfBirth: Yup.date()
     .required('Date of birth is required')
     .max(new Date(), 'Date of birth cannot be in the future')
@@ -125,7 +129,10 @@ const AdmissionForm = ({ onClose, studentData }) => {
     familyId: studentData?.familyId || '',
     relationship: studentData?.relationship || '',
     parentId: studentData?.parentId || '',
-    isTransferStudent: !!(studentData?.dateOfLeaving || studentData?.classInWhichLeft || studentData?.reasonOfLeaving) || false,
+    parentContact: studentData?.parentContact || '',
+    // Fix: Make isTransferStudent unchecked by default for both new admissions and editing
+    // Only check it if we're editing and there are actual transfer values
+    isTransferStudent: studentData?.dateOfLeaving || studentData?.classInWhichLeft || studentData?.reasonOfLeaving ? true : false,
     dateOfLeaving: studentData?.dateOfLeaving ? new Date(studentData.dateOfLeaving).toISOString().split('T')[0] : '',
     classInWhichLeft: studentData?.classInWhichLeft || '',
     reasonOfLeaving: studentData?.reasonOfLeaving || '',
@@ -507,6 +514,25 @@ const AdmissionForm = ({ onClose, studentData }) => {
                           />
                         </div>
                         <ErrorMessage name="phone" component="div" className="text-red-500 text-sm mt-1" />
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="parentContact" className="block text-sm font-medium text-gray-700 mb-1">
+                          Parent Contact Number
+                        </label>
+                        <div className="relative">
+                          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <FaPhone className="h-5 w-5 text-gray-400" />
+                          </div>
+                          <Field
+                            type="tel"
+                            id="parentContact"
+                            name="parentContact"
+                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="+92 300 1234567"
+                          />
+                        </div>
+                        <ErrorMessage name="parentContact" component="div" className="text-red-500 text-sm mt-1" />
                       </div>
                       
                       <div>

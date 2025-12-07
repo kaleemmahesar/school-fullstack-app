@@ -81,33 +81,34 @@ const FeesSection = () => {
 
   // Set current academic year as default batch
   useEffect(() => {
-    if (!selectedBatch && students.length > 0) {
-      // Get current academic year based on current date
-      const currentYear = new Date().getFullYear();
-      const nextYear = currentYear + 1;
-      const currentAcademicYear = `${currentYear}-${nextYear}`;
+    if (!selectedBatch && students.length > 0 && batches.length > 0) {
+      // Get active batch first
+      const activeBatch = batches.find(batch => batch.status === 'active');
       
-      // Check if current academic year exists in the data
-      const hasCurrentBatch = students.some(student => student.academicYear === currentAcademicYear);
-      
-      // If current academic year exists, set it as default
-      if (hasCurrentBatch) {
-        setSelectedBatch(currentAcademicYear);
+      if (activeBatch) {
+        // Use active batch if available
+        setSelectedBatch(activeBatch.name);
       } else {
-        // Otherwise, set to the most recent batch
-        const uniqueBatches = [...new Set(students.map(student => student.academicYear).filter(Boolean))];
-        if (uniqueBatches.length > 0) {
-          // Sort batches and get the most recent one
-          const sortedBatches = uniqueBatches.sort((a, b) => {
-            const aYear = parseInt(a.split('-')[0]);
-            const bYear = parseInt(b.split('-')[0]);
-            return bYear - aYear;
-          });
-          setSelectedBatch(sortedBatches[0]);
+        // Otherwise, use the most recent real batch from batches data
+        const sortedBatches = [...batches].sort((a, b) => {
+          // Try to sort by year if batch names contain years
+          const aYearMatch = a.name.match(/(\d{4})/);
+          const bYearMatch = b.name.match(/(\d{4})/);
+          
+          if (aYearMatch && bYearMatch) {
+            return parseInt(bYearMatch[1]) - parseInt(aYearMatch[1]);
+          }
+          
+          // Fallback to alphabetical sorting
+          return b.name.localeCompare(a.name);
+        });
+        
+        if (sortedBatches.length > 0) {
+          setSelectedBatch(sortedBatches[0].name);
         }
       }
     }
-  }, [students, selectedBatch]);
+  }, [students, selectedBatch, batches]);
 
   // Ref to track the last updated student ID to prevent infinite loops
   const lastUpdatedStudentIdRef = useRef(null);
@@ -181,14 +182,18 @@ const FeesSection = () => {
       lastUpdateTimestampRef.current = 0;
     }
   }, [students, detailViewStudent, showStudentDetails]);
-  const uniqueBatches = useMemo(() => [...new Set(students.map(student => student.academicYear).filter(Boolean))], [students]);
+  const uniqueBatches = useMemo(() => batches.map(batch => batch.name), [batches]);
   const uniqueClasses = useMemo(() => [...new Set(students.map(student => student.class))], [students]);
   const classSections = useMemo(() => selectedClass 
     ? [...new Set(students.filter(student => student.class === selectedClass).map(student => student.section))]
     : [], [students, selectedClass]);
 
   const generateStudentFeeStats = () => {
-    return students.map(student => {
+    // Only process students who belong to real batches
+    const realBatchNames = batches.map(batch => batch.name);
+    const validStudents = students.filter(student => realBatchNames.includes(student.academicYear));
+    
+    return validStudents.map(student => {
       const monthlyChallans = student.feesHistory ? student.feesHistory.filter(challan => challan.type !== 'admission') : [];
       const admissionChallans = student.feesHistory ? student.feesHistory.filter(challan => challan.type === 'admission') : [];
       
@@ -273,8 +278,12 @@ const FeesSection = () => {
     const matchesSection = !selectedSection || student.section === selectedSection;
     const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
     
-    return matchesSearch && matchesStatus && matchesClass && matchesSection && matchesBatch;
-  }), [studentStats, searchTerm, filterStatus, selectedClass, selectedSection, selectedBatch]);
+    // Only show students who belong to real batches
+    const realBatchNames = batches.map(batch => batch.name);
+    const belongsToRealBatch = realBatchNames.includes(student.academicYear);
+    
+    return matchesSearch && matchesStatus && matchesClass && matchesSection && matchesBatch && belongsToRealBatch;
+  }), [studentStats, searchTerm, filterStatus, selectedClass, selectedSection, selectedBatch, batches]);
 
   // Pagination functions
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -295,7 +304,11 @@ const FeesSection = () => {
   const getFamilyChallans = () => {
     const familyMap = {};
     
-    filteredStudents.forEach(student => {
+    // Only process students who belong to real batches
+    const realBatchNames = batches.map(batch => batch.name);
+    const validStudents = filteredStudents.filter(student => realBatchNames.includes(student.academicYear));
+    
+    validStudents.forEach(student => {
       const parent = parents.find(p => p.studentIds.includes(student.id));
       const familyId = parent ? parent.id : student.familyId || `unknown-${student.id}`;
       

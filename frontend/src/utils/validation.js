@@ -181,6 +181,17 @@ export const validateAtLeastOne = (fields, fieldNames) => {
   return null;
 };
 
+// New: Validate Pakistani phone number format
+export const validatePakistaniPhone = (phone) => {
+  if (!phone) return null;
+  // Pakistani phone number format: +92 followed by 10 digits, or 0 followed by 10 digits
+  const phoneRegex = /^(\+92|0)[0-9]{10}$/;
+  if (!phoneRegex.test(phone)) {
+    return 'Please enter a valid Pakistani phone number (+92xxxxxxxxxx or 0xxxxxxxxxx)';
+  }
+  return null;
+};
+
 // Generic validation function
 export const validateField = (value, rules, fieldName) => {
   for (const rule of rules) {
