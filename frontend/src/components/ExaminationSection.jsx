@@ -158,8 +158,9 @@ const ExaminationSection = () => {
     );
   });
   
-  // Use all classes if no eligible classes found, otherwise use eligible classes
-  const availableClasses = eligibleClasses.length > 0 ? eligibleClasses : classes;
+  // Use all classes - don't filter based on students
+  // This allows creating exams for all configured classes regardless of current student enrollment
+  const availableClasses = classes;
   
   // Filter exams based on search term and current academic year
   const filteredExams = exams.filter(exam => 

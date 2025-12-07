@@ -95,7 +95,7 @@ const ExamSlipGenerator = () => {
 
   if (showPrintPreview && previewSlip) {
     return (
-      <div className="fixed inset-0 bg-white z-50 p-0 m-0 overflow-hidden">
+      <div className="absolute inset-0 bg-white z-50 p-0 m-0 overflow-hidden">
         <div className="print-container">
           <div className="flex justify-between items-center mb-4 p-4 bg-white border-b print:hidden">
             <h1 className="text-xl font-bold text-gray-900">Exam Slip Print Preview</h1>
@@ -114,7 +114,7 @@ const ExamSlipGenerator = () => {
               </button>
             </div>
           </div>
-          <div className="overflow-auto h-screen pb-20">
+          <div className="pb-20">
             <ExamSlipPrintView
               examSlip={previewSlip.slip}
               student={previewSlip.student}
@@ -131,26 +131,26 @@ const ExamSlipGenerator = () => {
 
   if (showBulkPrintPreview && generatedSlips.length > 0) {
     return (
-      <div className="fixed inset-0 bg-white z-50 p-0 m-0 overflow-auto">
+      <div className="absolute inset-0 bg-white z-50 p-0 m-0">
         <div className="print-container h-full flex flex-col">
-          <div className="flex justify-between items-center mb-4 p-4 bg-white border-b print:hidden sticky top-0 z-10">
-            <h1 className="text-xl font-bold text-gray-900">Bulk Exam Slips Print Preview</h1>
+          <div className="print:hidden flex justify-between items-center mb-4 p-4 bg-white border-b print:border-b-0 print:p-0 print:hidden sticky top-0 z-10">
+            <h1 className="print:hidden text-xl font-bold text-gray-900">Bulk Exam Slips Print Preview</h1>
             <div className="flex space-x-2">
               <button
                 onClick={() => window.print()}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                className="print:hidden inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
               >
                 <FaPrint className="mr-2" /> Print All Slips
               </button>
               <button
                 onClick={() => setShowBulkPrintPreview(false)}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                className="print:hidden inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 Back to Generator
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-auto p-4 print:p-0 print:overflow-visible print:flex-none">
+          <div className="flex-1 p-4 print:p-0 print:flex-none">
             <BulkExamSlipPrintView
               examSlips={generatedSlips}
               students={students}

@@ -20,9 +20,9 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
   });
 
   return (
-    <div className="w-full mx-auto bg-white font-sans">
+    <div className="w-full mx-auto bg-white font-sans bulk-exam-slip-print-view">
       {/* Printable Exam Slips */}
-      <div className="print-container">
+      <div className="print-container p-4">
         {examSlips.map((slip, index) => {
           const student = students?.find(s => s.id === slip.studentId) || {};
           const exam = exams?.find(e => e.id === slip.examId) || {};
@@ -35,7 +35,7 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
           const section = slip.sectionName || 'N/A';
 
           return (
-            <div key={slip.id} className={`exam-slip ${index > 0 ? 'mt-8' : ''} ${index < examSlips.length - 1 ? 'exam-slip-page-break' : ''}`}>
+            <div key={slip.id} className={`exam-slip ${index > 0 ? 'mt-8' : ''}`}>
               {/* School Header - Hidden in print view */}
               <div className="text-center border-b border-gray-300 pb-2 mb-3 print:hidden">
                 <div className="flex items-center justify-center mb-1">
@@ -157,12 +157,20 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
             display: none !important;
           }
           
-          .exam-slip-page-break {
+          .exam-slip {
             page-break-after: always;
+            break-after: page;
+            margin-bottom: 1rem;
+          }
+          
+          .exam-slip:last-child {
+            page-break-after: avoid;
+            break-after: auto;
           }
 
           .page-break {
             page-break-after: always;
+            break-after: page;
             height: 0;
             margin: 0;
             padding: 0;
@@ -229,6 +237,13 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
         
         .exam-slip {
           margin-bottom: 2rem;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          padding: 1rem;
+          border-radius: 0.5rem;
+        }
+        
+        .bulk-exam-slip-print-view {
+          overflow: auto;
         }
       `}</style>
     </div>
