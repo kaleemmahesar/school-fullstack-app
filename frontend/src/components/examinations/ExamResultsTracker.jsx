@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchMarks } from '../../store/marksSlice';
 import { FaChartBar, FaChartLine, FaChartPie, FaFileExcel, FaSearch } from 'react-icons/fa';
 
 const ExamResultsTracker = () => {
@@ -8,6 +9,46 @@ const ExamResultsTracker = () => {
   const { students } = useSelector(state => state.students);
   const { marks } = useSelector(state => state.marks);
   
+  // Extract marks array from Redux state with improved logic
+  const marksArray = useMemo(() => {
+    // If marks is already an array, use it directly
+    if (Array.isArray(marks)) {
+      return marks;
+    }
+    
+    // If marks is an object with a marks property (standard Redux state structure)
+    if (marks && typeof marks === 'object' && marks.marks && Array.isArray(marks.marks)) {
+      return marks.marks;
+    }
+    
+    // If marks is an object with nested data, flatten it
+    if (marks && typeof marks === 'object') {
+      const flattened = [];
+      
+      // Handle different possible structures
+      Object.keys(marks).forEach(key => {
+        if (key === 'marks' && Array.isArray(marks[key])) {
+          // Direct marks array
+          flattened.push(...marks[key]);
+        } else if (typeof marks[key] === 'object' && marks[key] !== null) {
+          // Nested objects
+          if (Array.isArray(marks[key])) {
+            flattened.push(...marks[key]);
+          } else if (marks[key].marks && Array.isArray(marks[key].marks)) {
+            flattened.push(...marks[key].marks);
+          } else if (marks[key].examType) {
+            // Direct marksheet object
+            flattened.push(marks[key]);
+          }
+        }
+      });
+      
+      return flattened;
+    }
+    
+    return [];
+  }, [marks]);
+
   const [selectedExam, setSelectedExam] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
@@ -47,7 +88,10 @@ const ExamResultsTracker = () => {
   
   // Get marks for selected exam
   const getMarksForExam = (examId) => {
-    return marks.filter(mark => mark.examType === exams.find(e => e.id === examId)?.examType);
+    const exam = exams.find(e => e.id === examId);
+    if (!exam) return [];
+    
+    return marksArray.filter(mark => mark.examType === exam.examType);
   };
   
   // Calculate statistics for the selected exam
@@ -59,7 +103,7 @@ const ExamResultsTracker = () => {
     
     // Calculate overall statistics
     const totalStudents = examMarks.length;
-    const averagePercentage = examMarks.reduce((sum, mark) => sum + parseFloat(mark.percentage), 0) / totalStudents;
+    const averagePercentage = examMarks.reduce((sum, mark) => sum + parseFloat(mark.percentage || 0), 0) / totalStudents;
     
     // Grade distribution
     const gradeDistribution = {
@@ -73,7 +117,7 @@ const ExamResultsTracker = () => {
     };
     
     examMarks.forEach(mark => {
-      const grade = mark.overallGrade;
+      const grade = mark.overallGrade || 'F';
       if (gradeDistribution.hasOwnProperty(grade)) {
         gradeDistribution[grade]++;
       }
@@ -82,17 +126,20 @@ const ExamResultsTracker = () => {
     // Subject-wise performance
     const subjectPerformance = {};
     examMarks.forEach(mark => {
-      mark.marks.forEach(subjectMark => {
-        if (!subjectPerformance[subjectMark.subjectName]) {
-          subjectPerformance[subjectMark.subjectName] = {
-            total: 0,
-            count: 0,
-            average: 0
-          };
-        }
-        subjectPerformance[subjectMark.subjectName].total += subjectMark.marksObtained;
-        subjectPerformance[subjectMark.subjectName].count++;
-      });
+      if (mark.marks && Array.isArray(mark.marks)) {
+        mark.marks.forEach(subjectMark => {
+          if (!subjectPerformance[subjectMark.subjectName]) {
+            subjectPerformance[subjectMark.subjectName] = {
+              total: 0,
+              count: 0,
+              average: 0
+            };
+          }
+          const subjectPercentage = subjectMark.totalMarks > 0 ? (subjectMark.marksObtained / subjectMark.totalMarks) * 100 : 0;
+          subjectPerformance[subjectMark.subjectName].total += subjectPercentage;
+          subjectPerformance[subjectMark.subjectName].count++;
+        });
+      }
     });
     
     // Calculate averages
@@ -108,27 +155,38 @@ const ExamResultsTracker = () => {
       subjectPerformance
     };
   };
-  
+
   const stats = calculateExamStatistics();
   
   // Filter students based on search term
   const filteredStudents = getStudentsForClassSection(selectedClass, selectedSection).filter(student =>
     `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.id.includes(searchTerm)
+    student.id.toString().includes(searchTerm)
   );
   
-  // Get marks for a specific student in the selected exam
+  // Get marks for a specific student in the selected exam - FIXED VERSION
   const getStudentMarks = (studentId) => {
     if (!selectedExam) return null;
     const exam = exams.find(e => e.id === selectedExam);
     if (!exam) return null;
     
-    return marks.find(mark => 
-      mark.studentId === studentId && 
+    // Convert studentId to string for comparison since it might be a number in one place and string in another
+    const studentIdStr = studentId.toString();
+    
+    // Find marks for this student and exam type
+    const studentMarks = marksArray.find(mark => 
+      mark.studentId && mark.studentId.toString() === studentIdStr && 
       mark.examType === exam.examType
     );
+    
+    return studentMarks;
   };
   
+  // Add useEffect to fetch marks when component mounts and when selected exam changes
+  useEffect(() => {
+    dispatch(fetchMarks());
+  }, [dispatch, selectedExam]);
+
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -138,6 +196,12 @@ const ExamResultsTracker = () => {
         </div>
         
         <div className="flex space-x-2 mt-4 md:mt-0">
+          <button
+            onClick={() => dispatch(fetchMarks())}
+            className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 text-gray-800 hover:bg-gray-200"
+          >
+            Refresh
+          </button>
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-lg text-sm font-medium ${
@@ -251,83 +315,59 @@ const ExamResultsTracker = () => {
         <>
           {viewMode === 'summary' && stats && (
             <div className="mb-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Exam Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg p-6 text-white">
-                  <h4 className="text-sm font-medium text-blue-100">Total Students</h4>
-                  <p className="text-3xl font-bold mt-2">{stats.totalStudents}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Exam Summary</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-blue-800">{stats.totalStudents}</div>
+                  <div className="text-sm text-blue-600">Total Students</div>
                 </div>
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg p-6 text-white">
-                  <h4 className="text-sm font-medium text-green-100">Average Percentage</h4>
-                  <p className="text-3xl font-bold mt-2">{stats.averagePercentage}%</p>
+                <div className="bg-green-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-green-800">{stats.averagePercentage}%</div>
+                  <div className="text-sm text-green-600">Average Percentage</div>
                 </div>
-                <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-6 text-white">
-                  <h4 className="text-sm font-medium text-purple-100">Pass Rate</h4>
-                  <p className="text-3xl font-bold mt-2">
-                    {(
-                      ((stats.gradeDistribution['A+'] + 
-                        stats.gradeDistribution['A'] + 
-                        stats.gradeDistribution['B+'] + 
-                        stats.gradeDistribution['B'] + 
-                        stats.gradeDistribution['C']) / stats.totalStudents) * 100
-                    ).toFixed(1)}%
-                  </p>
+                <div className="bg-yellow-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-yellow-800">{stats.gradeDistribution['A+'] + stats.gradeDistribution['A']}</div>
+                  <div className="text-sm text-yellow-600">A Grades</div>
+                </div>
+                <div className="bg-red-50 rounded-lg p-4">
+                  <div className="text-2xl font-bold text-red-800">{stats.gradeDistribution['F']}</div>
+                  <div className="text-sm text-red-600">Failed Students</div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Grade Distribution</h4>
-                  <div className="space-y-3">
-                    {Object.entries(stats.gradeDistribution).map(([grade, count]) => (
-                      <div key={grade} className="flex items-center">
-                        <div className="w-24 text-sm font-medium text-gray-700">{grade}</div>
-                        <div className="flex-1 ml-2">
-                          <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-blue-500 rounded-full" 
-                              style={{ width: `${(count / stats.totalStudents) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="w-12 text-right text-sm text-gray-700">{count}</div>
-                      </div>
-                    ))}
-                  </div>
+              <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Grade Distribution</h4>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(stats.gradeDistribution).map(([grade, count]) => (
+                    <div key={grade} className="bg-gray-50 rounded-lg p-3 text-center min-w-[80px]">
+                      <div className="text-lg font-bold text-gray-900">{count}</div>
+                      <div className="text-sm text-gray-600">Grade {grade}</div>
+                    </div>
+                  ))}
                 </div>
-                
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">Subject Performance</h4>
-                  <div className="space-y-3">
-                    {Object.entries(stats.subjectPerformance).map(([subject, data]) => (
-                      <div key={subject} className="flex items-center">
-                        <div className="w-32 text-sm font-medium text-gray-700 truncate">{subject}</div>
-                        <div className="flex-1 ml-2">
-                          <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
-                              className="h-full bg-green-500 rounded-full" 
-                              style={{ width: `${(data.average / 100) * 100}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                        <div className="w-16 text-right text-sm text-gray-700">
-                          {data.average.toFixed(1)}%
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+              </div>
+              
+              <div className="mt-6">
+                <h4 className="text-md font-semibold text-gray-900 mb-3">Subject Performance</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.entries(stats.subjectPerformance).map(([subject, data]) => (
+                    <div key={subject} className="bg-gray-50 rounded-lg p-4">
+                      <div className="font-medium text-gray-900">{subject}</div>
+                      <div className="mt-2 text-2xl font-bold text-gray-900">{data.average.toFixed(1)}%</div>
+                      <div className="text-sm text-gray-600">Average Score</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
           
-          {(viewMode === 'list' || viewMode === 'chart') && (
-            <div className="overflow-x-auto">
+          {viewMode === 'list' && (
+            <div className="overflow-hidden rounded-lg border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
@@ -341,56 +381,47 @@ const ExamResultsTracker = () => {
                       <tr key={student.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-gray-200 border-2 border-dashed rounded-xl" />
+                            <div className="bg-gray-200 border-2 border-dashed rounded-xl w-10 h-10" />
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900">
                                 {student.firstName} {student.lastName}
                               </div>
-                              <div className="text-sm text-gray-500">
-                                {student.class} - {student.section}
-                              </div>
+                              <div className="text-sm text-gray-500">ID: {student.id}</div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {student.id}
+                          {studentMarks ? `${studentMarks.totalObtained || 0}/${studentMarks.totalMarks || 0}` : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {studentMarks ? `${studentMarks.totalObtained}/${studentMarks.totalMarks}` : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {studentMarks ? `${studentMarks.percentage}%` : 'N/A'}
+                          {studentMarks ? `${parseFloat(studentMarks.percentage || 0).toFixed(2)}%` : 'Pending'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {studentMarks ? (
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              studentMarks.overallGrade === 'A+' || studentMarks.overallGrade === 'A' 
-                                ? 'bg-green-100 text-green-800' 
-                                : studentMarks.overallGrade === 'B+' || studentMarks.overallGrade === 'B' 
-                                  ? 'bg-blue-100 text-blue-800' 
-                                  : studentMarks.overallGrade === 'C' 
-                                    ? 'bg-yellow-100 text-yellow-800' 
-                                    : 'bg-red-100 text-red-800'
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              studentMarks.overallGrade === 'A+' ? 'bg-yellow-100 text-yellow-800' :
+                              studentMarks.overallGrade === 'A' ? 'bg-green-100 text-green-800' :
+                              studentMarks.overallGrade === 'B+' ? 'bg-blue-100 text-blue-800' :
+                              studentMarks.overallGrade === 'B' ? 'bg-indigo-100 text-indigo-800' :
+                              studentMarks.overallGrade === 'C' ? 'bg-purple-100 text-purple-800' :
+                              studentMarks.overallGrade === 'D' ? 'bg-pink-100 text-pink-800' :
+                              'bg-red-100 text-red-800'
                             }`}>
-                              {studentMarks.overallGrade}
+                              {studentMarks.overallGrade || 'F'}
                             </span>
                           ) : (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                              N/A
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                              Pending
                             </span>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {studentMarks ? (
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              parseFloat(studentMarks.percentage) >= 40 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
-                              {parseFloat(studentMarks.percentage) >= 40 ? 'Pass' : 'Fail'}
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              Completed
                             </span>
                           ) : (
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                               Pending
                             </span>
                           )}
@@ -405,9 +436,55 @@ const ExamResultsTracker = () => {
                 <div className="text-center py-12">
                   <FaSearch className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
-                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search or selection criteria.</p>
+                  <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
                 </div>
               )}
+            </div>
+          )}
+          
+          {viewMode === 'chart' && stats && (
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Grade Distribution Chart</h3>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="flex items-end justify-center h-64 space-x-2">
+                  {Object.entries(stats.gradeDistribution).map(([grade, count]) => {
+                    const maxHeight = 200;
+                    const height = stats.totalStudents > 0 ? (count / stats.totalStudents) * maxHeight : 0;
+                    return (
+                      <div key={grade} className="flex flex-col items-center">
+                        <div 
+                          className="w-12 bg-blue-500 rounded-t transition-all duration-300"
+                          style={{ height: `${height}px` }}
+                        ></div>
+                        <div className="mt-2 text-sm font-medium text-gray-900">{count}</div>
+                        <div className="text-xs text-gray-600">Grade {grade}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 mt-8">Subject Performance Chart</h3>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <div className="space-y-4">
+                  {Object.entries(stats.subjectPerformance).map(([subject, data]) => (
+                    <div key={subject} className="flex items-center">
+                      <div className="w-32 text-sm font-medium text-gray-900 truncate">{subject}</div>
+                      <div className="flex-1 ml-4">
+                        <div className="flex items-center">
+                          <div className="flex-1 h-4 bg-gray-200 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full bg-green-500 rounded-full transition-all duration-300"
+                              style={{ width: `${data.average}%` }}
+                            ></div>
+                          </div>
+                          <div className="ml-4 text-sm font-medium text-gray-900 w-16">{data.average.toFixed(1)}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </>

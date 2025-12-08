@@ -32,7 +32,7 @@ function handleMarks($method, $id, $input, $pdo) {
         case 'POST':
             // Add new mark record
             $id = $input['id'] ?? uniqid();
-            $stmt = $pdo->prepare("INSERT INTO marks (id, studentId, studentName, class, examId, examName, subject, marksObtained, totalMarks, academicYear, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO marks (id, studentId, studentName, class, examId, examName, examType, subject, marksObtained, totalMarks, academicYear, year) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $id,
                 $input['studentId'] ?? '',
@@ -40,6 +40,7 @@ function handleMarks($method, $id, $input, $pdo) {
                 $input['class'] ?? '',
                 $input['examId'] ?? '',
                 $input['examName'] ?? '',
+                $input['examType'] ?? '',
                 $input['subject'] ?? '',
                 $input['marksObtained'] ?? 0,
                 $input['totalMarks'] ?? 0,
@@ -66,13 +67,14 @@ function handleMarks($method, $id, $input, $pdo) {
             }
             
             // Update mark record
-            $stmt = $pdo->prepare("UPDATE marks SET studentId = ?, studentName = ?, class = ?, examId = ?, examName = ?, subject = ?, marksObtained = ?, totalMarks = ?, academicYear = ?, year = ? WHERE id = ?");
+            $stmt = $pdo->prepare("UPDATE marks SET studentId = ?, studentName = ?, class = ?, examId = ?, examName = ?, examType = ?, subject = ?, marksObtained = ?, totalMarks = ?, academicYear = ?, year = ? WHERE id = ?");
             $stmt->execute([
                 $input['studentId'] ?? '',
                 $input['studentName'] ?? '',
                 $input['class'] ?? '',
                 $input['examId'] ?? '',
                 $input['examName'] ?? '',
+                $input['examType'] ?? '',
                 $input['subject'] ?? '',
                 $input['marksObtained'] ?? 0,
                 $input['totalMarks'] ?? 0,

@@ -217,6 +217,15 @@ const StudentMarksheetForm = ({
     onSubmit(marksheetData);
     setShowPrintPreview(false);
     setPreviewData(null);
+    // Reset form after submission
+    setStep(1);
+    setSelectedClass('');
+    setSelectedSection('');
+    setSelectedStudent('');
+    setExamType('');
+    setSelectedExam(null);
+    setYear(new Date().getFullYear().toString());
+    setSubjectMarks([]);
   };
 
   // Handle print action

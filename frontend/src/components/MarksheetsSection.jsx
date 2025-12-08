@@ -17,6 +17,46 @@ const MarksheetsSection = () => {
   const { marks, loading, error } = useSelector(state => state.marks);
   const { exams } = useSelector(state => state.exams);
   
+  // Extract marks array from Redux state with improved logic
+  const marksArray = useMemo(() => {
+    // If marks is already an array, use it directly
+    if (Array.isArray(marks)) {
+      return marks;
+    }
+    
+    // If marks is an object with a marks property (standard Redux state structure)
+    if (marks && typeof marks === 'object' && marks.marks && Array.isArray(marks.marks)) {
+      return marks.marks;
+    }
+    
+    // If marks is an object with nested data, flatten it
+    if (marks && typeof marks === 'object') {
+      const flattened = [];
+      
+      // Handle different possible structures
+      Object.keys(marks).forEach(key => {
+        if (key === 'marks' && Array.isArray(marks[key])) {
+          // Direct marks array
+          flattened.push(...marks[key]);
+        } else if (typeof marks[key] === 'object' && marks[key] !== null) {
+          // Nested objects
+          if (Array.isArray(marks[key])) {
+            flattened.push(...marks[key]);
+          } else if (marks[key].marks && Array.isArray(marks[key].marks)) {
+            flattened.push(...marks[key].marks);
+          } else if (marks[key].examType) {
+            // Direct marksheet object
+            flattened.push(marks[key]);
+          }
+        }
+      });
+      
+      return flattened;
+    }
+    
+    return [];
+  }, [marks]);
+  
   const [view, setView] = useState('list');
   const [showForm, setShowForm] = useState(false);
   const [bulkMode, setBulkMode] = useState(false);
@@ -25,9 +65,8 @@ const MarksheetsSection = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState(''); // Add batch filter state
+  const [selectedBatch, setSelectedBatch] = useState(getCurrentAcademicYear());
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
   const [formData, setFormData] = useState({
     studentId: '',
     studentName: '',
@@ -37,118 +76,113 @@ const MarksheetsSection = () => {
     year: new Date().getFullYear().toString(),
     marks: []
   });
-
-  // Fetch marks and exams data on component mount
+  
+  const itemsPerPage = 10;
+  
   useEffect(() => {
     dispatch(fetchMarks());
     dispatch(fetchExams());
   }, [dispatch]);
-
-  // Set current academic year as default batch
-  useEffect(() => {
-    if (!selectedBatch && students.length > 0) {
-      const currentAcademicYear = getCurrentAcademicYear();
-      // Check if current academic year exists in the data
-      const hasCurrentBatch = students.some(student => student.academicYear === currentAcademicYear);
-      
-      // If current academic year exists, set it as default
-      if (hasCurrentBatch) {
-        setSelectedBatch(currentAcademicYear);
-      } else {
-        // Otherwise, set to the most recent batch
-        const uniqueBatches = [...new Set(students.map(student => student.academicYear).filter(Boolean))];
-        if (uniqueBatches.length > 0) {
-          // Sort batches and get the most recent one
-          const sortedBatches = uniqueBatches.sort((a, b) => {
-            const aYear = parseInt(a.split('-')[0]);
-            const bYear = parseInt(b.split('-')[0]);
-            return bYear - aYear;
-          });
-          setSelectedBatch(sortedBatches[0]);
-        }
-      }
-    }
-  }, [students, selectedBatch]);
-
-  // Get unique batches from students
-  const uniqueBatches = useMemo(() => {
-    const batches = students.map(student => student.academicYear).filter(Boolean);
-    return [...new Set(batches)];
-  }, [students]);
-
-  // Filter exams based on current academic year
-  const filteredExams = useMemo(() => {
-    const currentAcademicYear = getCurrentAcademicYear();
-    return exams.filter(exam => 
-      exam.academicYear === currentAcademicYear
-    );
-  }, [exams]);
-
-  // Filter exams by selected class for the forms
-  const formFilteredExams = useMemo(() => {
-    // This will be filtered by class in the forms themselves
-    return filteredExams;
-  }, [filteredExams]);
-
+  
   // Get students with their marksheet counts
   const studentsWithMarks = useMemo(() => {
-    return students.map(student => {
-      const studentMarks = marks.filter(mark => mark.studentId === student.id);
-      const studentName = `${student.firstName} ${student.lastName}`;
-      
-      return {
-        ...student,
-        name: studentName,
-        marksCount: studentMarks.length,
-        marks: studentMarks
-      };
+    if (!students || !Array.isArray(students) || !marksArray || !Array.isArray(marksArray)) {
+      return [];
+    }
+    
+    // Group marks by studentId
+    const marksByStudent = {};
+    marksArray.forEach(mark => {
+      if (mark && mark.studentId) {
+        if (!marksByStudent[mark.studentId]) {
+          marksByStudent[mark.studentId] = [];
+        }
+        marksByStudent[mark.studentId].push(mark);
+      }
     });
-  }, [students, marks]);
+    
+    // Add marksheet counts to students
+    return students.map(student => ({
+      ...student,
+      marksCount: marksByStudent[student.id] ? marksByStudent[student.id].length : 0,
+      marks: marksByStudent[student.id] || []
+    }));
+  }, [students, marksArray]);
+  
+  // Get unique batches from marks data
+  const uniqueBatches = useMemo(() => {
+    if (!marksArray || !Array.isArray(marksArray)) return [getCurrentAcademicYear()];
+    
+    const batches = new Set();
+    marksArray.forEach(mark => {
+      if (mark && mark.year) {
+        batches.add(mark.year);
+      }
+    });
+    
+    return Array.from(batches).sort().reverse();
+  }, [marksArray]);
 
-  // Filter students based on search, filters, and batch
+  // Filter students based on search and filters
   const filteredStudents = useMemo(() => {
     return studentsWithMarks.filter(student => {
-      const matchesSearch = 
-        student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      // Search term filter
+      const matchesSearch = !searchTerm || 
+        `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.class.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.section.toLowerCase().includes(searchTerm.toLowerCase());
       
+      // Class filter
       const matchesClass = !selectedClass || student.class === selectedClass;
+      
+      // Section filter
       const matchesSection = !selectedSection || student.section === selectedSection;
-      const matchesBatch = !selectedBatch || student.academicYear === selectedBatch; // Add batch filter
+      
+      // Batch filter
+      const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
       
       return matchesSearch && matchesClass && matchesSection && matchesBatch;
     });
   }, [studentsWithMarks, searchTerm, selectedClass, selectedSection, selectedBatch]);
-
-  // Calculate pagination values
-  const totalPages = useMemo(() => Math.ceil(filteredStudents.length / itemsPerPage), [filteredStudents, itemsPerPage]);
-  const indexOfLastItem = useMemo(() => currentPage * itemsPerPage, [currentPage, itemsPerPage]);
-  const indexOfFirstItem = useMemo(() => indexOfLastItem - itemsPerPage, [indexOfLastItem, itemsPerPage]);
-  const currentStudents = useMemo(() => filteredStudents.slice(indexOfFirstItem, indexOfLastItem), [filteredStudents, indexOfFirstItem, indexOfLastItem]);
-
-  // Reset pagination when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, selectedClass, selectedSection, selectedBatch]); // Add selectedBatch to dependency array
-
-  // Pagination functions
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-  const nextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  const prevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
   
-  // Handle functions
+  // Paginate filtered students
+  const paginatedStudents = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredStudents.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredStudents, currentPage]);
+  
+  // Filter exams for forms (exclude past academic years)
+  const formFilteredExams = useMemo(() => {
+    const currentYear = new Date().getFullYear().toString();
+    // Filter exams that belong to the current academic year
+    // Academic year format is "YYYY-YYYY" (e.g., "2025-2026")
+    return exams.filter(exam => {
+      // If exam has academicYear, check if it starts with current year
+      if (exam.academicYear) {
+        return exam.academicYear.startsWith(currentYear);
+      }
+      // Fallback to year property if academicYear is not available
+      return exam.year === currentYear;
+    });
+  }, [exams]);
+  
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  
+  const handleStudentClick = (student) => {
+    setSelectedStudentData({
+      ...student,
+      marks: student.marks || []
+    });
+    setView('detail');
+  };
+  
   const handleBackToList = () => {
     setView('list');
     setSelectedStudentData(null);
     setCurrentMarks(null);
   };
   
-  const handleViewDetails = (student) => {
-    setSelectedStudentData(student);
-    setView('detail');
-  };
-
   const handleViewMarksheet = (marksheet) => {
     setCurrentMarks(marksheet);
     setView('marksheet-view'); // New view state for viewing
@@ -169,20 +203,28 @@ const MarksheetsSection = () => {
     // Handle bulk marksheets (array of marksheets)
     if (Array.isArray(marksheetData)) {
       marksheetData.forEach(marksheet => {
-        if (marksheet.id && marks.find(m => m.id === marksheet.id)) {
+        if (marksheet.id && marksArray.find(m => m.id === marksheet.id)) {
           dispatch(updateMarks(marksheet));
         } else {
           dispatch(addMarks(marksheet));
         }
       });
+      // Refresh marks data after bulk save
+      setTimeout(() => {
+        dispatch(fetchMarks());
+      }, 1000);
     } 
     // Handle single marksheet
     else {
-      if (marksheetData.id && marks.find(m => m.id === marksheetData.id)) {
+      if (marksheetData.id && marksArray.find(m => m.id === marksheetData.id)) {
         dispatch(updateMarks(marksheetData));
       } else {
         dispatch(addMarks(marksheetData));
       }
+      // Refresh marks data after single save
+      setTimeout(() => {
+        dispatch(fetchMarks());
+      }, 1000);
     }
   };
   
@@ -531,7 +573,7 @@ const MarksheetsSection = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {currentStudents
+                    {paginatedStudents
                       .map((student) => (
                         <tr key={student.id} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
@@ -541,21 +583,24 @@ const MarksheetsSection = () => {
                                 <div className="text-sm font-medium text-gray-900">
                                   {student.name}
                                 </div>
-                                <div className="text-sm text-gray-500">ID: {student.id}</div>
+                                <div className="text-sm text-gray-500">
+                                  ID: {student.id}
+                                </div>
                               </div>
                             </div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student.class}</div>
-                            <div className="text-sm text-gray-500">Section {student.section}</div>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {student.class} - {student.section}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{student.marksCount} marksheets</div>
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                              {student.marksCount} marksheets
+                            </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button
-                              onClick={() => handleViewDetails(student)}
-                              className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
+                              onClick={() => handleStudentClick(student)}
+                              className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-lg text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
                             >
                               <FaEye className="mr-1" /> View Details
                             </button>
@@ -564,29 +609,23 @@ const MarksheetsSection = () => {
                       ))}
                   </tbody>
                 </table>
-                {filteredStudents.length === 0 && (
-                  <div className="text-center py-12">
-                    <FaGraduationCap className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
-                    <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria</p>
-                  </div>
-                )}
                 
-                {/* Pagination */}
-                {filteredStudents.length > itemsPerPage && (
-                  <div className="mt-4">
-                    <Pagination
-                      currentPage={currentPage}
-                      totalPages={totalPages}
-                      itemsPerPage={itemsPerPage}
-                      totalItems={filteredStudents.length}
-                      paginate={paginate}
-                      nextPage={nextPage}
-                      prevPage={prevPage}
-                    />
+                {paginatedStudents.length === 0 && (
+                  <div className="text-center py-12">
+                    <FaSearch className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                    <p className="mt-1 text-sm text-gray-500">Try adjusting your search or filter criteria.</p>
                   </div>
                 )}
               </div>
+              
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              )}
             </div>
           )}
         </>

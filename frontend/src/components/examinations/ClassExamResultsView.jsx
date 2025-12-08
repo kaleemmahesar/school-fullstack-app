@@ -1,15 +1,62 @@
 import React, { useState, useMemo } from 'react';
 import { FaTrophy, FaMedal, FaSearch, FaFilter } from 'react-icons/fa';
 
-const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = '', marks = [] }) => {
+const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = '', marks = {} }) => {
   console.log('=== CLASS EXAM RESULTS VIEW DEBUG ===');
   console.log('Exams received:', exams);
   console.log('Students received:', students);
   console.log('Marks received:', marks);
-  console.log('Marks length:', marks.length);
-  console.log('Marks type:', typeof marks);
-  console.log('Is marks array:', Array.isArray(marks));
   
+  // Extract marks array from the Redux state structure
+  const marksArray = useMemo(() => {
+    // Handle different possible Redux state structures
+    if (Array.isArray(marks)) {
+      console.log('Marks is already an array, returning as is');
+      return marks;
+    }
+    
+    // If marks is an object with a marks property (standard Redux state structure)
+    if (marks && typeof marks === 'object' && marks.marks && Array.isArray(marks.marks)) {
+      console.log('Marks is Redux state object, extracting marks array');
+      return marks.marks;
+    }
+    
+    // If marks is an object with nested data, flatten it
+    if (marks && typeof marks === 'object') {
+      console.log('Marks is object, attempting to flatten');
+      const flattened = [];
+      
+      // Handle different possible structures
+      Object.keys(marks).forEach(key => {
+        if (key === 'marks' && Array.isArray(marks[key])) {
+          // Direct marks array
+          flattened.push(...marks[key]);
+        } else if (typeof marks[key] === 'object' && marks[key] !== null) {
+          // Nested objects
+          if (Array.isArray(marks[key])) {
+            flattened.push(...marks[key]);
+          } else if (marks[key].marks && Array.isArray(marks[key].marks)) {
+            flattened.push(...marks[key].marks);
+          } else if (marks[key].examType) {
+            // Direct marksheet object
+            flattened.push(marks[key]);
+          }
+        }
+      });
+      
+      console.log('Flattened marks result:', flattened);
+      return flattened;
+    }
+    
+    console.log('No valid marks data found, returning empty array');
+    return [];
+  }, [marks]);
+
+  console.log('Marks array after extraction:', marksArray);
+  console.log('Marks array length:', marksArray.length);
+  console.log('Marks array type:', typeof marksArray);
+  console.log('Is marks array:', Array.isArray(marksArray));
+
   const [selectedExamType, setSelectedExamType] = useState('Midterm');
   const [selectedClass, setSelectedClass] = useState(''); // New state for class filter
   const [searchTerm, setSearchTerm] = useState('');
@@ -21,12 +68,12 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
 
   // Get unique classes from marks data
   const availableClasses = useMemo(() => {
-    if (!marks || !Array.isArray(marks) || marks.length === 0) {
+    if (!marksArray || !Array.isArray(marksArray) || marksArray.length === 0) {
       return [];
     }
     
     const classes = new Set();
-    marks.forEach(item => {
+    marksArray.forEach(item => {
       if (item && typeof item === 'object') {
         // Check direct marksheet objects
         if (item.class) {
@@ -42,17 +89,17 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
     });
     
     return Array.from(classes).sort();
-  }, [marks]);
+  }, [marksArray]);
 
   // Flatten marks data structure and filter by selected exam type
   const flattenedMarks = useMemo(() => {
     console.log('=== PROCESSING MARKS ===');
-    console.log('Raw marks data:', marks);
+    console.log('Raw marks data:', marksArray);
     console.log('Selected exam type:', selectedExamType);
     console.log('Selected class:', selectedClass);
     
     // Add null checks
-    if (!marks || !Array.isArray(marks) || marks.length === 0) {
+    if (!marksArray || !Array.isArray(marksArray) || marksArray.length === 0) {
       console.log('No marks data available');
       return [];
     }
@@ -61,7 +108,7 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
     const flattened = [];
     
     // Handle different possible structures
-    marks.forEach((item, index) => {
+    marksArray.forEach((item, index) => {
       console.log(`Processing item ${index}:`, item);
       
       // Check if this is a direct marksheet object (has examType property directly)
@@ -118,7 +165,7 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
     console.log('Final flattened and filtered marks result (duplicates removed):', uniqueMarks);
     console.log('=== END PROCESSING MARKS ===');
     return uniqueMarks;
-  }, [marks, selectedExamType]);
+  }, [marksArray, selectedExamType]);
 
   // Get all marks without filtering by exams (already filtered by exam type above)
   const filteredMarks = useMemo(() => {
@@ -208,8 +255,8 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
       
       // Sort by percentage descending
       group.students.sort((a, b) => {
-        const aPercentage = parseFloat(a.percentage) || 0;
-        const bPercentage = parseFloat(b.percentage) || 0;
+        const aPercentage = parseFloat(a.percentage || 0);
+        const bPercentage = parseFloat(b.percentage || 0);
         console.log(`Comparing ${a.studentName} (${aPercentage}) with ${b.studentName} (${bPercentage})`);
         return bPercentage - aPercentage;
       });
@@ -252,160 +299,149 @@ const ClassExamResultsView = ({ exams = [], students = [], studentsSearchTerm = 
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Class Examination Results</h2>
-          <p className="text-gray-600">View all examination results with student rankings by class</p>
-        </div>
-      </div>
-
-      {/* Exam Type Filter */}
-      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Exam Type</label>
-            <select
-              value={selectedExamType}
-              onChange={(e) => setSelectedExamType(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="Midterm">Midterm</option>
-              <option value="Final">Final</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-            <select
-              value={selectedClass}
-              onChange={(e) => setSelectedClass(e.target.value)}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Classes</option>
-              {availableClasses.map((cls) => (
-                <option key={cls} value={cls}>
-                  {cls}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Search */}
       <div className="mb-6">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <FaSearch className="text-gray-400" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Class Exam Results</h2>
+        <p className="text-gray-600">View and analyze student performance by class and section</p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Exam Type</label>
+          <select
+            value={selectedExamType}
+            onChange={(e) => setSelectedExamType(e.target.value)}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Select Exam Type</option>
+            {exams && [...new Set(exams.map(exam => exam.examType))].map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+          <select
+            value={selectedClass}
+            onChange={(e) => setSelectedClass(e.target.value)}
+            className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+            disabled={!selectedExamType}
+          >
+            <option value="">All Classes</option>
+            {availableClasses.map(cls => (
+              <option key={cls} value={cls}>{cls}</option>
+            ))}
+          </select>
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Search Students</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FaSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Search by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={!selectedExamType}
+            />
           </div>
-          <input
-            type="text"
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Search students..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
         </div>
       </div>
-
-      {/* Results */}
-      {classResults.length === 0 ? (
+      
+      {!selectedExamType ? (
         <div className="text-center py-12">
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  <strong>No examination results found.</strong> This could be because:
-                </p>
-                <ul className="mt-1 text-sm text-yellow-700 list-disc list-inside">
-                  <li>There are no marksheets generated yet</li>
-                  <li>The marks data structure doesn't match expected format</li>
-                  <li>There's a mismatch between exam data and marks data</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-          <FaSearch className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No results to display</h3>
-          <p className="mt-1 text-sm text-gray-500">Generate marksheets first to see examination results.</p>
+          <FaFilter className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No exam type selected</h3>
+          <p className="mt-1 text-sm text-gray-500">Please select an exam type to view results.</p>
+        </div>
+      ) : classResults.length === 0 ? (
+        <div className="text-center py-12">
+          <FaTrophy className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900">No results found</h3>
+          <p className="mt-1 text-sm text-gray-500">No marks have been entered for the selected exam type yet.</p>
         </div>
       ) : (
         <div className="space-y-8">
-          {classResults.map((result) => {
-            // Filter students based on search term
-            const filteredStudents = result.students.filter(student => 
-              student.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              student.studentId.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            
-            // Skip groups with no matching students
-            if (filteredStudents.length === 0 && searchTerm) return null;
-            
-            return (
-              <div key={`${result.class}-${result.section}`} className="border border-gray-200 rounded-lg">
-                <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 rounded-t-lg">
-                  <h3 className="text-lg font-medium text-gray-900">
-                    {result.class} - Section {result.section}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''} ranked
-                  </p>
-                </div>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {filteredStudents.map((student) => (
+          {classResults.map((result, index) => (
+            <div key={`${result.class}-${result.section}`} className="border border-gray-200 rounded-lg">
+              <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {result.class} - Section {result.section}
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {result.students.length} students
+                </p>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Marks</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percentage</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {result.students
+                      .filter(student => 
+                        student.studentName.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map((student) => (
                         <tr key={student.studentId} className="hover:bg-gray-50">
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {getPositionIcon(student.position)}
-                              <span className="ml-2 font-medium">
-                                {getPositionText(student.position)}
-                              </span>
+                              <span className="ml-2 font-medium">{getPositionText(student.position)}</span>
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="text-sm font-medium text-gray-900">{student.studentName}</div>
+                            <div className="text-sm text-gray-500">ID: {student.studentId}</div>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {student.studentId}
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {student.totalObtained || student.totalMarks ? `${student.totalObtained || 0}/${student.totalMarks || 0}` : 'N/A'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {student.totalObtained}/{student.totalMarks}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-sm font-medium text-gray-900">
-                              {parseFloat(student.percentage).toFixed(2)}%
-                            </span>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {student.percentage ? `${parseFloat(student.percentage).toFixed(2)}%` : 'N/A'}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                              {student.overallGrade}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              student.overallGrade === 'A+' ? 'bg-yellow-100 text-yellow-800' :
+                              student.overallGrade === 'A' ? 'bg-green-100 text-green-800' :
+                              student.overallGrade === 'B+' ? 'bg-blue-100 text-blue-800' :
+                              student.overallGrade === 'B' ? 'bg-indigo-100 text-indigo-800' :
+                              student.overallGrade === 'C' ? 'bg-purple-100 text-purple-800' :
+                              student.overallGrade === 'D' ? 'bg-pink-100 text-pink-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {student.overallGrade || 'N/A'}
                             </span>
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      ))
+                    }
+                  </tbody>
+                </table>
+                
+                {result.students.filter(student => 
+                  student.studentName.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length === 0 && searchTerm && (
+                  <div className="text-center py-8">
+                    <FaSearch className="mx-auto h-8 w-8 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No matching students</h3>
+                    <p className="mt-1 text-sm text-gray-500">No students found matching "{searchTerm}"</p>
+                  </div>
+                )}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       )}
     </div>

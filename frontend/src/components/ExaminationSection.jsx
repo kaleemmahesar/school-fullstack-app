@@ -198,57 +198,45 @@ const ExaminationSection = () => {
       
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Examination Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Examinations Management</h1>
           <p className="mt-1 text-sm text-gray-600">
-            {view === 'list' 
-              ? 'Manage examinations and exam schedules' 
-              : view === 'slips'
-                ? 'Generate exam slips for students'
-                : view === 'results'
-                  ? 'Track and analyze exam results'
-                  : view === 'class-results'
-                    ? 'View class-wise examination results with rankings'
-                    : `Details for ${selectedExam?.name}`}
+            {view === 'list' ? 'Manage examinations and schedules' : 
+             view === 'slips' ? 'Generate examination slips' :
+             view === 'results' ? 'Track examination results' :
+             view === 'class-results' ? 'View class-wise examination results' :
+             'Examination details'}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex space-x-2">
-          {view === 'list' ? (
-            <>
-              <button
-                onClick={() => setView('class-results')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <FaChartBar className="mr-2" /> Class Results
-              </button>
-              <button
-                onClick={() => setView('results')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                <FaEye className="mr-2" /> Results
-              </button>
+          {view === 'list' && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="print:hidden inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              <FaPlus className="mr-2" /> {showForm ? 'Cancel' : 'Create Exam'}
+            </button>
+          )}
+          {view === 'list' && (
+            <div className="flex space-x-2">
               <button
                 onClick={() => setView('slips')}
-                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="print:hidden inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 <FaFileAlt className="mr-2" /> Exam Slips
               </button>
               <button
-                onClick={() => setShowForm(!showForm)}
-                className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={() => setView('results')}
+                className="print:hidden inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <FaPlus className="mr-2" /> {showForm ? 'Cancel' : 'Add Examination'}
+                <FaChartBar className="mr-2" /> Results Tracker
               </button>
-            </>
-          ) : (
-            <button
-              onClick={handleBackToList}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to List
-            </button>
+              <button
+                onClick={() => setView('class-results')}
+                className="print:hidden inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <FaChartBar className="mr-2" /> Class Results
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -261,13 +249,13 @@ const ExaminationSection = () => {
               setFormData={setFormData}
               onSubmit={handleSave}
               onCancel={resetForm}
-              classes={availableClasses} // Use availableClasses instead of all classes
+              classes={availableClasses}
             />
           )}
 
-          <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-              <div className="relative flex-grow max-w-md">
+          <div className="bg-white rounded-2xl shadow-lg p-6">
+            <div className="mb-4">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaSearch className="text-gray-400" />
                 </div>
@@ -281,7 +269,7 @@ const ExaminationSection = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="overflow-hidden rounded-lg border border-gray-200">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -393,7 +381,7 @@ const ExaminationSection = () => {
           <ClassExamResultsView 
             exams={filteredExams} // Pass filtered exams instead of all exams
             students={students}
-            marks={marks} // Pass the marks array directly, not marks.marks
+            marks={marks} // Pass the entire marks object, let ClassExamResultsView handle extraction
           />
         )
       )}
@@ -508,213 +496,167 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
       };
     });
     
-    // Pass the scheduled subjects data to onSubmit
+    // Submit with scheduled subjects
     onSubmit({
       ...formData,
       scheduledSubjects: classesWithScheduledSubjects
     });
   };
 
-  // Get sections for selected class
-  const getSectionsForClass = (className) => {
-    const classObj = classes.find(c => c.name === className);
-    return classObj ? classObj.sections : [];
-  };
-
-  // Get subjects for selected classes
-  const getSubjectsForSelectedClasses = () => {
-    if (formData.classes.length === 0) return [];
-    
-    // Get subjects from the first selected class as an example
-    // In a real implementation, you might want to show subjects for all selected classes
-    const firstClass = classes.find(c => c.name === formData.classes[0]);
-    return firstClass ? firstClass.subjects : [];
-  };
-
-  const selectedClassSubjects = getSubjectsForSelectedClasses();
-
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-      <h2 className="text-lg font-medium text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">
         {formData.id ? 'Edit Examination' : 'Create New Examination'}
-      </h2>
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      </h3>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-              Examination Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Examination Name *</label>
             <input
               type="text"
-              id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              placeholder="Enter examination name"
             />
           </div>
           
           <div>
-            <label htmlFor="examType" className="block text-sm font-medium text-gray-700 mb-1">
-              Exam Type
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Examination Type *</label>
             <select
-              id="examType"
               name="examType"
               value={formData.examType}
               onChange={handleChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="">Select exam type</option>
+              <option value="">Select examination type</option>
               <option value="Midterm">Midterm</option>
               <option value="Final">Final</option>
-            </select>
-          </div>
-          
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Classes (Select multiple classes)
-            </label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-40 overflow-y-auto p-2 border border-gray-300 rounded-lg">
-              {classes.map(cls => (
-                <div key={cls.id} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id={`class-${cls.id}`}
-                    checked={formData.classes.includes(cls.name)}
-                    onChange={() => handleClassChange(cls.name)}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor={`class-${cls.id}`} className="ml-2 text-sm text-gray-700">
-                    {cls.name}
-                  </label>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div>
-            <label htmlFor="section" className="block text-sm font-medium text-gray-700 mb-1">
-              Section (Optional - applies to all selected classes)
-            </label>
-            <select
-              id="section"
-              name="section"
-              value={formData.section}
-              onChange={handleChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">All Sections</option>
-              {/* We'll show sections from the first selected class for simplicity */}
-              {formData.classes.length > 0 && getSectionsForClass(formData.classes[0]).map(sec => (
-                <option key={sec.id} value={sec.name}>{sec.name}</option>
-              ))}
+              <option value="Quiz">Quiz</option>
+              <option value="Assignment">Assignment</option>
+              <option value="Project">Project</option>
             </select>
           </div>
           
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-1">
-              Start Date
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Start Date *</label>
             <input
               type="date"
-              id="startDate"
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-1">
-              End Date
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">End Date *</label>
             <input
               type="date"
-              id="endDate"
               name="endDate"
               value={formData.endDate}
               onChange={handleChange}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
               required
+              className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           
           <div>
-            <label htmlFor="maxMarks" className="block text-sm font-medium text-gray-700 mb-1">
-              Maximum Marks
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Max Marks</label>
             <input
               type="number"
-              id="maxMarks"
               name="maxMarks"
               value={formData.maxMarks}
               onChange={handleChange}
               min="1"
               className="block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              required
             />
           </div>
         </div>
         
-        {/* Subject Schedule Section */}
-        {formData.classes.length > 0 && selectedClassSubjects.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-md font-medium text-gray-900 mb-3">Subject Schedule</h3>
-            <p className="text-sm text-gray-500 mb-4">Set date, time, and duration for each subject (applies to all selected classes)</p>
-            
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (minutes)</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedClassSubjects.map((subject) => {
-                    const schedule = subjectSchedule[subject.id] || subjectSchedule[subject.name] || {};
-                    return (
-                      <tr key={subject.id || subject.name} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {subject.name}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="date"
-                            value={schedule.date || ''}
-                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'date', e.target.value)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="time"
-                            value={schedule.time || ''}
-                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'time', e.target.value)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="number"
-                            min="1"
-                            value={schedule.duration || 180}
-                            onChange={(e) => handleSubjectScheduleChange(subject.id || subject.name, 'duration', parseInt(e.target.value) || 180)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Classes *</label>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {classes.map((cls) => (
+              <div key={cls.id} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`class-${cls.id}`}
+                  checked={formData.classes.includes(cls.name)}
+                  onChange={() => handleClassChange(cls.name)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor={`class-${cls.id}`} className="ml-2 block text-sm text-gray-900">
+                  {cls.name}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {formData.classes.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subject Schedule</label>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="space-y-4">
+                {formData.classes.map((className, classIndex) => {
+                  const classObj = classes.find(c => c.name === className);
+                  if (!classObj || !classObj.subjects) return null;
+                  
+                  return (
+                    <div key={classIndex} className="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                      <h4 className="font-medium text-gray-900 mb-2">{className} Subjects</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {classObj.subjects.map((subject, subjectIndex) => {
+                          const subjectKey = subject.id || subject.name;
+                          const schedule = subjectSchedule[subjectKey] || {};
+                          
+                          return (
+                            <div key={subjectIndex} className="bg-white rounded-lg p-3 shadow-sm">
+                              <div className="font-medium text-gray-900 mb-2">{subject.name}</div>
+                              <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                  <label className="block text-xs text-gray-500">Date</label>
+                                  <input
+                                    type="date"
+                                    value={schedule.date || ''}
+                                    onChange={(e) => handleSubjectScheduleChange(subjectKey, 'date', e.target.value)}
+                                    className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-500">Time</label>
+                                  <input
+                                    type="time"
+                                    value={schedule.time || '10:00'}
+                                    onChange={(e) => handleSubjectScheduleChange(subjectKey, 'time', e.target.value)}
+                                    className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-xs text-gray-500">Duration (mins)</label>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    value={schedule.duration || 180}
+                                    onChange={(e) => handleSubjectScheduleChange(subjectKey, 'duration', parseInt(e.target.value))}
+                                    className="mt-1 block w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-blue-500 focus:border-blue-500"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -723,16 +665,15 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
           <button
             type="button"
             onClick={onCancel}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
           >
             Cancel
           </button>
           <button
             type="submit"
             className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            disabled={formData.classes.length === 0}
           >
-            {formData.id ? 'Update Examination' : 'Create Examination'}
+            <FaCheck className="mr-2" /> {formData.id ? 'Update' : 'Create'} Examination
           </button>
         </div>
       </form>
@@ -742,207 +683,84 @@ const ExamForm = ({ formData, setFormData, onSubmit, onCancel, classes }) => {
 
 // Exam Detail Component
 const ExamDetail = ({ exam, classes }) => {
-  const dispatch = useDispatch();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedSubjects, setEditedSubjects] = useState([]);
-
-  useEffect(() => {
-    // Initialize editedSubjects with exam subjects or empty array
-    if (exam && exam.subjects && Array.isArray(exam.subjects)) {
-      setEditedSubjects([...exam.subjects]);
-    } else {
-      setEditedSubjects([]);
-    }
-  }, [exam]);
-
-  const getSubjectsForClass = (className) => {
-    const classObj = classes.find(c => c.name === className);
-    return classObj ? classObj.subjects : [];
-  };
-
-  const classSubjects = getSubjectsForClass(exam.class);
-
-  const handleEditSchedule = () => {
-    setIsEditing(true);
-  };
-
-  const handleSaveSchedule = () => {
-    // Update the exam with the new subject schedule
-    const updatedExam = {
-      ...exam,
-      subjects: editedSubjects
-    };
-    dispatch(updateExam(updatedExam));
-    setIsEditing(false);
-  };
-
-  const handleCancelEdit = () => {
-    // Reset to original subjects
-    if (exam && exam.subjects && Array.isArray(exam.subjects)) {
-      setEditedSubjects([...exam.subjects]);
-    } else {
-      setEditedSubjects([]);
-    }
-    setIsEditing(false);
-  };
-
-  const handleSubjectChange = (index, field, value) => {
-    const updatedSubjects = [...editedSubjects];
-    updatedSubjects[index] = {
-      ...updatedSubjects[index],
-      [field]: value
-    };
-    setEditedSubjects(updatedSubjects);
-  };
-
+  const classObj = classes.find(c => c.name === exam.class);
+  
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{exam.name}</h2>
-          <p className="text-gray-600">{exam.class} - {exam.section || 'All Sections'} ({exam.academicYear})</p>
+          <p className="text-gray-600 mt-1">{exam.class} - {exam.examType}</p>
         </div>
-        <span className="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-          {exam.examType}
-        </span>
+        <button
+          onClick={() => window.history.back()}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+        >
+          <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">Start Date</h3>
-          <p className="text-lg font-semibold text-gray-900">{exam.startDate}</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">End Date</h3>
-          <p className="text-lg font-semibold text-gray-900">{exam.endDate}</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-sm font-medium text-gray-500 mb-1">Maximum Marks</h3>
-          <p className="text-lg font-semibold text-gray-900">{exam.maxMarks}</p>
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Exam Schedule</h3>
-          {!isEditing ? (
-            <button
-              onClick={handleEditSchedule}
-              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-            >
-              <FaEdit className="mr-1" /> Edit Schedule
-            </button>
-          ) : (
-            <div className="space-x-2">
-              <button
-                onClick={handleSaveSchedule}
-                className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-              >
-                <FaCheck className="mr-1" /> Save
-              </button>
-              <button
-                onClick={handleCancelEdit}
-                className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                Cancel
-              </button>
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Examination Details</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Start Date:</span>
+              <span className="font-medium">{exam.startDate}</span>
             </div>
-          )}
+            <div className="flex justify-between">
+              <span className="text-gray-600">End Date:</span>
+              <span className="font-medium">{exam.endDate}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Academic Year:</span>
+              <span className="font-medium">{exam.academicYear}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Status:</span>
+              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                {exam.status}
+              </span>
+            </div>
+          </div>
         </div>
         
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
-                {isEditing ? (
-                  <>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration (minutes)</th>
-                  </>
-                ) : (
-                  <>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
-                  </>
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {editedSubjects && editedSubjects.length > 0 ? (
-                editedSubjects.map((subject, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{subject.name}</td>
-                    {isEditing ? (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="date"
-                            value={subject.date || ''}
-                            onChange={(e) => handleSubjectChange(index, 'date', e.target.value)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="time"
-                            value={subject.time || ''}
-                            onChange={(e) => handleSubjectChange(index, 'time', e.target.value)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <input
-                            type="number"
-                            min="1"
-                            value={subject.duration || ''}
-                            onChange={(e) => handleSubjectChange(index, 'duration', parseInt(e.target.value) || 0)}
-                            className="block w-full px-2 py-1 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
-                          />
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subject.date || 'Not scheduled'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{subject.time || 'Not scheduled'}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {subject.duration ? `${subject.duration} minutes` : 'Not set'}
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={isEditing ? "4" : "4"} className="px-6 py-4 text-center text-sm text-gray-500">
-                    No subjects scheduled for this examination
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="bg-gray-50 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Schedule Information</h3>
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Section:</span>
+              <span className="font-medium">{exam.section || 'All Sections'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-600">Max Marks:</span>
+              <span className="font-medium">{exam.maxMarks}</span>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Class Subjects</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {classSubjects.map((subject, index) => (
-            <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <FaFileAlt className="text-blue-600" />
-                </div>
-                <div className="ml-3">
-                  <h4 className="text-sm font-medium text-gray-900">{subject.name}</h4>
-                  <p className="text-xs text-gray-500">{subject.teacher || 'No teacher assigned'}</p>
+      
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">Subject Schedule</h3>
+        {exam.subjects && exam.subjects.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {exam.subjects.map((subject, index) => (
+              <div key={index} className="bg-white rounded-lg p-4 shadow-sm">
+                <div className="font-medium text-gray-900">{subject.name}</div>
+                <div className="mt-2 text-sm text-gray-600">
+                  <div>Date: {subject.date || 'Not scheduled'}</div>
+                  <div>Time: {subject.time || 'Not scheduled'}</div>
+                  <div>Duration: {subject.duration || 'Not set'} minutes</div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-600">No subjects scheduled for this examination.</p>
+        )}
       </div>
     </div>
   );

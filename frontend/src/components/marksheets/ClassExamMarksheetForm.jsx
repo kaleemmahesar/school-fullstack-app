@@ -33,31 +33,30 @@ const ClassExamMarksheetForm = ({
   ]);
   const [showGradeConfig, setShowGradeConfig] = useState(false);
   
-  // Filter students to only include those in current batch who haven't passed out
-  const currentAcademicYear = getCurrentAcademicYear();
+  // Filter students to include all students in the selected class and section
+  // Removed the restriction to only show students in current batch who haven't passed out
   const eligibleStudents = useMemo(() => {
-    return students.filter(student => 
-      student.academicYear === currentAcademicYear && 
-      student.status !== 'passed_out' && 
-      student.status !== 'left'
-    );
-  }, [students, currentAcademicYear]);
+    // Return all students - don't filter based on academic year or status
+    // This allows creating marksheets for all students regardless of their current status
+    return students;
+  }, [students]);
 
-  // Get sections for selected class
-  const classSections = selectedClass 
-    ? classes.find(cls => cls.name === selectedClass)?.sections || []
-    : [];
-    
   // Get students for selected class and section
   const filteredStudents = useMemo(() => {
-    return eligibleStudents.filter(student => 
+    const filtered = eligibleStudents.filter(student => 
       student.class === selectedClass && student.section === selectedSection
     );
+    return filtered;
   }, [eligibleStudents, selectedClass, selectedSection]);
 
   // Get subjects for selected class
   const classSubjects = selectedClass 
     ? classes.find(cls => cls.name === selectedClass)?.subjects || []
+    : [];
+
+  // Get sections for selected class
+  const classSections = selectedClass 
+    ? classes.find(cls => cls.name === selectedClass)?.sections || []
     : [];
 
   // Get filtered exams for the selected class (memoized to prevent infinite loops)
@@ -76,7 +75,7 @@ const ClassExamMarksheetForm = ({
 
   // Initialize form when class is selected
   useEffect(() => {
-    if (selectedClass && selectedSection) {
+    if (selectedClass && selectedSection && examType) {
       // Get subjects for selected class from the selected exam if available
       const selectedExamForClass = filteredExams.find(exam => exam.examType === examType);
       const subjects = selectedExamForClass?.effectiveSubjects || 
@@ -95,21 +94,39 @@ const ClassExamMarksheetForm = ({
         student.class === selectedClass && student.section === selectedSection
       );
       
-      // Initialize student marks structure
-      const initialStudentMarks = studentsInClass.map(student => ({
-        studentId: student.id,
-        studentName: `${student.firstName} ${student.lastName}`,
-        marks: initialSubjectMarks.map(subject => ({
-          subjectId: subject.subjectId,
-          subjectName: subject.subjectName,
-          marksObtained: '',
-          totalMarks: subject.totalMarks,
-          grade: ''
-        }))
-      }));
+      // Initialize student marks structure with existing data if available
+      const initialStudentMarks = studentsInClass.map(student => {
+        // Find existing marks for this student and exam type
+        const existingMarks = student.marks?.find(mark => mark.examType === examType) || null;
+        
+        // Create marks structure with existing data or empty values
+        const marks = initialSubjectMarks.map(subject => {
+          // Try to find existing mark for this subject
+          const existingSubjectMark = existingMarks?.marks?.find(m => m.subjectName === subject.subjectName);
+          
+          return {
+            // Include the subject mark ID for proper updates
+            id: existingSubjectMark ? existingSubjectMark.id : null,
+            subjectId: subject.subjectId,
+            subjectName: subject.subjectName,
+            marksObtained: existingSubjectMark ? existingSubjectMark.marksObtained : '',
+            totalMarks: subject.totalMarks,
+            grade: existingSubjectMark ? existingSubjectMark.grade : ''
+          };
+        });
+        
+        return {
+          studentId: student.id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          marks: marks,
+          // Store reference to existing marks for update purposes
+          existingMarksId: existingMarks ? existingMarks.id : null
+        };
+      });
+      
       setStudentMarks(initialStudentMarks);
     }
-  }, [selectedClass, selectedSection, examType]);
+  }, [selectedClass, selectedSection, examType, eligibleStudents, classes, filteredExams]);
 
   // Handle marks change for a specific student and subject
   const handleMarksChange = (studentIndex, subjectIndex, value) => {
@@ -191,7 +208,8 @@ const ClassExamMarksheetForm = ({
     const marksheetsData = studentMarks.map(student => {
       const totals = calculateStudentTotals(student.marks);
       return {
-        id: Date.now().toString() + student.studentId,
+        // Use existing ID if available, otherwise generate a new one
+        id: student.existingMarksId || `${student.studentId}_${examType}_${Date.now()}`,
         studentId: student.studentId,
         studentName: student.studentName,
         class: selectedClass,
@@ -213,6 +231,15 @@ const ClassExamMarksheetForm = ({
     onSubmit(marksheetsData);
     setShowPrintPreview(false);
     setPreviewData(null);
+    // Reset form after submission
+    setStep(1);
+    setSelectedClass('');
+    setSelectedSection('');
+    setExamType('');
+    setSelectedExam(null);
+    setYear(new Date().getFullYear().toString());
+    setSubjectMarks([]);
+    setStudentMarks([]);
   };
 
   // Handle print action
