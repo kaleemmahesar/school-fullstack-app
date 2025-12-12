@@ -7,25 +7,26 @@ CREATE DATABASE IF NOT EXISTS school_management_system CHARACTER SET utf8mb4 COL
 USE school_management_system;
 
 -- Drop existing tables if they exist to ensure clean setup
+-- Tables with foreign key constraints should be dropped before the tables they reference
 DROP TABLE IF EXISTS alumni;
 DROP TABLE IF EXISTS promotions;
-DROP TABLE IF EXISTS events;
-DROP TABLE IF EXISTS notifications;
-DROP TABLE IF EXISTS settings;
-DROP TABLE IF EXISTS batches;
+DROP TABLE IF EXISTS fees_history;
 DROP TABLE IF EXISTS marks;
 DROP TABLE IF EXISTS attendance;
-DROP TABLE IF EXISTS staff_attendance;
 DROP TABLE IF EXISTS staff_salary_history;
-DROP TABLE IF EXISTS staff;
-DROP TABLE IF EXISTS exams;
-DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS staff_attendance;
 DROP TABLE IF EXISTS sections;
 DROP TABLE IF EXISTS subjects;
-DROP TABLE IF EXISTS classes;
-DROP TABLE IF EXISTS fees_history;
-DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS exams;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS batches;
 DROP TABLE IF EXISTS subsidies;
+DROP TABLE IF EXISTS settings;
+DROP TABLE IF EXISTS expenses;
+DROP TABLE IF EXISTS classes;
+DROP TABLE IF EXISTS staff;
+DROP TABLE IF EXISTS students;
 
 -- Students table
 -- Stores information about all students in the school
@@ -55,9 +56,47 @@ CREATE TABLE IF NOT EXISTS students (
     familyId VARCHAR(50),
     relationship VARCHAR(20),
     parentId VARCHAR(50) NULL,
+    parentContact VARCHAR(20) NULL,
     status VARCHAR(20) DEFAULT 'studying',
     academicYear VARCHAR(20),
-    admissionTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    admissionTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Classes table
+-- Defines all classes offered by the school
+CREATE TABLE IF NOT EXISTS classes (
+    id VARCHAR(50) PRIMARY KEY,
+    name VARCHAR(50),
+    monthlyFees DECIMAL(10, 2),
+    admissionFees DECIMAL(10, 2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Staff table
+-- Contains information about all staff members
+CREATE TABLE IF NOT EXISTS staff (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    photo TEXT,
+    firstName VARCHAR(100),
+    lastName VARCHAR(100),
+    fatherName VARCHAR(100),
+    cnic VARCHAR(20),
+    dateOfBirth DATE,
+    gender VARCHAR(10),
+    religion VARCHAR(50),
+    address TEXT,
+    contactNumber VARCHAR(20),
+    emergencyContact VARCHAR(20),
+    email VARCHAR(100),
+    dateOfJoining DATE,
+    designation VARCHAR(100),
+    department VARCHAR(100),
+    salary DECIMAL(10, 2),
+    jobType VARCHAR(20) DEFAULT 'Teaching',
+    subject VARCHAR(100) NULL,
+    status VARCHAR(20) DEFAULT 'active',
+    addedTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -82,17 +121,6 @@ CREATE TABLE IF NOT EXISTS fees_history (
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE
-);
-
--- Classes table
--- Defines all classes offered by the school
-CREATE TABLE IF NOT EXISTS classes (
-    id VARCHAR(50) PRIMARY KEY,
-    name VARCHAR(50),
-    monthlyFees DECIMAL(10, 2),
-    admissionFees DECIMAL(10, 2),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 -- Subjects table
@@ -143,34 +171,6 @@ CREATE TABLE IF NOT EXISTS exams (
     date DATE,
     totalMarks DECIMAL(10, 2),
     academicYear VARCHAR(20),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Staff table
--- Contains information about all staff members
-CREATE TABLE IF NOT EXISTS staff (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    photo TEXT,
-    firstName VARCHAR(100),
-    lastName VARCHAR(100),
-    fatherName VARCHAR(100),
-    cnic VARCHAR(20),
-    dateOfBirth DATE,
-    gender VARCHAR(10),
-    religion VARCHAR(50),
-    address TEXT,
-    contactNumber VARCHAR(20),
-    emergencyContact VARCHAR(20),
-    email VARCHAR(100),
-    dateOfJoining DATE,
-    designation VARCHAR(100),
-    department VARCHAR(100),
-    salary DECIMAL(10, 2),
-    jobType VARCHAR(20) DEFAULT 'Teaching',
-    subject VARCHAR(100) NULL,
-    status VARCHAR(20) DEFAULT 'active',
-    addedTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

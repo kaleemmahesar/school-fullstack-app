@@ -13,7 +13,7 @@ function formatStudentData($student) {
         // Format fees history if it exists
         if (isset($student['feesHistory']) && is_array($student['feesHistory'])) {
             foreach ($student['feesHistory'] as &$fee) {
-                $feeNumericFields = ['amount', 'fineAmount'];
+                $feeNumericFields = ['amount', 'fineAmount', 'discountAmount', 'discountedAmount'];
                 foreach ($feeNumericFields as $field) {
                     if (isset($fee[$field])) {
                         $fee[$field] = (float)$fee[$field];

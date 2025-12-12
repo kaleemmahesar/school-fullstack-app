@@ -285,7 +285,7 @@ const SettingsPage = () => {
           <div className="px-6 py-4">
             <div className="space-y-8">
               {/* School Information Section */}
-              <div>
+              {/* <div>
                 <h3 className="text-md font-medium text-gray-900 mb-4 flex items-center">
                   <FaSchool className="mr-2 text-blue-500" />
                   School Information
@@ -366,7 +366,7 @@ const SettingsPage = () => {
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* School Level Section */}
               <div>
