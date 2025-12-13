@@ -41,11 +41,16 @@ const ClassExamMarksheetForm = ({
     return students;
   }, [students]);
 
-  // Get students for selected class and section
+  // Get students for selected class and section - UPDATED VERSION
   const filteredStudents = useMemo(() => {
-    const filtered = eligibleStudents.filter(student => 
-      student.class === selectedClass && student.section === selectedSection
-    );
+    const filtered = eligibleStudents.filter(student => {
+      // Filter by class first
+      if (student.class !== selectedClass) return false;
+      
+      // If no section selected, include all sections; otherwise filter by section
+      if (!selectedSection) return true;
+      return student.section === selectedSection;
+    });
     return filtered;
   }, [eligibleStudents, selectedClass, selectedSection]);
 
@@ -73,9 +78,9 @@ const ClassExamMarksheetForm = ({
       }) || [];
   }, [exams, selectedClass]);
 
-  // Initialize form when class is selected
+  // Initialize form when class is selected - UPDATED VERSION
   useEffect(() => {
-    if (selectedClass && selectedSection && examType) {
+    if (selectedClass && examType) {
       // Get subjects for selected class from the selected exam if available
       const selectedExamForClass = filteredExams.find(exam => exam.examType === examType);
       const subjects = selectedExamForClass?.effectiveSubjects || 
@@ -89,17 +94,22 @@ const ClassExamMarksheetForm = ({
       }));
       setSubjectMarks(initialSubjectMarks);
       
-      // Get students for selected class and section
-      const studentsInClass = eligibleStudents.filter(student => 
-        student.class === selectedClass && student.section === selectedSection
-      );
+      // Get students for selected class (and section if selected)
+      const studentsInClass = eligibleStudents.filter(student => {
+        // Filter by class first
+        if (student.class !== selectedClass) return false;
+        
+        // If no section selected, include all sections; otherwise filter by section
+        if (!selectedSection) return true;
+        return student.section === selectedSection;
+      });
       
       // Initialize student marks structure with existing data if available
       const initialStudentMarks = studentsInClass.map(student => {
         // Find existing marks for this student and exam type
         const existingMarks = student.marks?.find(mark => mark.examType === examType) || null;
         
-        // Create marks structure with existing data or empty values
+        // Create marks structure with existing data or default values
         const marks = initialSubjectMarks.map(subject => {
           // Try to find existing mark for this subject
           const existingSubjectMark = existingMarks?.marks?.find(m => m.subjectName === subject.subjectName);
@@ -109,7 +119,7 @@ const ClassExamMarksheetForm = ({
             id: existingSubjectMark ? existingSubjectMark.id : null,
             subjectId: subject.subjectId,
             subjectName: subject.subjectName,
-            marksObtained: existingSubjectMark ? existingSubjectMark.marksObtained : '',
+            marksObtained: existingSubjectMark ? existingSubjectMark.marksObtained : '33', // Set default to 33
             totalMarks: subject.totalMarks,
             grade: existingSubjectMark ? existingSubjectMark.grade : ''
           };
@@ -188,9 +198,9 @@ const ClassExamMarksheetForm = ({
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate required fields
-    if (!selectedClass || !selectedSection || !examType) {
-      alert('Please fill in all required fields');
+    // Validate required fields - UPDATED VERSION (section is now optional)
+    if (!selectedClass || !examType) {
+      alert('Please select class and exam type');
       return;
     }
     
@@ -213,7 +223,7 @@ const ClassExamMarksheetForm = ({
         studentId: student.studentId,
         studentName: student.studentName,
         class: selectedClass,
-        section: selectedSection,
+        section: selectedSection || '', // Use empty string if no section selected
         examType: examType,
         year: year,
         marks: student.marks,
@@ -431,7 +441,7 @@ const ClassExamMarksheetForm = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Section *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Section</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <FaGraduationCap className="h-5 w-5 text-gray-400" />
@@ -440,15 +450,14 @@ const ClassExamMarksheetForm = ({
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
                   className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  required
-                  disabled={!selectedClass}
                 >
-                  <option value="">Select Section</option>
+                  <option value="">All Sections</option>
                   {classSections.map(section => (
                     <option key={section.id} value={section.name}>{section.name}</option>
                   ))}
                 </select>
               </div>
+
             </div>
 
             <div>
@@ -491,10 +500,10 @@ const ClassExamMarksheetForm = ({
             </div>
           </div>
           
-          {selectedClass && selectedSection && (
+          {selectedClass && (
             <div className="p-4 bg-blue-50 rounded-lg">
               <h4 className="text-md font-medium text-gray-900 mb-2">
-                Students in {selectedClass} - Section {selectedSection}
+                Students in {selectedClass}{selectedSection ? ` - Section ${selectedSection}` : ' - All Sections'}
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {filteredStudents.map(student => (
@@ -506,17 +515,20 @@ const ClassExamMarksheetForm = ({
                           {student.firstName} {student.lastName}
                         </div>
                         <div className="text-xs text-gray-500">ID: {student.id}</div>
+                        {!selectedSection && (
+                          <div className="text-xs text-gray-500">Section: {student.section}</div>
+                        )}
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
               {filteredStudents.length === 0 && (
-                <p className="text-sm text-gray-600 mt-2">No students found in this class and section</p>
+                <p className="text-sm text-gray-600 mt-2">No students found in this class{selectedSection ? ` and section ${selectedSection}` : ''}</p>
               )}
             </div>
           )}
-          
+
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -528,14 +540,14 @@ const ClassExamMarksheetForm = ({
             <button
               type="button"
               onClick={() => {
-                if (selectedClass && selectedSection && examType && year) {
+                if (selectedClass && examType && year) {
                   setStep(2);
                 } else {
                   alert('Please fill in all required fields');
                 }
               }}
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              disabled={!selectedClass || !selectedSection || !examType || !year}
+              disabled={!selectedClass || !examType || !year}
             >
               Next: Enter Marks
             </button>
@@ -549,7 +561,7 @@ const ClassExamMarksheetForm = ({
           <div className="flex justify-between items-center">
             <div>
               <h4 className="text-lg font-medium text-gray-900">
-                Enter Marks for {selectedClass} - Section {selectedSection}
+                Enter Marks for {selectedClass}{selectedSection ? ` - Section ${selectedSection}` : ' - All Sections'}
               </h4>
               <p className="text-sm text-gray-600">
                 {examType} {year} - {filteredStudents.length} students
@@ -662,6 +674,9 @@ const ClassExamMarksheetForm = ({
                           <td className="px-6 py-4 whitespace-nowrap sticky left-0 bg-white">
                             <div className="text-sm font-medium text-gray-900">{student.studentName}</div>
                             <div className="text-xs text-gray-500">ID: {student.studentId}</div>
+                            {!selectedSection && (
+                              <div className="text-xs text-gray-500">Section: {student.section}</div>
+                            )}
                           </td>
                           {student.marks.map((mark, subjectIndex) => (
                             <td key={mark.subjectId} className="px-6 py-4 whitespace-nowrap">
@@ -732,7 +747,7 @@ const ClassExamMarksheetForm = ({
                 Review and Configure Grades
               </h4>
               <p className="text-sm text-gray-600">
-                {examType} {year} - {selectedClass} - Section {selectedSection}
+                {examType} {year} - {selectedClass}{selectedSection ? ` - Section ${selectedSection}` : ' - All Sections'}
               </p>
             </div>
             <button

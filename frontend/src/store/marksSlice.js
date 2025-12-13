@@ -274,7 +274,9 @@ const marksSlice = createSlice({
           const newMarks = transformMarksData(action.payload);
           // Merge with existing marks
           newMarks.forEach(newMark => {
-            const existingIndex = state.marks.findIndex(m => m.studentId === newMark.studentId && m.examType === newMark.examType);
+            // Use examId if available, otherwise fall back to examType
+            const examIdentifier = newMark.examId || newMark.examType;
+            const existingIndex = state.marks.findIndex(m => m.studentId === newMark.studentId && (m.examId === examIdentifier || m.examType === examIdentifier));
             if (existingIndex !== -1) {
               state.marks[existingIndex] = newMark;
             } else {
@@ -286,7 +288,9 @@ const marksSlice = createSlice({
           const transformed = transformMarksData([action.payload]);
           if (transformed.length > 0) {
             const newMark = transformed[0];
-            const existingIndex = state.marks.findIndex(m => m.studentId === newMark.studentId && m.examType === newMark.examType);
+            // Use examId if available, otherwise fall back to examType
+            const examIdentifier = newMark.examId || newMark.examType;
+            const existingIndex = state.marks.findIndex(m => m.studentId === newMark.studentId && (m.examId === examIdentifier || m.examType === examIdentifier));
             if (existingIndex !== -1) {
               state.marks[existingIndex] = newMark;
             } else {
@@ -300,7 +304,9 @@ const marksSlice = createSlice({
         if (Array.isArray(action.payload)) {
           const updatedMarks = transformMarksData(action.payload);
           updatedMarks.forEach(updatedMark => {
-            const existingIndex = state.marks.findIndex(m => m.studentId === updatedMark.studentId && m.examType === updatedMark.examType);
+            // Use examId if available, otherwise fall back to examType
+            const examIdentifier = updatedMark.examId || updatedMark.examType;
+            const existingIndex = state.marks.findIndex(m => m.studentId === updatedMark.studentId && (m.examId === examIdentifier || m.examType === examIdentifier));
             if (existingIndex !== -1) {
               state.marks[existingIndex] = updatedMark;
             } else {
@@ -312,7 +318,9 @@ const marksSlice = createSlice({
           const transformed = transformMarksData([action.payload]);
           if (transformed.length > 0) {
             const updatedMark = transformed[0];
-            const existingIndex = state.marks.findIndex(m => m.studentId === updatedMark.studentId && m.examType === updatedMark.examType);
+            // Use examId if available, otherwise fall back to examType
+            const examIdentifier = updatedMark.examId || updatedMark.examType;
+            const existingIndex = state.marks.findIndex(m => m.studentId === updatedMark.studentId && (m.examId === examIdentifier || m.examType === examIdentifier));
             if (existingIndex !== -1) {
               state.marks[existingIndex] = updatedMark;
             } else {
@@ -335,31 +343,35 @@ const marksSlice = createSlice({
   },
 });
 
-// Helper function to transform flat subject marks into marksheet objects
+// Helper function to transform flat subject marks into marksheet objects - FIXED VERSION
 function transformMarksData(rawMarks) {
   if (!Array.isArray(rawMarks) || rawMarks.length === 0) {
     return [];
   }
   
-  // Group marks by studentId and examType
+  // Group marks by studentId and examId (instead of examType)
   const grouped = {};
   
   rawMarks.forEach(mark => {
     // Skip invalid marks
-    if (!mark.studentId || !mark.examType) {
+    if (!mark.studentId || (!mark.examType && !mark.examId)) {
       return;
     }
     
-    const key = `${mark.studentId}_${mark.examType}`;
+    // Use examId if available, otherwise fall back to examType
+    const examIdentifier = mark.examId || mark.examType;
+    const key = `${mark.studentId}_${examIdentifier}`;
     
     if (!grouped[key]) {
       grouped[key] = {
-        id: mark.id?.split('_')[0] || `${mark.studentId}_${mark.examType}`,
+        id: mark.id?.split('_')[0] || `${mark.studentId}_${examIdentifier}`,
         studentId: mark.studentId,
         studentName: mark.studentName,
         class: mark.class,
         section: mark.section || '',
-        examType: mark.examType,
+        examId: mark.examId, // Store examId
+        examType: mark.examType, // Store examType if available
+        examName: mark.examName || mark.examType, // Use examName if available
         year: mark.year || new Date().getFullYear().toString(),
         marks: [],
         // Initialize summary fields to 0, will be calculated from subject marks
