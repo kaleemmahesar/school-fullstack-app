@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaSchool } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const BulkMarksheetPrintView = ({ 
   marksheetsData, 
@@ -8,6 +9,13 @@ const BulkMarksheetPrintView = ({
   schoolInfo
 }) => {
   if (!marksheetsData || marksheetsData.length === 0) return null;
+
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
 
   // Group marksheets by student
   const groupedMarksheets = marksheetsData.reduce((acc, marksheet) => {
@@ -34,6 +42,16 @@ const BulkMarksheetPrintView = ({
 
           return (
             <div key={studentId} className="student-marksheets">
+              {/* School Header - Visible in both print and screen */}
+              <div className="text-center border-b border-gray-300 pb-2 mb-3">
+                <div className="flex items-center justify-center mb-1">
+                  <FaSchool className="text-blue-600 text-lg mr-2" />
+                  <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.schoolName || "School Management System"}</h1>
+                </div>
+                <p className="text-gray-600 text-xs mb-1">{safeSchoolInfo.schoolAddress || "123 Education Street, Learning City"}</p>
+                <p className="text-gray-600 text-xs">Phone: {safeSchoolInfo.schoolPhone || "+1 (555) 123-4567"}</p>
+              </div>
+
               {/* Student Photo and Info */}
               <div className="flex items-center mb-4">
                 {/* Student Photo */}
@@ -65,8 +83,9 @@ const BulkMarksheetPrintView = ({
                 {studentMarksheets.map((marksheet, marksheetIndex) => (
                   <div key={`${studentId}-${marksheetIndex}`} className="marksheets-section border rounded p-3">
                     {/* Exam Header */}
-                    <div className="font-bold text-gray-800 text-sm mb-3 border-b border-gray-300 pb-2">
-                      {marksheet.examType} - {marksheet.year}
+                    <div className="font-bold text-gray-800 text-sm mb-3 border-b border-gray-300 pb-2 flex justify-between items-center">
+                      <span>{marksheet.examType} - {marksheet.year}</span>
+                      <span className="text-xs text-gray-500">Generated: {new Date().toLocaleDateString()}</span>
                     </div>
                     
                     {/* Marks Table */}
@@ -84,7 +103,11 @@ const BulkMarksheetPrintView = ({
                               <span>{subject.subjectName}</span>
                               <span className="text-center">{subject.marksObtained}</span>
                               <span className="text-center">{subject.totalMarks}</span>
-                              <span className="text-center font-medium">{subject.grade}</span>
+                              <span className="text-center">
+                                <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-xs">
+                                  {subject.grade}
+                                </span>
+                              </span>
                             </div>
                           ))}
                         </div>
@@ -107,7 +130,11 @@ const BulkMarksheetPrintView = ({
                       </div>
                       <div className="bg-gray-50 p-2 rounded text-center">
                         <div className="text-xs text-gray-600">Grade</div>
-                        <div className="font-bold">{marksheet.overallGrade}</div>
+                        <div className="font-bold">
+                          <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded text-xs">
+                            {marksheet.overallGrade}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -49,8 +49,8 @@ const PrintMarksheetsView = ({
 
           return (
             <div key={studentId} className={`student-marksheets ${index > 0 ? 'mt-8' : ''}`}>
-              {/* School Header - Hidden in print view */}
-              <div className="text-center border-b border-gray-300 pb-2 mb-3 print:hidden">
+              {/* School Header - Visible in both print and screen */}
+              <div className="text-center border-b border-gray-300 pb-2 mb-3">
                 <div className="flex items-center justify-center mb-1">
                   <FaSchool className="text-blue-600 text-lg mr-2" />
                   <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.schoolName || "School Management System"}</h1>
@@ -132,33 +132,28 @@ const PrintMarksheetsView = ({
 
                     {/* Summary */}
                     <div className="grid grid-cols-4 gap-2 mb-4">
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-1">Obtained</h4>
-                        <div className="bg-gray-50 p-2 rounded border text-xs text-center font-bold">
-                          {marksheet.totalObtained}
-                        </div>
+                      <div className="bg-gray-50 p-2 rounded text-center">
+                        <div className="text-xs text-gray-600">Obtained</div>
+                        <div className="font-bold">{marksheet.totalObtained}</div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-1">Total</h4>
-                        <div className="bg-gray-50 p-2 rounded border text-xs text-center font-bold">
-                          {marksheet.totalMarks}
-                        </div>
+                      <div className="bg-gray-50 p-2 rounded text-center">
+                        <div className="text-xs text-gray-600">Total</div>
+                        <div className="font-bold">{marksheet.totalMarks}</div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-1">%</h4>
-                        <div className="bg-gray-50 p-2 rounded border text-xs text-center font-bold">
-                          {marksheet.percentage}%
-                        </div>
+                      <div className="bg-gray-50 p-2 rounded text-center">
+                        <div className="text-xs text-gray-600">%</div>
+                        <div className="font-bold">{marksheet.percentage}%</div>
                       </div>
-                      <div>
-                        <h4 className="text-xs font-medium text-gray-700 mb-1">Grade</h4>
-                        <div className="bg-gray-50 p-2 rounded border text-xs text-center font-bold">
+                      <div className="bg-gray-50 p-2 rounded text-center">
+                        <div className="text-xs text-gray-600">Grade</div>
+                        <div className="font-bold">
                           <span className="bg-green-100 text-green-800 px-1 py-0.5 rounded text-xs">
                             {marksheet.overallGrade}
                           </span>
                         </div>
                       </div>
                     </div>
+
                   </div>
                 ))}
               </div>

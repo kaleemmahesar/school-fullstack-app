@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaUser } from 'react-icons/fa';
+import { FaUser, FaSchool } from 'react-icons/fa';
+import { useSelector } from 'react-redux';
 
 const IndividualMarksheetPrintView = ({ 
   marksheetData, 
@@ -10,10 +11,27 @@ const IndividualMarksheetPrintView = ({
 }) => {
   if (!marksheetData) return null;
 
+  // Use school info from props with fallback defaults
+  const safeSchoolInfo = {
+    schoolName: schoolInfo?.schoolName || schoolInfo?.name || "School Management System",
+    schoolAddress: schoolInfo?.schoolAddress || schoolInfo?.address || "123 Education Street, Learning City",
+    schoolPhone: schoolInfo?.schoolPhone || schoolInfo?.phone || "+1 (555) 123-4567"
+  };
+
   return (
     <div className="w-full mx-auto bg-white font-sans">
       {/* Printable Marksheet */}
       <div className="marksheets-section">
+        {/* School Header - Visible in both print and screen */}
+        <div className="text-center border-b border-gray-300 pb-2 mb-3">
+          <div className="flex items-center justify-center mb-1">
+            <FaSchool className="text-blue-600 text-lg mr-2" />
+            <h1 className="text-lg font-bold text-gray-800">{safeSchoolInfo.schoolName || "School Management System"}</h1>
+          </div>
+          <p className="text-gray-600 text-xs mb-1">{safeSchoolInfo.schoolAddress || "123 Education Street, Learning City"}</p>
+          <p className="text-gray-600 text-xs">Phone: {safeSchoolInfo.schoolPhone || "+1 (555) 123-4567"}</p>
+        </div>
+
         {/* Student Photo and Info */}
         <div className="flex items-center mb-4">
           {/* Student Photo */}
@@ -58,7 +76,11 @@ const IndividualMarksheetPrintView = ({
           </div>
           <div className="bg-gray-50 p-3 rounded text-center">
             <div className="text-xs text-gray-600">Grade</div>
-            <div className="font-bold text-lg">{marksheetData.overallGrade}</div>
+            <div className="font-bold text-lg">
+              <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+                {marksheetData.overallGrade}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -77,7 +99,11 @@ const IndividualMarksheetPrintView = ({
                   <span>{subject.subjectName}</span>
                   <span className="text-center">{subject.marksObtained}</span>
                   <span className="text-center">{subject.totalMarks}</span>
-                  <span className="text-center font-medium">{subject.grade}</span>
+                  <span className="text-center">
+                    <span className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-xs">
+                      {subject.grade}
+                    </span>
+                  </span>
                 </div>
               ))}
             </div>

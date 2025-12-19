@@ -2,11 +2,11 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchMarks, addMarks, updateMarks, deleteMarks } from '../store/marksSlice';
 import { fetchExams } from '../store/examsSlice';
-import { FaPlus, FaEye, FaEdit, FaTrash, FaSearch, FaGraduationCap, FaClipboard, FaFilter, FaDownload } from 'react-icons/fa';
+import { FaPlus, FaEye, FaEdit, FaTrash, FaSearch, FaGraduationCap, FaClipboard, FaFilter, FaDownload, FaPrint } from 'react-icons/fa';
 import StudentMarksheetForm from './marksheets/StudentMarksheetForm';
 import ClassExamMarksheetForm from './marksheets/ClassExamMarksheetForm';
 import IndividualMarksheetPrintView from './marksheets/IndividualMarksheetPrintView';
-
+import BulkMarksheetPrintView from './marksheets/BulkMarksheetPrintView';
 import Pagination from './common/Pagination';
 import { getCurrentAcademicYear } from '../utils/dateUtils';
 
@@ -16,7 +16,8 @@ const MarksheetsSection = () => {
   const { classes } = useSelector(state => state.classes);
   const { marks, loading, error } = useSelector(state => state.marks);
   const { exams } = useSelector(state => state.exams);
-  
+  const schoolInfo = useSelector(state => state.settings.schoolInfo);
+
   // Extract marks array from Redux state with improved logic
   const marksArray = useMemo(() => {
     // If marks is already an array, use it directly
@@ -65,7 +66,8 @@ const MarksheetsSection = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('');
   const [selectedSection, setSelectedSection] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState(getCurrentAcademicYear());
+  const [selectedBatch, setSelectedBatch] = useState(getCurrentAcademicYear()); // Use full academic year format
+  const [selectedExamType, setSelectedExamType] = useState(''); // Add exam type filter
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     studentId: '',
@@ -77,6 +79,11 @@ const MarksheetsSection = () => {
     marks: []
   });
   
+  // State for print preview functionality
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [marksheetsToPrint, setMarksheetsToPrint] = useState([]);
+  const [studentsToPrint, setStudentsToPrint] = useState([]);
+
   const itemsPerPage = 10;
   
   useEffect(() => {
@@ -115,12 +122,30 @@ const MarksheetsSection = () => {
     
     const batches = new Set();
     marksArray.forEach(mark => {
-      if (mark && mark.year) {
+      // Use academicYear instead of year to get the full format (e.g., "2025-2026")
+      if (mark && mark.academicYear) {
+        batches.add(mark.academicYear);
+      } else if (mark && mark.year) {
+        // Fallback to year if academicYear is not available
         batches.add(mark.year);
       }
     });
     
     return Array.from(batches).sort().reverse();
+  }, [marksArray]);
+  
+  // Get unique exam types from marks data
+  const uniqueExamTypes = useMemo(() => {
+    if (!marksArray || !Array.isArray(marksArray)) return [];
+    
+    const examTypes = new Set();
+    marksArray.forEach(mark => {
+      if (mark && mark.examType) {
+        examTypes.add(mark.examType);
+      }
+    });
+    
+    return Array.from(examTypes).sort();
   }, [marksArray]);
 
   // Filter students based on search and filters
@@ -142,9 +167,13 @@ const MarksheetsSection = () => {
       // Batch filter
       const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
       
-      return matchesSearch && matchesClass && matchesSection && matchesBatch;
+      // Exam type filter - check if student has marks of the selected exam type
+      const matchesExamType = !selectedExamType || 
+        (student.marks && student.marks.some(mark => mark.examType === selectedExamType));
+      
+      return matchesSearch && matchesClass && matchesSection && matchesBatch && matchesExamType;
     });
-  }, [studentsWithMarks, searchTerm, selectedClass, selectedSection, selectedBatch]);
+  }, [studentsWithMarks, searchTerm, selectedClass, selectedSection, selectedBatch, selectedExamType]);
   
   // Paginate filtered students
   const paginatedStudents = useMemo(() => {
@@ -243,12 +272,100 @@ const MarksheetsSection = () => {
     setSearchTerm('');
     setSelectedClass('');
     setSelectedSection('');
-    setSelectedBatch(getCurrentAcademicYear()); // Reset to current batch
+    setSelectedBatch(getCurrentAcademicYear()); // Reset to current batch with full academic year format
+    setSelectedExamType(''); // Reset exam type filter
     setCurrentPage(1);
+  };
+
+  // Function to print marksheets for filtered students
+  const printFilteredMarksheets = () => {
+    // Filter students based on selected criteria (using the same logic as filteredStudents)
+    const filteredStudents = studentsWithMarks.filter(student => {
+      // Search term filter (not applicable for print, but keeping for consistency)
+      const matchesSearch = true;
+      
+      // Class filter
+      const matchesClass = !selectedClass || student.class === selectedClass;
+      
+      // Section filter
+      const matchesSection = !selectedSection || student.section === selectedSection;
+      
+      // Batch filter
+      const matchesBatch = !selectedBatch || student.academicYear === selectedBatch;
+      
+      // Exam type filter - check if student has marks of the selected exam type
+      const matchesExamType = !selectedExamType || 
+        (student.marks && student.marks.some(mark => mark.examType === selectedExamType));
+      
+      return matchesSearch && matchesClass && matchesSection && matchesBatch && matchesExamType;
+    });
+    
+    // If we have filtered students, trigger print
+    if (filteredStudents.length > 0) {
+      // Collect all marksheets for the filtered students
+      const allMarksheets = [];
+      filteredStudents.forEach(student => {
+        if (student.marks && student.marks.length > 0) {
+          // If an exam type is selected, only include marksheets of that exam type
+          if (selectedExamType) {
+            const filteredMarks = student.marks.filter(mark => mark.examType === selectedExamType);
+            allMarksheets.push(...filteredMarks);
+          } else {
+            // If no exam type is selected, include all marksheets
+            allMarksheets.push(...student.marks);
+          }
+        }
+      });
+      
+      // If we have marksheets, show print preview
+      if (allMarksheets.length > 0) {
+        // Set the marksheets to be printed
+        setMarksheetsToPrint(allMarksheets);
+        setStudentsToPrint(filteredStudents);
+        setShowPrintPreview(true);
+      } else {
+        alert('No marksheets found for the selected students');
+      }
+    } else {
+      alert('No students match the selected filters');
+    }
   };
 
   return (
     <div className="">
+      {/* Print Preview Modal */}
+      {showPrintPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Print Preview</h2>
+              <div className="flex space-x-2">
+                <button
+                  onClick={() => window.print()}
+                  className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  <FaPrint className="mr-2" /> Print
+                </button>
+                <button
+                  onClick={() => setShowPrintPreview(false)}
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <BulkMarksheetPrintView
+                marksheetsData={marksheetsToPrint}
+                studentsData={studentsToPrint}
+                classesData={classes}
+                schoolInfo={schoolInfo}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 print:hidden">Marksheets Management</h1>
@@ -319,17 +436,19 @@ const MarksheetsSection = () => {
 
       {view === 'detail' && selectedStudentData && (
         <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center">
-              <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
-              <div className="ml-4">
-                <h2 className="text-xl font-bold text-gray-900">{selectedStudentData.name}</h2>
-                <p className="text-gray-600">{selectedStudentData.class} - Section {selectedStudentData.section}</p>
-              </div>
+          <div className="flex items-start justify-between mb-6">
+            <div className="flex-grow">
+              <h2 className="text-xl font-bold text-gray-900">{selectedStudentData.name}</h2>
+              <p className="text-gray-600">{selectedStudentData.class} - Section {selectedStudentData.section}</p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Total Marksheets</p>
-              <p className="text-2xl font-bold text-gray-900">{selectedStudentData.marksCount}</p>
+            <div className="flex items-start space-x-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500">Total Marksheets</p>
+                <p className="text-2xl font-bold text-gray-900">{selectedStudentData.marksCount}</p>
+              </div>
+              <div className="ml-2">
+                <div className="bg-gray-200 border-2 border-dashed rounded-xl w-16 h-16" />
+              </div>
             </div>
           </div>
 
@@ -552,13 +671,37 @@ const MarksheetsSection = () => {
                       </select>
                     </div>
                     
+                    {/* Exam Type Filter */}
+                    <div className="flex items-center space-x-2">
+                      <select
+                        value={selectedExamType}
+                        onChange={(e) => setSelectedExamType(e.target.value)}
+                        className="block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">All Exam Types</option>
+                        {uniqueExamTypes.map(examType => (
+                          <option key={examType} value={examType}>{examType}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
                     <button
                       onClick={clearFilters}
                       className="inline-flex items-center px-3 py-1 border border-gray-300 text-xs font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50"
                     >
                       <FaFilter className="mr-1" /> Clear Filters
                     </button>
+                    
+                    {(selectedClass || selectedSection || selectedBatch || selectedExamType) && (
+                      <button
+                        onClick={printFilteredMarksheets}
+                        className="inline-flex items-center px-3 py-1 border border-transparent text-xs font-medium rounded-lg text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                      >
+                        <FaPrint className="mr-1" /> Print Marksheets
+                      </button>
+                    )}
                   </div>
+
                 </div>
               </div>
               
