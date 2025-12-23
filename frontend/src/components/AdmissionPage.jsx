@@ -18,34 +18,25 @@ export const admissionFormValidationRules = {
     { type: 'length', minLength: 0, maxLength: 20 }
   ],
   firstName: [
-    { type: 'required' },
-    { type: 'length', minLength: 1, maxLength: 50 }
+    { type: 'required', errorMessage: 'First name is required' },
+    { type: 'length', minLength: 2, maxLength: 50, errorMessage: 'First name must be between 2 and 50 characters' }
   ],
   lastName: [
-    { type: 'length', minLength: 1, maxLength: 50 }
+    { type: 'required', errorMessage: 'Last name is required' },
+    { type: 'length', minLength: 2, maxLength: 50, errorMessage: 'Last name must be between 2 and 50 characters' }
   ],
   fatherName: [
-    { type: 'required' },
-    { type: 'length', minLength: 1, maxLength: 50 }
-  ],
-  religion: [],
-  address: [
-    { type: 'length', minLength: 1, maxLength: 200 }
+    { type: 'required', errorMessage: 'Father name is required' },
+    { type: 'length', minLength: 2, maxLength: 50, errorMessage: 'Father name must be between 2 and 50 characters' }
   ],
   dateOfBirth: [
-    { type: 'date' }
-  ],
-  birthPlace: [
-    { type: 'length', minLength: 1, maxLength: 50 }
+    { type: 'required', errorMessage: 'Date of birth is required' },
+    { type: 'date', errorMessage: 'Please enter a valid date' }
   ],
   dateOfAdmission: [
-    { type: 'date' }
+    { type: 'required', errorMessage: 'Date of admission is required' },
+    { type: 'date', errorMessage: 'Please enter a valid date' }
   ],
-  class: [
-    { type: 'required' }
-  ],
-  section: [],
-  // Fee fields for traditional schools (validation will be conditional in the component)
   admissionFees: [
     { type: 'number', min: 0 }
   ],
@@ -58,7 +49,34 @@ export const admissionFormValidationRules = {
   totalFees: [
     { type: 'number', min: 0 }
   ],
-  // Fix parentContact validation to accept both 10 and 11 digit Pakistani numbers
+  class: [
+    { type: 'required', errorMessage: 'Class is required' }
+  ],
+  section: [
+    { type: 'required', errorMessage: 'Section is required' }
+  ],
+  religion: [
+    { type: 'required', errorMessage: 'Religion is required' }
+  ],
+  address: [
+    { type: 'required', errorMessage: 'Address is required' },
+    { type: 'length', minLength: 5, maxLength: 200, errorMessage: 'Address must be between 5 and 200 characters' }
+  ],
+  birthPlace: [
+    { type: 'length', minLength: 1, maxLength: 50, errorMessage: 'Birth place must be between 1 and 50 characters' }
+  ],
+  lastSchoolAttended: [
+    { type: 'length', minLength: 0, maxLength: 100, errorMessage: 'Last school attended must be less than 100 characters' }
+  ],
+  classInWhichLeft: [
+    { type: 'length', minLength: 0, maxLength: 50, errorMessage: 'Class in which left must be less than 50 characters' }
+  ],
+  reasonOfLeaving: [
+    { type: 'length', minLength: 0, maxLength: 100, errorMessage: 'Reason of leaving must be less than 100 characters' }
+  ],
+  remarks: [
+    { type: 'length', minLength: 0, maxLength: 200, errorMessage: 'Remarks must be less than 200 characters' }
+  ],
   parentContact: [
     { type: 'pattern', pattern: /^(0[0-9]{10}|[0-9]{10})$/, errorMessage: 'Please enter a valid Pakistani phone number (0xxxxxxxxxx or xxxxxxxxxx)' }
   ]
@@ -99,6 +117,9 @@ const AdmissionPage = () => {
     class: '',
     section: '',
     admissionFees: '',
+    monthlyFees: '', // Add monthly fees field
+    feesPaid: '', // Add fees paid field
+    totalFees: '', // Add total fees field
     lastSchoolAttended: '',
     isTransferStudent: false, // Explicitly set to false
     dateOfLeaving: null,
@@ -217,10 +238,31 @@ const AdmissionPage = () => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
-    // If class is being changed, automatically select section "A" if available
-    if (name === 'class') {
+    // Handle fee calculations
+    if (name === 'admissionFees' || name === 'monthlyFees') {
+      // Calculate total fees when either admission fees or monthly fees change
+      const admissionFees = name === 'admissionFees' ? newValue : formData.admissionFees;
+      const monthlyFees = name === 'monthlyFees' ? newValue : formData.monthlyFees;
+      const total = (parseFloat(admissionFees) || 0) + (parseFloat(monthlyFees) || 0);
+      
+      setFormData({
+        ...formData,
+        [name]: newValue,
+        totalFees: total.toString()
+      });
+    }
+    // If class is being changed, automatically populate fees from class data
+    else if (name === 'class') {
+      // Find the selected class
+      const selectedClass = classes.find(cls => cls.name === newValue);
+      
+      // Get fees from class data, or use existing values if no class found
+      const admissionFees = selectedClass?.admissionFees || '';
+      const monthlyFees = selectedClass?.monthlyFees || '';
+      const totalFees = (parseFloat(admissionFees) || 0) + (parseFloat(monthlyFees) || 0);
+      
       // Find sections for the selected class
-      const sections = classes.find(cls => cls.name === newValue)?.sections || [];
+      const sections = selectedClass?.sections || [];
       
       // Check if section "A" exists in the sections
       const sectionA = sections.find(section => section.name === 'A');
@@ -228,7 +270,10 @@ const AdmissionPage = () => {
       setFormData({
         ...formData,
         class: newValue,
-        section: sectionA ? 'A' : '' // Auto-select section "A" if available
+        section: sectionA ? 'A' : '', // Auto-select section "A" if available
+        admissionFees: admissionFees.toString(),
+        monthlyFees: monthlyFees.toString(),
+        totalFees: totalFees.toString()
       });
     } else {
       setFormData({
@@ -1018,7 +1063,7 @@ const AdmissionPage = () => {
               <FundingConditional showFor="traditional">
                 <div className="bg-white rounded-lg shadow-lg p-6">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b border-gray-200 pb-2">Fee Information</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Admission Fees
@@ -1038,6 +1083,51 @@ const AdmissionPage = () => {
                       </div>
                       {errors.admissionFees && (
                         <p className="mt-1 text-sm text-red-600">{errors.admissionFees}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Monthly Fees
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FaMoneyBillWave className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="monthlyFees"
+                          value={formData.monthlyFees}
+                          onChange={handleInputChange}
+                          className={`block w-full pl-10 pr-3 py-2.5 border ${errors.monthlyFees ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-blue-500 focus:border-blue-500 transition`}
+                          placeholder="Enter Monthly Fees"
+                        />
+                      </div>
+                      {errors.monthlyFees && (
+                        <p className="mt-1 text-sm text-red-600">{errors.monthlyFees}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Total Fees
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FaMoneyBillWave className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <input
+                          type="number"
+                          name="totalFees"
+                          value={formData.totalFees}
+                          onChange={handleInputChange}
+                          readOnly
+                          className={`block w-full pl-10 pr-3 py-2.5 border ${errors.totalFees ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:ring-blue-500 focus:border-blue-500 transition bg-gray-100`}
+                          placeholder="Total Fees (Auto-calculated)"
+                        />
+                      </div>
+                      {errors.totalFees && (
+                        <p className="mt-1 text-sm text-red-600">{errors.totalFees}</p>
                       )}
                     </div>
                   </div>

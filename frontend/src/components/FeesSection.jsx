@@ -390,10 +390,24 @@ const FeesSection = () => {
     if (studentId) {
       const student = students.find(s => s.id === studentId);
       if (student) {
+        // First check if student has individual fees defined
+        let monthlyFees = 0;
+        if (student.monthlyFees) {
+          monthlyFees = parseFloat(student.monthlyFees) || 0;
+        }
+        
+        // If no individual fees, fall back to class-based fees
+        if (monthlyFees === 0) {
+          const studentClass = classes.find(c => c.name === student.class);
+          if (studentClass && studentClass.monthlyFees) {
+            monthlyFees = parseFloat(studentClass.monthlyFees) || 0;
+          }
+        }
+        
         setChallanData(prev => ({
           ...prev,
           studentId: studentId,
-          amount: student.monthlyFees || ''
+          amount: monthlyFees
         }));
       }
     }

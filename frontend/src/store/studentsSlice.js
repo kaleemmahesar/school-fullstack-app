@@ -484,9 +484,15 @@ export const bulkGenerateChallans = createAsyncThunkWithToast(
         }
       }
       
-      // Get class-based fees instead of using student.monthlyFees
-      let classBasedFees = 0;
-      if (student.class) {
+      // Get individual student fees or fall back to class-based fees
+      let studentFees = 0;
+      if (student.monthlyFees) {
+        // First try to use individual student fees
+        studentFees = parseFloat(student.monthlyFees) || 0;
+      }
+      
+      // If no individual fees or zero fees, fall back to class-based fees
+      if (studentFees === 0 && student.class) {
         // Fetch class data to get the monthly fees
         try {
           // Construct the URL properly for query parameters
@@ -495,7 +501,7 @@ export const bulkGenerateChallans = createAsyncThunkWithToast(
           if (classResponse.ok) {
             const classData = await classResponse.json();
             if (classData && classData.monthlyFees) {
-              classBasedFees = parseFloat(classData.monthlyFees) || 0;
+              studentFees = parseFloat(classData.monthlyFees) || 0;
             }
           }
         } catch (error) {
@@ -506,7 +512,7 @@ export const bulkGenerateChallans = createAsyncThunkWithToast(
       // Create new challan
       const newChallan = {
         month: formattedMonth,
-        amount: classBasedFees,
+        amount: studentFees,
         dueDate: challanTemplate.dueDate || new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         description: challanTemplate.description || '',
         paid: false,

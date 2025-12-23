@@ -32,6 +32,14 @@ const ChallanModals = ({
     const student = students.find(s => s.id === studentId);
     if (!student) return 0;
     
+    // First check if student has individual fees defined
+    if (student.monthlyFees) {
+      const individualFees = parseFloat(student.monthlyFees) || 0;
+      if (individualFees > 0) {
+        return individualFees;
+      }
+    }
+    
     // Find the class fees for this student's class
     const studentClass = classes.find(c => c.name === student.class);
     if (studentClass && studentClass.monthlyFees) {

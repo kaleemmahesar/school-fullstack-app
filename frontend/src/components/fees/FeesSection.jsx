@@ -534,9 +534,17 @@ const FeesSection = () => {
   };
 
   // Get class-based fees for bulk generation
-  const getClassBasedFees = (className) => {
+  const getClassBasedFees = (student) => {
+    // First check if student has individual fees defined
+    if (student.monthlyFees) {
+      const individualFees = parseFloat(student.monthlyFees) || 0;
+      if (individualFees > 0) {
+        return individualFees;
+      }
+    }
+    
     // Find the class fees for this student's class
-    const studentClass = classes.find(c => c.name === className);
+    const studentClass = classes.find(c => c.name === student.class);
     if (studentClass && studentClass.monthlyFees) {
       return parseFloat(studentClass.monthlyFees) || 0;
     }
@@ -627,7 +635,7 @@ const FeesSection = () => {
       const generatedChallans = validStudentIds.map(studentId => {
         const student = students.find(s => s.id === studentId);
         if (student) {
-          const amount = getClassBasedFees(student.class) || 0;
+          const amount = getClassBasedFees(student) || 0;
           // Calculate next challan number
           const existingChallans = student.feesHistory || [];
           const nextChallanNumber = (existingChallans.length + 1).toString().padStart(2, '0');
@@ -866,14 +874,18 @@ const FeesSection = () => {
     if (studentId) {
       const student = students.find(s => s.id === studentId);
       if (student) {
-        // Find the class fees for this student's class
-        const studentClass = classes.find(c => c.name === student.class);
+        // First check if student has individual fees defined
         let monthlyFees = 0;
-        if (studentClass && studentClass.monthlyFees) {
-          monthlyFees = parseFloat(studentClass.monthlyFees) || 0;
-        } else {
-          // Fallback to student's monthlyFees if class data not found
-          monthlyFees = student.monthlyFees ? parseFloat(student.monthlyFees) || 0 : 0;
+        if (student.monthlyFees) {
+          monthlyFees = parseFloat(student.monthlyFees) || 0;
+        }
+        
+        // If no individual fees, fall back to class-based fees
+        if (monthlyFees === 0) {
+          const studentClass = classes.find(c => c.name === student.class);
+          if (studentClass && studentClass.monthlyFees) {
+            monthlyFees = parseFloat(studentClass.monthlyFees) || 0;
+          }
         }
         
         setChallanData(prev => ({
