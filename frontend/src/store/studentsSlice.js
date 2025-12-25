@@ -568,7 +568,7 @@ export const bulkUpdateChallanStatuses = createAsyncThunkWithToast(
     const updatesByStudent = {};
     
     challanUpdates.forEach(update => {
-      const { studentId, challanId, paymentMethod, paymentDate } = update || {};
+      const { studentId, challanId, paymentMethod, paymentDate, discountAmount, discountReason } = update || {};
       if (!studentId || !challanId) return;
       
       if (!updatesByStudent[studentId]) {
@@ -578,7 +578,9 @@ export const bulkUpdateChallanStatuses = createAsyncThunkWithToast(
       updatesByStudent[studentId].push({
         challanId,
         paymentMethod: paymentMethod || 'cash',
-        paymentDate: paymentDate || new Date().toISOString().split('T')[0]
+        paymentDate: paymentDate || new Date().toISOString().split('T')[0],
+        discountAmount: discountAmount || 0,
+        discountReason: discountReason || ''
       });
     });
     
@@ -599,7 +601,7 @@ export const bulkUpdateChallanStatuses = createAsyncThunkWithToast(
       let totalAdditionalPaid = 0;
       
       updates.forEach(update => {
-        const { challanId, paymentMethod, paymentDate } = update;
+        const { challanId, paymentMethod, paymentDate, discountAmount, discountReason } = update;
         
         if (student.feesHistory) {
           const feeRecord = student.feesHistory.find(f => f.id === challanId);
@@ -610,8 +612,16 @@ export const bulkUpdateChallanStatuses = createAsyncThunkWithToast(
             feeRecord.date = paymentDate;
             feeRecord.paymentMethod = paymentMethod;
             
-            // Add to total additional paid amount
-            totalAdditionalPaid += parseFloat(feeRecord.amount || 0);
+            // Store discount information
+            feeRecord.discountAmount = discountAmount || 0;
+            feeRecord.discountReason = discountReason || '';
+            
+            // Calculate the discounted amount (original amount - discount)
+            feeRecord.discountedAmount = (parseFloat(feeRecord.amount) || 0) - (discountAmount || 0);
+            
+            // Add to total additional paid amount (use discounted amount if discount is applied)
+            const amountToPay = (parseFloat(feeRecord.amount) || 0) - (discountAmount || 0);
+            totalAdditionalPaid += amountToPay;
             studentUpdated = true;
           }
         }

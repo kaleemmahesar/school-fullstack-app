@@ -17,6 +17,7 @@ const FeesFilters = ({
   classSections,
   uniqueBatches,  // Add this line
   onBulkGenerate,
+  onBulkPayment,  // Add bulk payment handler
   onClearFilters
 }) => {
   return (
@@ -111,6 +112,16 @@ const FeesFilters = ({
               className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
             >
               <FaReceipt className="mr-1" /> Bulk Generate
+            </button>
+          </div>
+          
+          {/* Bulk Payment Button */}
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onBulkPayment}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+            >
+              <FaReceipt className="mr-1" /> Bulk Payment
             </button>
           </div>
           
