@@ -1,3 +1,15 @@
+// Configuration constants for easy switching between environments
+const BASENAME_CONFIG = {
+  // For local development
+  local: '/',  // Use empty string or '/' for local development
+  
+  // For production deployment to subdirectory
+  production: '/dawn-school/'  // Use your subdirectory path for production
+};
+
+// Set the current environment (change this when switching environments)
+const CURRENT_ENV = 'production'; // Change to 'local' for development
+
 import { Provider } from 'react-redux'
 import { store } from './store'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
@@ -33,7 +45,7 @@ import RBACTestPage from './components/RBACTestPage'
 function App() {
   return (
     <Provider store={store}>
-      <Router basename="/sms-sef/">
+      <Router basename={BASENAME_CONFIG[CURRENT_ENV]}>
         <div className="min-h-screen bg-gray-100">
           <Routes>
             <Route path="/login" element={<LoginPage />} />

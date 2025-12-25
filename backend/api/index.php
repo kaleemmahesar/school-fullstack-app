@@ -1,7 +1,8 @@
 <?php
 // Handle preflight requests first, before any other processing
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    header("Access-Control-Allow-Origin: http://localhost:5173");
+    // For production deployment, use wildcard or specific domain
+    header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
     header("Access-Control-Max-Age: 86400"); // Cache preflight request for 24 hours
@@ -12,7 +13,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 // Set CORS headers for all other requests
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: http://localhost:5173");
+// For production deployment, use wildcard or specific domain
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Vary: Origin");
@@ -126,7 +128,7 @@ try {
 } catch (Exception $e) {
     // Set CORS headers for error responses
     header("Content-Type: application/json");
-    header("Access-Control-Allow-Origin: http://localhost:5173");
+    header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
     header("Access-Control-Allow-Headers: Content-Type, Authorization");
     header("Vary: Origin");

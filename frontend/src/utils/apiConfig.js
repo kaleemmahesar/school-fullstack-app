@@ -4,8 +4,13 @@
  */
 
 // Use our new PHP backend
-export const API_BASE_URL = 'http://localhost/school-app/backend/api.php?endpoint=';
-export const API_BASE_URL_PHOTO = 'http://localhost/school-app/backend/api.php?endpoint=photos';
+// For local development
+// export const API_BASE_URL = 'http://localhost/school-app/backend/api.php?endpoint=';
+// export const API_BASE_URL_PHOTO = 'http://localhost/school-app/backend/api.php?endpoint=photos';
+
+// For production deployment to subdirectory
+export const API_BASE_URL = '/dawn-school/backend/api.php?endpoint=';
+export const API_BASE_URL_PHOTO = '/dawn-school/backend/api.php?endpoint=photos';
 
 /**
  * Helper function to construct full API URLs

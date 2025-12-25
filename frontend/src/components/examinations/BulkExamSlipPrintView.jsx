@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaUser } from 'react-icons/fa';
+import Logo from '../../img/d-logo.jpeg';
 
 const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
   if (!examSlips || examSlips.length === 0) return null;
@@ -30,7 +31,7 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
               <div className="text-center mb-2">
                 <div className="flex items-center justify-center">
                   <img 
-                    src="http://localhost:5173/sms-sef/src/img/d-logo.jpeg" 
+                    src={Logo} 
                     alt="School Logo" 
                     className="h-8 mr-2"
                   />
