@@ -13,7 +13,7 @@ if (!defined('DB_PASS')) {
     define('DB_PASS', '');
 }
 if (!defined('DB_NAME')) {
-    define('DB_NAME', 'school_management_system');
+    define('DB_NAME', 'brightmodel');
 }
 
 // Load configuration from ini file if it exists
@@ -31,7 +31,7 @@ if (file_exists($config_file)) {
             define('DB_PASS', $config['database']['password'] ?? '');
         }
         if (!defined('DB_NAME')) {
-            define('DB_NAME', $config['database']['database'] ?? 'school_management_system');
+            define('DB_NAME', $config['database']['database'] ?? 'brightmodel');
         }
     }
 }

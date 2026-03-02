@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { fetchStaff, addStaff, updateStaff, deleteStaff, addStaffAdvance, payStaffSalary } from '../store/staffSlice';
 import { fetchClasses } from '../store/classesSlice';
-import { FaPlus, FaEdit, FaTrash, FaSearch, FaChalkboardTeacher, FaUser, FaPhone, FaCalendar, FaDollarSign, FaBriefcase, FaMoneyBillWave, FaCamera, FaDownload, FaPrint } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaSearch, FaChalkboardTeacher, FaUser, FaPhone, FaCalendar, FaDollarSign, FaBriefcase, FaMoneyBillWave, FaCamera, FaDownload, FaPrint, FaCertificate, FaFileInvoice } from 'react-icons/fa';
 import PageHeader from './common/PageHeader';
 import StaffFormModal from './StaffFormModal';
 import StaffFinancialModal from './StaffFinancialModal';
 import StaffDetailsModal from './StaffDetailsModal';
 import Pagination from './common/Pagination';
+import ExperienceCertificateModal from './staff/ExperienceCertificateModal';
+
 
 const StaffSection = () => {
   const dispatch = useDispatch();
@@ -19,9 +21,11 @@ const StaffSection = () => {
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showFinancialModal, setShowFinancialModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showExperienceCertificateModal, setShowExperienceCertificateModal] = useState(false);
   const [currentStaff, setCurrentStaff] = useState(null);
   const [selectedStaffForFinance, setSelectedStaffForFinance] = useState(null);
   const [selectedStaffForDetails, setSelectedStaffForDetails] = useState(null);
+  const [selectedStaffForCertificate, setSelectedStaffForCertificate] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -60,6 +64,12 @@ const StaffSection = () => {
     setSelectedStaffForDetails(staffMember);
     setShowDetailsModal(true);
   };
+
+  const handleGenerateCertificate = (staffMember) => {
+    setSelectedStaffForCertificate(staffMember);
+    setShowExperienceCertificateModal(true);
+  };
+
 
   const handleAddAdvance = (advanceData) => {
     dispatch(addStaffAdvance(advanceData));
@@ -459,6 +469,22 @@ const StaffSection = () => {
                             Finance
                           </button>
                           <button
+                            onClick={() => handleGenerateCertificate(member)}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            title="Generate Experience Certificate"
+                          >
+                            <FaCertificate className="mr-1" />
+                            Certificate
+                          </button>
+                          <button
+                            onClick={() => handlePrintCheque(member)}
+                            className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                            title="Print Cheque"
+                          >
+                            <FaFileInvoice className="mr-1" />
+                            Cheque
+                          </button>
+                          <button
                             onClick={() => handleEdit(member)}
                             className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             title="Edit"
@@ -541,6 +567,19 @@ const StaffSection = () => {
           classes={classes}
         />
       )}
+
+      {/* Experience Certificate Modal */}
+      {showExperienceCertificateModal && selectedStaffForCertificate && (
+        <ExperienceCertificateModal
+          staffMember={selectedStaffForCertificate}
+          onClose={() => {
+            setShowExperienceCertificateModal(false);
+            setSelectedStaffForCertificate(null);
+          }}
+        />
+      )}
+
+
     </>
   );
 };

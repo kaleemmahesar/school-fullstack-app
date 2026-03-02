@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaUser, FaCalendar, FaDollarSign, FaReceipt, FaCheck } from 'react-icons/fa';
+import { FaUser, FaCalendar, FaDollarSign, FaReceipt, FaCheck, FaUsers, FaChalkboardTeacher } from 'react-icons/fa';
 import SearchableStudentDropdown from '../common/SearchableStudentDropdown';
 
 const ChallanModals = ({
@@ -26,6 +26,9 @@ const ChallanModals = ({
   detailViewStudent,
   batches // Add batches prop
 }) => {
+  // State for challan generation mode (single, class, all)
+  const [generationMode, setGenerationMode] = useState('single'); // 'single', 'class', 'all'
+  
   // Get student's monthly fees when student is selected
   const getStudentMonthlyFees = (studentId) => {
     if (!studentId) return 0;
@@ -76,7 +79,8 @@ const ChallanModals = ({
   const [bulkGenerateData, setBulkGenerateData] = useState({
     month: new Date().toISOString().slice(0, 7),
     dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    description: ''
+    description: '',
+    classId: '' // For class-based generation
   });
 
   // Handle bulk generate form changes
@@ -168,6 +172,42 @@ const ChallanModals = ({
     return isMonthInBatchRange(month, batch);
   };
 
+  // Get students by class - FIXED to use class name instead of classId
+  const getStudentsByClass = (classId) => {
+    if (!classId) return [];
+    
+    // Find the class name from the class ID
+    const selectedClass = classes.find(c => c.id == classId);
+    if (!selectedClass) return [];
+    
+    // Filter students by class name (since students store class name, not classId)
+    return students.filter(s => s.class === selectedClass.name);
+  };
+
+  // Get count of students for current selection
+  const getStudentCount = () => {
+    if (generationMode === 'single') return 1;
+    if (generationMode === 'class') {
+      const classStudents = getStudentsByClass(bulkGenerateData.classId);
+      return classStudents.length;
+    }
+    if (generationMode === 'all') return students.length;
+    return 0;
+  };
+
+  // Reset generation mode when modal closes
+  useEffect(() => {
+    if (!showGenerateModal) {
+      setGenerationMode('single');
+      setBulkGenerateData({
+        month: new Date().toISOString().slice(0, 7),
+        dueDate: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        description: '',
+        classId: ''
+      });
+    }
+  }, [showGenerateModal]);
+
   return (
     <>
       {/* Payment Modal */}
@@ -235,61 +275,39 @@ const ChallanModals = ({
                       <input
                         type="number"
                         name="discountAmount"
-                        min="0"
-                        step="0.01"
+                        defaultValue={paymentData.discountAmount}
                         className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Enter discount amount"
-                        onChange={(e) => {
-                          // Update discount display
-                          const discountDisplay = document.getElementById('discountDisplay');
-                          const amountToPayDisplay = document.getElementById('amountToPayDisplay');
-                          
-                          if (discountDisplay && amountToPayDisplay) {
-                            const discountAmount = parseFloat(e.target.value) || 0;
-                            const originalAmount = parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0;
-                            const amountToPay = originalAmount - discountAmount;
-                            
-                            discountDisplay.textContent = `Rs ${discountAmount.toFixed(2)}`;
-                            amountToPayDisplay.textContent = `Rs ${amountToPay.toFixed(2)}`;
-                          }
-                        }}
+                        placeholder="0.00"
+                        step="0.01"
                       />
                     </div>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Discount</label>
-                    <input
-                      type="text"
-                      name="discountReason"
-                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Enter reason (optional)"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Final Amount</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaDollarSign className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        readOnly
+                        value={(parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0) - (parseFloat(paymentData.discountAmount) || 0)}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-gray-50"
+                      />
+                    </div>
                   </div>
                 </div>
                 
-                {/* Display calculated amounts */}
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-                    <div>
-                      <p className="font-medium text-gray-700 text-sm mb-1">Original Amount:</p>
-                      <p className="text-gray-900">
-                        Rs {(parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0).toFixed(2)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-700 text-sm mb-1">Discount:</p>
-                      <p className="text-red-600" id="discountDisplay">
-                        Rs 0.00
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-700 text-sm mb-1">Amount to Pay:</p>
-                      <p className="font-bold text-green-600" id="amountToPayDisplay">
-                        Rs {(parseFloat(detailViewStudent?.feesHistory?.find(c => c.id === paymentData.challanId)?.amount) || 0).toFixed(2)}
-                      </p>
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Discount Reason</label>
+                  <input
+                    type="text"
+                    name="discountReason"
+                    defaultValue={paymentData.discountReason}
+                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Enter reason for discount"
+                  />
                 </div>
               </div>
               
@@ -305,7 +323,7 @@ const ChallanModals = ({
                   type="submit"
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
                 >
-                  <FaDollarSign className="mr-2" /> Process Payment
+                  <FaCheck className="mr-2" /> Process Payment
                 </button>
               </div>
             </form>
@@ -313,14 +331,61 @@ const ChallanModals = ({
         </div>
       )}
 
-      {/* Generate Challan Modal */}
+      {/* Generate Challan Modal - Enhanced with multiple options */}
       {showGenerateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-2xl">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">Generate New Challan</h3>
+            
+            {/* Generation Mode Selection */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Select Generation Type</label>
+              <div className="grid grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setGenerationMode('single')}
+                  className={`p-4 border-2 rounded-lg flex flex-col items-center justify-center transition-all ${
+                    generationMode === 'single'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FaUser className="text-2xl mb-2" />
+                  <span className="text-sm font-medium">Single Student</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setGenerationMode('class')}
+                  className={`p-4 border-2 rounded-lg flex flex-col items-center justify-center transition-all ${
+                    generationMode === 'class'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FaChalkboardTeacher className="text-2xl mb-2" />
+                  <span className="text-sm font-medium">For Class</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setGenerationMode('all')}
+                  className={`p-4 border-2 rounded-lg flex flex-col items-center justify-center transition-all ${
+                    generationMode === 'all'
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <FaUsers className="text-2xl mb-2" />
+                  <span className="text-sm font-medium">All Students</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form based on generation mode */}
             <form onSubmit={(e) => {
               // Validate month against batch range before submitting
-              if (challanData.studentId && challanData.month) {
+              if (generationMode === 'single' && challanData.studentId && challanData.month) {
                 const isValid = isMonthValidForStudentBatch(challanData.month, challanData.studentId);
                 if (!isValid) {
                   e.preventDefault();
@@ -328,93 +393,204 @@ const ChallanModals = ({
                   return;
                 }
               }
-              submitChallan(e);
+              
+              // Prepare data based on mode
+              if (generationMode === 'single') {
+                submitChallan(e);
+              } else {
+                // For class or all students mode
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = {
+                  month: formData.get('month'),
+                  dueDate: formData.get('dueDate'),
+                  description: formData.get('description') || '',
+                  classId: generationMode === 'class' ? bulkGenerateData.classId : null,
+                  mode: generationMode
+                };
+                
+                // Show confirmation
+                const studentCount = getStudentCount();
+                const confirmMsg = `Generate challans for ${studentCount} student(s)?\n\nMonth: ${data.month}\nDue Date: ${data.dueDate}`;
+                if (window.confirm(confirmMsg)) {
+                  submitBulkGenerate(data);
+                  setShowGenerateModal(false);
+                }
+              }
             }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Student</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <SearchableStudentDropdown
-                    students={students}
-                    value={challanData.studentId}
-                    onChange={handleStudentChangeWithFees}
-                    placeholder="Select a student..."
-                    required
-                  />
-                </div>
-              </div>
               
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaCalendar className="h-5 w-5 text-gray-400" />
+              {/* Single Student Mode */}
+              {generationMode === 'single' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaUser className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <SearchableStudentDropdown
+                        students={students}
+                        value={challanData.studentId}
+                        onChange={handleStudentChangeWithFees}
+                        placeholder="Select a student..."
+                        required
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="month"
-                    value={challanData.month}
-                    onChange={(e) => setChallanData({...challanData, month: e.target.value})}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-                {/* Show warning if month is outside batch range */}
-                {challanData.studentId && challanData.month && !isMonthValidForStudentBatch(challanData.month, challanData.studentId) && (
-                  <p className="mt-1 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
-                    Warning: Selected month is outside the student's batch period. Please select a month within the batch dates.
-                  </p>
-                )}
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Monthly Fees)</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaDollarSign className="h-5 w-5 text-gray-400" />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaCalendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="month"
+                        name="month"
+                        value={challanData.month}
+                        onChange={(e) => setChallanData({...challanData, month: e.target.value})}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    {/* Show warning if month is outside batch range */}
+                    {challanData.studentId && challanData.month && !isMonthValidForStudentBatch(challanData.month, challanData.studentId) && (
+                      <p className="mt-1 text-xs text-red-600 bg-red-50 p-2 rounded border border-red-100">
+                        Warning: Selected month is outside the student's batch period. Please select a month within the batch dates.
+                      </p>
+                    )}
                   </div>
-                  <input
-                    type="number"
-                    value={challanData.amount}
-                    onChange={(e) => setChallanData({...challanData, amount: e.target.value})}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter amount"
-                    required
-                    readOnly
-                  />
-                </div>
-                <p className="mt-1 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-100">
-                  Auto-filled from student's class monthly fees: Rs {getStudentMonthlyFees(challanData.studentId)}. This amount is fixed based on the student's class fees.
-                </p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaCalendar className="h-5 w-5 text-gray-400" />
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Monthly Fees)</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaDollarSign className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="number"
+                        value={challanData.amount}
+                        onChange={(e) => setChallanData({...challanData, amount: e.target.value})}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter amount"
+                        required
+                        readOnly
+                      />
+                    </div>
+                    <p className="mt-1 text-xs text-blue-600 bg-blue-50 p-2 rounded border border-blue-100">
+                      Auto-filled from student's class monthly fees: Rs {getStudentMonthlyFees(challanData.studentId)}. This amount is fixed based on the student's class fees.
+                    </p>
                   </div>
-                  <input
-                    type="date"
-                    value={challanData.dueDate}
-                    onChange={(e) => setChallanData({...challanData, dueDate: e.target.value})}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  value={challanData.description}
-                  onChange={(e) => setChallanData({...challanData, description: e.target.value})}
-                  className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter description (optional)"
-                  rows="2"
-                />
-              </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaCalendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="date"
+                        name="dueDate"
+                        value={challanData.dueDate}
+                        onChange={(e) => setChallanData({...challanData, dueDate: e.target.value})}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      name="description"
+                      value={challanData.description}
+                      onChange={(e) => setChallanData({...challanData, description: e.target.value})}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter description (optional)"
+                      rows="2"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Class Mode or All Students Mode */}
+              {(generationMode === 'class' || generationMode === 'all') && (
+                <>
+                  {generationMode === 'class' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Select Class</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <FaChalkboardTeacher className="h-5 w-5 text-gray-400" />
+                        </div>
+                        <select
+                          value={bulkGenerateData.classId}
+                          onChange={(e) => setBulkGenerateData({...bulkGenerateData, classId: e.target.value})}
+                          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                          required
+                        >
+                          <option value="">Select a class...</option>
+                          {classes.map(cls => (
+                            <option key={cls.id} value={cls.id}>{cls.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaCalendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="month"
+                        name="month"
+                        defaultValue={bulkGenerateData.month}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaCalendar className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <input
+                        type="date"
+                        name="dueDate"
+                        defaultValue={bulkGenerateData.dueDate}
+                        className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea
+                      name="description"
+                      defaultValue={bulkGenerateData.description}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter description (optional)"
+                      rows="2"
+                    />
+                  </div>
+                  
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <p className="text-sm text-blue-700">
+                      <strong>Note:</strong> Amounts will be automatically calculated based on each student's class fees structure.
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Target students: <strong>{getStudentCount()}</strong> student(s)
+                    </p>
+                  </div>
+                </>
+              )}
               
               <div className="flex justify-end space-x-3 pt-4">
                 <button
@@ -427,9 +603,12 @@ const ChallanModals = ({
                 <button
                   type="submit"
                   className="inline-flex items-center px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-                  disabled={challanData.studentId && challanData.month && !isMonthValidForStudentBatch(challanData.month, challanData.studentId)}
+                  disabled={generationMode === 'single' && challanData.studentId && challanData.month && !isMonthValidForStudentBatch(challanData.month, challanData.studentId)}
                 >
-                  <FaReceipt className="mr-2" /> Generate Challan
+                  <FaReceipt className="mr-2" /> 
+                  {generationMode === 'single' ? 'Generate Challan' : 
+                   generationMode === 'class' ? `Generate for Class (${getStudentCount()} students)` : 
+                   `Generate for All (${getStudentCount()} students)`}
                 </button>
               </div>
             </form>
