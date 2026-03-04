@@ -476,15 +476,7 @@ const StaffSection = () => {
                             <FaCertificate className="mr-1" />
                             Certificate
                           </button>
-                          <button
-                            onClick={() => handlePrintCheque(member)}
-                            className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-green-700 bg-white hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                            title="Print Cheque"
-                          >
-                            <FaFileInvoice className="mr-1" />
-                            Cheque
-                          </button>
-                          <button
+                                                    <button
                             onClick={() => handleEdit(member)}
                             className="inline-flex items-center px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-indigo-700 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
                             title="Edit"

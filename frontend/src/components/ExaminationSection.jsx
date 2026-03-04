@@ -186,7 +186,7 @@ const ExaminationSection = () => {
 
   return (
     <div className="">
-      <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 text-xs">
+      {/* <div className="mb-4 p-2 bg-yellow-100 text-yellow-800 text-xs">
         <p>Debug Info - ExaminationSection:</p>
         <p>Exams: {exams.length}</p>
         <p>Students: {students.length}</p>
@@ -194,7 +194,7 @@ const ExaminationSection = () => {
         <p>Marks type: {marks.marks ? typeof marks.marks : 'undefined'}</p>
         <p>Marks loading: {marks.loading ? 'true' : 'false'}</p>
         <p>Marks error: {marks.error || 'none'}</p>
-      </div>
+      </div> */}
       
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>

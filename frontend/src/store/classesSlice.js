@@ -29,7 +29,7 @@ export const addClass = createAddThunk(
   async (classData) => {
     // Prepare class data for API (with sections)
     const newClass = {
-      id: Date.now().toString(),
+      id: classData.id || `class-${classData.name.toLowerCase().replace(/\s+/g, '-')}`,
       name: classData.name,
       monthlyFees: classData.monthlyFees || 0,
       admissionFees: classData.admissionFees || 0,

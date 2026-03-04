@@ -170,21 +170,32 @@ const ClassFormModal = ({ onClose, onSubmit, classData, students }) => { // Add 
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validate class name
-    const classNameError = validateClassName(formData.name);
-    if (classNameError) {
-      setErrors({ name: classNameError });
-      return;
+    // Generate proper class ID based on name
+    let classId;
+    if (formData.name === 'PG') {
+      classId = 'class-pg';
+    } else if (formData.name === 'Nursery') {
+      classId = 'class-nursery';
+    } else if (formData.name === 'KG') {
+      classId = 'class-kg';
+    } else {
+      // For numbered classes like "Class 1", convert to "class-1"
+      const classNumberMatch = formData.name.match(/^Class\s+(\d+)$/i);
+      if (classNumberMatch) {
+        classId = `class-${classNumberMatch[1]}`;
+      } else {
+        // Fallback to lowercase dashed format
+        classId = `class-${formData.name.toLowerCase().replace(/\s+/g, '-')}`;
+      }
     }
     
-    // When creating/updating a class, we need to handle sections separately
-    const classData = {
-      name: formData.name,
-      monthlyFees: formData.monthlyFees || 0,
-      admissionFees: 0 // Default value
+    // Prepare class data with proper ID format
+    const preparedData = {
+      ...formData,
+      id: isEditMode ? classData.id : classId // Use existing ID in edit mode, generate new ID for create mode
     };
     
-    onSubmit({ ...classData, sections: formData.sections });
+    onSubmit(preparedData);
   };
 
   return (

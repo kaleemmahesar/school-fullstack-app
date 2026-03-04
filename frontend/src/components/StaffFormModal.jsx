@@ -22,12 +22,15 @@ const StaffFormModal = ({ onClose, onSubmit, staffData, classes }) => {
   useEffect(() => {
     if (staffData) {
       setFormData({
-        ...staffData,
-        contactNumber: staffData.contactNumber || staffData.phone || '', // Use contactNumber if available, otherwise phone
-        jobType: staffData.position && (staffData.position.toLowerCase().includes('teacher') || staffData.position.toLowerCase().includes('professor')) 
-          ? 'Teaching' 
-          : 'Non-Teaching',
-        subject: staffData.subject || '', // Assuming we add this field to staff data
+        firstName: staffData.firstName || '',
+        lastName: staffData.lastName || '',
+        contactNumber: staffData.contactNumber || staffData.phone || '',
+        position: staffData.designation || staffData.position || '', // Handle both designation and position
+        salary: staffData.salary || '',
+        dateOfJoining: staffData.dateOfJoining || '',
+        jobType: staffData.jobType || (staffData.designation && (staffData.designation.toLowerCase().includes('teacher') || staffData.designation.toLowerCase().includes('professor')) ? 'Teaching' : 'Non-Teaching') || 'Teaching',
+        subject: staffData.subject || '',
+        photo: null,
       });
       // If staff has a photo, set the preview
       if (staffData.photo) {

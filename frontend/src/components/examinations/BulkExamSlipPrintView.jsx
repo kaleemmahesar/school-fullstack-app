@@ -30,7 +30,7 @@ const BulkExamSlipPrintView = ({ examSlips, students, exams, schoolInfo }) => {
               <div className="text-center mb-2">
                 <div className="flex items-center justify-center">
                   <img 
-                    src="http://localhost:5173/sms-sef/src/img/d-logo.jpeg" 
+                    src="http://localhost:5173/sms-sef/src/img/bms.jpg" 
                     alt="School Logo" 
                     className="h-8 mr-2"
                   />

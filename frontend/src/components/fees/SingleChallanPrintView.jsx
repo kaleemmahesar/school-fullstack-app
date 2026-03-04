@@ -1,6 +1,6 @@
 import React from 'react';
 import { FaPrint } from 'react-icons/fa';
-import Logo from '../../img/d-logo.jpeg';
+import Logo from '../../img/bms.jpg';
 import PaidChallanView from './PaidChallanView';
 import ParentReceiptView from './ParentReceiptView';
 

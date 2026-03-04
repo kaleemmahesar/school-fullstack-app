@@ -67,6 +67,16 @@ const StaffFinancialModal = ({ staffMember, onClose, onAddAdvance, onPaySalary }
     setChequeAmountInWords(calculateAmountInWords(parseInt(amount) || 0));
   };
 
+  // Auto-populate cheque fields when payment method changes to cheque
+  React.useEffect(() => {
+    if (paymentMethod === 'cheque' && amountType === 'salary') {
+      const totalSalary = Math.floor(calculateTotalSalary());
+      setChequeAmount(totalSalary.toString());
+      setChequeAmountInWords(calculateAmountInWords(totalSalary));
+      setChequeDate(new Date().toISOString().split('T')[0]);
+    }
+  }, [paymentMethod, amountType]);
+
   // Show cheque print view
   const showChequePrintView = () => {
     // Create a new window for printing
@@ -361,7 +371,7 @@ const StaffFinancialModal = ({ staffMember, onClose, onAddAdvance, onPaySalary }
               {paymentMethod === 'cheque' && (
                 <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50 mt-4">
                   <h4 className="text-lg font-semibold text-blue-800 mb-4 flex items-center">
-                    <FaRupeeSign className="mr-2" /> Cheque Payment Details
+                    Cheque Payment Details
                   </h4>
                   
                   {/* Cheque Preview */}
@@ -393,20 +403,16 @@ const StaffFinancialModal = ({ staffMember, onClose, onAddAdvance, onPaySalary }
                   {/* Cheque Input Fields */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Rs.)</label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <FaRupeeSign className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          type="number"
-                          value={chequeAmount}
-                          onChange={handleChequeAmountChange}
-                          className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                          placeholder="Enter amount"
-                          required
-                        />
-                      </div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Amount (Rs.) - Auto-filled</label>
+                      <input
+                        type="number"
+                        value={chequeAmount}
+                        onChange={handleChequeAmountChange}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter amount"
+                        required
+                        readOnly
+                      />
                     </div>
                     
                     <div>
